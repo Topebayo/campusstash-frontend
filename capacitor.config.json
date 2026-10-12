@@ -1,0 +1,9 @@
+{
+  "appId": "com.campusstash.app",
+  "appName": "CampusStash",
+  "webDir": "dist",
+  "server": {
+    "androidScheme": "http",
+    "cleartext": true
+  }
+}
