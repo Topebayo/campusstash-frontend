@@ -6,6 +6,20 @@ function Navbar({ onPrimaryAction, primaryActionText }) {
   const location = useLocation();
 
   const [themeMode, setThemeMode] = useState(() => localStorage.getItem('theme') || 'system');
+  const [token, setToken] = useState(() => localStorage.getItem('token'));
+
+  useEffect(() => {
+    setToken(localStorage.getItem('token'));
+  }, [location.pathname]);
+
+  const handleLogout = () => {
+    if (window.confirm('Are you sure you want to log out of CampusStash?')) {
+      localStorage.removeItem('token');
+      localStorage.removeItem('user');
+      setToken(null);
+      navigate('/auth');
+    }
+  };
 
   const isHome = location.pathname === '/dashboard' || location.pathname === '/';
 
@@ -121,6 +135,52 @@ function Navbar({ onPrimaryAction, primaryActionText }) {
               <i className={themeMode === 'dark' ? "fa-solid fa-moon" : themeMode === 'light' ? "fa-solid fa-sun" : "fa-solid fa-desktop"} style={{ color: 'var(--brandblue)' }} />
               <span style={{ textTransform: 'capitalize' }}>{themeMode}</span>
             </button>
+
+            {token ? (
+              <button
+                onClick={handleLogout}
+                title="Log Out of Account"
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.4rem',
+                  padding: '0.45rem 0.85rem',
+                  borderRadius: '20px',
+                  border: '1px solid rgba(239, 68, 68, 0.25)',
+                  backgroundColor: 'rgba(239, 68, 68, 0.08)',
+                  color: '#dc2626',
+                  fontFamily: 'var(--font-display)',
+                  fontWeight: '600',
+                  fontSize: '0.82rem',
+                  cursor: 'pointer',
+                  transition: 'all 0.2s ease'
+                }}
+              >
+                <i className="fa-solid fa-right-from-bracket" />
+                <span>Log Out</span>
+              </button>
+            ) : (
+              <button
+                onClick={() => navigate('/auth')}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.4rem',
+                  padding: '0.45rem 0.85rem',
+                  borderRadius: '20px',
+                  border: '1px solid var(--border)',
+                  backgroundColor: 'var(--surface-alt)',
+                  color: 'var(--brandblue)',
+                  fontFamily: 'var(--font-display)',
+                  fontWeight: '700',
+                  fontSize: '0.82rem',
+                  cursor: 'pointer'
+                }}
+              >
+                <i className="fa-solid fa-arrow-right-to-bracket" />
+                <span>Sign In</span>
+              </button>
+            )}
 
             {onPrimaryAction && primaryActionText && (
               <button 

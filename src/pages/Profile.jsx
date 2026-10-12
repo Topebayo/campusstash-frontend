@@ -61,6 +61,14 @@ function Profile() {
     fetchMyListings();
   }, [navigate]);
 
+  const handleLogout = () => {
+    if (window.confirm('Are you sure you want to log out of your account?')) {
+      localStorage.removeItem('token');
+      localStorage.removeItem('user');
+      navigate('/auth');
+    }
+  };
+
   const handleSave = async (e) => {
     e.preventDefault();
     if (!phone.trim()) {
@@ -181,7 +189,7 @@ function Profile() {
             </div>
           </div>
 
-          <div style={{ display: 'flex', gap: '0.85rem' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.85rem', flexWrap: 'wrap' }}>
             <div style={{
               padding: '0.65rem 1.1rem',
               backgroundColor: 'var(--bg-color)',
@@ -193,7 +201,7 @@ function Profile() {
               <span style={{ fontSize: '0.72rem', fontWeight: '700', textTransform: 'uppercase', color: 'var(--text-light)', display: 'block' }}>
                 Active
               </span>
-              <span style={{ fontFamily: 'var(--font-display)', fontSize: '1.3rem', fontWeight: '800', color: 'var(--brandgreen)' }}>
+              <span style={{ fontFamily: 'var(--font-display)', fontSize: '1.3rem', fontWeight: '800', color: 'var(--brandblue)' }}>
                 {myListings.filter(l => l.status !== 'sold').length}
               </span>
             </div>
@@ -213,6 +221,29 @@ function Profile() {
                 {myListings.filter(l => l.status === 'sold').length}
               </span>
             </div>
+
+            <button
+              onClick={handleLogout}
+              style={{
+                padding: '0.75rem 1.2rem',
+                backgroundColor: 'rgba(239, 68, 68, 0.08)',
+                color: '#dc2626',
+                border: '1px solid rgba(239, 68, 68, 0.25)',
+                borderRadius: '14px',
+                fontFamily: 'var(--font-display)',
+                fontWeight: '700',
+                fontSize: '0.88rem',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.5rem',
+                transition: 'all 0.15s ease'
+              }}
+              title="Sign out of this device"
+            >
+              <i className="fa-solid fa-right-from-bracket" />
+              <span>Log Out</span>
+            </button>
           </div>
         </div>
 
@@ -321,6 +352,38 @@ function Profile() {
               >
                 {isSaving ? 'Saving Changes...' : 'Save Changes'}
               </button>
+
+              <div style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                paddingTop: '1rem',
+                marginTop: '0.5rem',
+                borderTop: '1px solid var(--border)'
+              }}>
+                <span style={{ fontSize: '0.82rem', color: 'var(--text-muted)' }}>Device Session</span>
+                <button
+                  type="button"
+                  onClick={handleLogout}
+                  style={{
+                    background: 'none',
+                    border: 'none',
+                    color: '#dc2626',
+                    fontSize: '0.85rem',
+                    fontWeight: '700',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '0.4rem',
+                    padding: '0.35rem 0.6rem',
+                    borderRadius: '8px',
+                    transition: 'all 0.15s ease'
+                  }}
+                >
+                  <i className="fa-solid fa-right-from-bracket" />
+                  <span>Log Out of Account</span>
+                </button>
+              </div>
             </form>
           </div>
 
