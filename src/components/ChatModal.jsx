@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+﻿import React, { useState, useEffect, useRef } from 'react';
 import { apiFetch, getWebSocketUrl } from '../api';
 import { Capacitor } from '@capacitor/core';
 
@@ -294,7 +294,7 @@ function ChatModal({ isOpen = true, onClose, listing }) {
         {showDropzonePicker && (
           <div style={{
             padding: '0.85rem 1.25rem',
-            backgroundColor: '#e6f4ea',
+            backgroundColor: 'var(--surface-alt)',
             borderBottom: '1px solid rgba(16, 185, 129, 0.2)',
             display: 'flex',
             flexDirection: 'column',
@@ -363,7 +363,7 @@ function ChatModal({ isOpen = true, onClose, listing }) {
           display: 'flex',
           flexDirection: 'column',
           gap: '0.85rem',
-          backgroundColor: '#f8f9fa'
+          backgroundColor: 'var(--bg-color)'
         }}>
           {messages.length === 0 ? (
             <div style={{ textAlign: 'center', color: 'var(--text-muted)', margin: 'auto', padding: '2rem' }}>
@@ -395,7 +395,7 @@ function ChatModal({ isOpen = true, onClose, listing }) {
                     boxShadow: 'var(--shadow-md)'
                   }}>
                     <p style={{ fontSize: '0.82rem', color: 'var(--darkgreen)', fontWeight: '700', margin: '0 0 0.4rem 0' }}>
-                      📍 PROPOSED MEETUP SPOT
+                      ðŸ“ PROPOSED MEETUP SPOT
                     </p>
                     <p style={{ fontSize: '0.95rem', fontWeight: '800', fontFamily: 'var(--font-display)', color: 'var(--text-main)', margin: '0 0 0.75rem 0' }}>
                       {dzName}
@@ -419,14 +419,14 @@ function ChatModal({ isOpen = true, onClose, listing }) {
                   <div key={msg.id || index} style={{
                     alignSelf: 'center',
                     maxWidth: '90%',
-                    backgroundColor: '#e6f4ea',
+                    backgroundColor: 'var(--surface-alt)',
                     border: '1px solid rgba(16,185,129,0.4)',
                     borderRadius: '16px',
                     padding: '0.75rem 1.1rem',
                     textAlign: 'center'
                   }}>
                     <p style={{ fontSize: '0.82rem', color: 'var(--darkgreen)', fontWeight: '800', margin: 0 }}>
-                      ✅ MEETUP SPOT AGREED: {dzName}
+                      âœ… MEETUP SPOT AGREED: {dzName}
                     </p>
                   </div>
                 );
@@ -448,10 +448,10 @@ function ChatModal({ isOpen = true, onClose, listing }) {
                     borderRadius: '18px',
                     borderBottomRightRadius: isMine ? '4px' : '18px',
                     borderBottomLeftRadius: isMine ? '18px' : '4px',
-                    backgroundColor: isMine ? 'var(--brandgreen)' : '#ffffff',
+                    backgroundColor: isMine ? 'var(--brandblue)' : 'var(--surface)',
                     color: isMine ? '#ffffff' : 'var(--text-main)',
                     border: isMine ? 'none' : '1px solid var(--border)',
-                    boxShadow: isMine ? '0 4px 12px rgba(16,185,129,0.22)' : '0 2px 6px rgba(0,0,0,0.03)',
+                    boxShadow: isMine ? 'var(--shadow-blue)' : 'var(--shadow-sm)',
                     fontSize: '0.9rem',
                     lineHeight: '1.45',
                     wordBreak: 'break-word'
@@ -525,3 +525,4 @@ function ChatModal({ isOpen = true, onClose, listing }) {
 }
 
 export default ChatModal;
+
