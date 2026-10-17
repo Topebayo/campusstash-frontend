@@ -37,8 +37,22 @@ const PRICE_RANGES = [
 
 function Dashboard() {
   const navigate = useNavigate();
-  const [listings, setListings] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [listings, setListings] = useState(() => {
+    try {
+      const cached = localStorage.getItem('cs_cached_listings');
+      return cached ? JSON.parse(cached) : [];
+    } catch (e) {
+      return [];
+    }
+  });
+  const [loading, setLoading] = useState(() => {
+    try {
+      const cached = localStorage.getItem('cs_cached_listings');
+      return !cached || JSON.parse(cached).length === 0;
+    } catch (e) {
+      return true;
+    }
+  });
   const [selectedCategory, setSelectedCategory] = useState('All');
   const [searchQuery, setSearchQuery] = useState('');
   const [sortOption, setSortOption] = useState('newest');
@@ -113,12 +127,17 @@ function Dashboard() {
       }
 
       const data = await apiFetch(query);
+      let itemsList = [];
       if (Array.isArray(data)) {
-        setListings(data);
+        itemsList = data;
       } else if (data && Array.isArray(data.items)) {
-        setListings(data.items);
-      } else {
-        setListings([]);
+        itemsList = data.items;
+      }
+      setListings(itemsList);
+      if (selectedCategory === 'All' && !searchQuery.trim() && itemsList.length > 0) {
+        try {
+          localStorage.setItem('cs_cached_listings', JSON.stringify(itemsList));
+        } catch (e) {}
       }
     } catch (err) {
       console.error("Failed to fetch listings", err);
@@ -508,7 +527,7 @@ function Dashboard() {
                       <img 
                         src={getImageUrl(listing.image_url)} 
                         alt={listing.title} 
-                        style={{ width: '100%', height: '100%', objectFit: 'cover' }} 
+                        loading="lazy" decoding="async" style={{ width: '100%', height: '100%', objectFit: 'cover' }} 
                       />
                     ) : (
                       <div className="listing-placeholder" style={{ width: '100%', height: '100%', borderRadius: 0, margin: 0 }}>

@@ -116,3 +116,11 @@ export const apiFetch = async (endpoint, options = {}) => {
 
   return response.json();
 };
+
+
+// Warmup ping to ensure Render cloud instance wakes up from cold sleep immediately
+if (typeof window !== 'undefined') {
+  try {
+    fetch('https://campusstash-backend.onrender.com/health', { method: 'GET', mode: 'no-cors' }).catch(() => {});
+  } catch (e) {}
+}
