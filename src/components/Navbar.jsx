@@ -11,8 +11,8 @@ function playNotificationPing() {
     const gain = ctx.createGain();
     
     osc.type = 'sine';
-    osc.frequency.setValueAtTime(587.33, ctx.currentTime); // D5
-    osc.frequency.setValueAtTime(880.00, ctx.currentTime + 0.08); // A5
+    osc.frequency.setValueAtTime(587.33, ctx.currentTime);
+    osc.frequency.setValueAtTime(880.00, ctx.currentTime + 0.08);
     
     gain.gain.setValueAtTime(0.18, ctx.currentTime);
     gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.32);
@@ -22,7 +22,7 @@ function playNotificationPing() {
     osc.start();
     osc.stop(ctx.currentTime + 0.32);
   } catch (e) {
-    // Ignore audio autoplay restrictions
+    // Ignore audio restrictions
   }
 }
 
@@ -138,94 +138,47 @@ function Navbar({ onPrimaryAction, primaryActionText }) {
   return (
     <>
       {/* Top Header Navigation (Desktop & Mobile) */}
-      <header className="main-navbar-header">
-        <div className="navbar-container">
+      <header className="main-navbar-header" style={{ width: '100%', maxWidth: '100vw', overflowX: 'hidden' }}>
+        <div className="navbar-container" style={{ width: '100%', maxWidth: '1280px', margin: '0 auto', padding: '0.65rem 1rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '0.5rem', boxSizing: 'border-box' }}>
           
-          {/* Custom Header for Profile View */}
-          {isProfile ? (
-            <div className="navbar-brand-group" style={{ display: 'flex', alignItems: 'center', gap: '0.85rem' }}>
+          {/* Brand Logo & Back Button Group */}
+          <div className="navbar-brand-group" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', minWidth: 0, flexShrink: 1 }}>
+            {!isHome && (
               <button
-                onClick={() => navigate('/dashboard')}
+                onClick={handleBack}
                 style={{
                   display: 'flex',
                   alignItems: 'center',
-                  gap: '0.45rem',
-                  padding: '0.45rem 0.95rem',
+                  gap: '0.3rem',
+                  padding: '0.4rem 0.65rem',
                   borderRadius: '20px',
                   backgroundColor: 'var(--lightblue)',
                   border: '1px solid rgba(59, 130, 246, 0.3)',
                   color: 'var(--brandblue)',
-                  fontSize: '0.85rem',
+                  fontSize: '0.8rem',
                   fontFamily: 'var(--font-display)',
                   fontWeight: '700',
                   cursor: 'pointer',
-                  transition: 'all 0.15s ease'
+                  flexShrink: 0
                 }}
-                title="Back to Marketplace"
+                title="Go Back"
               >
                 <i className="fa-solid fa-arrow-left" />
-                <span>Marketplace</span>
+                <span className="desktop-label">{isProfile ? 'Market' : 'Back'}</span>
               </button>
+            )}
 
-              <div 
-                onClick={() => navigate('/dashboard')}
-                className="brand-logo"
-                style={{ fontSize: '1.25rem' }}
-              >
-                Campus<span className="text-brandblue">Stash</span>
-                <span style={{
-                  fontSize: '0.72rem',
-                  fontWeight: '700',
-                  padding: '0.2rem 0.6rem',
-                  borderRadius: '9999px',
-                  backgroundColor: 'var(--surface-alt)',
-                  color: 'var(--text-muted)',
-                  border: '1px solid var(--border)',
-                  marginLeft: '0.4rem',
-                  textTransform: 'uppercase',
-                  letterSpacing: '0.04em'
-                }}>
-                  Account
-                </span>
-              </div>
+            <div 
+              onClick={() => navigate('/dashboard')}
+              className="brand-logo"
+              style={{ fontSize: '1.25rem', whiteSpace: 'nowrap', cursor: 'pointer' }}
+            >
+              Campus<span className="text-brandblue">Stash</span>
             </div>
-          ) : (
-            /* Standard Header for Marketplace & Messages */
-            <div className="navbar-brand-group" style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-              {!isHome && (
-                <button
-                  onClick={handleBack}
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '0.35rem',
-                    padding: '0.45rem 0.85rem',
-                    borderRadius: '20px',
-                    backgroundColor: 'var(--lightblue)',
-                    border: '1px solid rgba(59, 130, 246, 0.3)',
-                    color: 'var(--brandblue)',
-                    fontSize: '0.85rem',
-                    fontFamily: 'var(--font-display)',
-                    fontWeight: '700',
-                    cursor: 'pointer',
-                    transition: 'all 0.15s ease'
-                  }}
-                  title="Go Back"
-                >
-                  <i className="fa-solid fa-arrow-left" />
-                  <span>Back</span>
-                </button>
-              )}
 
-              <div 
-                onClick={() => navigate('/dashboard')}
-                className="brand-logo"
-              >
-                Campus<span className="text-brandblue">Stash</span>
-              </div>
-
-              {/* Desktop Navigation Links */}
-              <nav className="desktop-nav-links" style={{ marginLeft: '1rem', display: 'flex', gap: '0.5rem' }}>
+            {/* Desktop Navigation Links */}
+            {!isProfile && (
+              <nav className="desktop-nav-links" style={{ marginLeft: '0.75rem', display: 'flex', gap: '0.4rem' }}>
                 {navLinks.map((link) => {
                   const isActive = location.pathname === link.path;
                   return (
@@ -245,19 +198,19 @@ function Navbar({ onPrimaryAction, primaryActionText }) {
                   );
                 })}
               </nav>
-            </div>
-          )}
+            )}
+          </div>
 
           {/* Action Buttons & Theme Toggle */}
-          <div className="navbar-action-group" style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
+          <div className="navbar-action-group" style={{ display: 'flex', alignItems: 'center', gap: '0.45rem', flexShrink: 0 }}>
             <button
               onClick={cycleTheme}
-              title={`Current Theme: ${themeMode.toUpperCase()} (Click to toggle)`}
+              title={`Theme: ${themeMode}`}
               style={{
                 display: 'flex',
                 alignItems: 'center',
-                gap: '0.4rem',
-                padding: '0.45rem 0.85rem',
+                gap: '0.35rem',
+                padding: '0.45rem 0.75rem',
                 borderRadius: '20px',
                 border: '1px solid var(--border)',
                 backgroundColor: 'var(--surface-alt)',
@@ -265,12 +218,11 @@ function Navbar({ onPrimaryAction, primaryActionText }) {
                 fontFamily: 'var(--font-display)',
                 fontWeight: '600',
                 fontSize: '0.82rem',
-                cursor: 'pointer',
-                transition: 'all 0.2s ease'
+                cursor: 'pointer'
               }}
             >
               <i className={themeMode === 'dark' ? "fa-solid fa-moon" : themeMode === 'light' ? "fa-solid fa-sun" : "fa-solid fa-desktop"} style={{ color: 'var(--brandblue)' }} />
-              <span style={{ textTransform: 'capitalize' }}>{themeMode}</span>
+              <span className="desktop-label" style={{ textTransform: 'capitalize' }}>{themeMode}</span>
             </button>
 
             {token ? (
@@ -280,8 +232,8 @@ function Navbar({ onPrimaryAction, primaryActionText }) {
                 style={{
                   display: 'flex',
                   alignItems: 'center',
-                  gap: '0.4rem',
-                  padding: '0.45rem 0.85rem',
+                  gap: '0.35rem',
+                  padding: '0.45rem 0.75rem',
                   borderRadius: '20px',
                   border: '1px solid rgba(239, 68, 68, 0.25)',
                   backgroundColor: 'rgba(239, 68, 68, 0.08)',
@@ -289,12 +241,11 @@ function Navbar({ onPrimaryAction, primaryActionText }) {
                   fontFamily: 'var(--font-display)',
                   fontWeight: '600',
                   fontSize: '0.82rem',
-                  cursor: 'pointer',
-                  transition: 'all 0.2s ease'
+                  cursor: 'pointer'
                 }}
               >
                 <i className="fa-solid fa-right-from-bracket" />
-                <span>Log Out</span>
+                <span className="desktop-label">Log Out</span>
               </button>
             ) : (
               <button
@@ -302,8 +253,8 @@ function Navbar({ onPrimaryAction, primaryActionText }) {
                 style={{
                   display: 'flex',
                   alignItems: 'center',
-                  gap: '0.4rem',
-                  padding: '0.45rem 0.85rem',
+                  gap: '0.35rem',
+                  padding: '0.45rem 0.75rem',
                   borderRadius: '20px',
                   border: '1px solid var(--border)',
                   backgroundColor: 'var(--surface-alt)',
@@ -315,7 +266,7 @@ function Navbar({ onPrimaryAction, primaryActionText }) {
                 }}
               >
                 <i className="fa-solid fa-arrow-right-to-bracket" />
-                <span>Sign In</span>
+                <span className="desktop-label">Sign In</span>
               </button>
             )}
 
@@ -324,14 +275,14 @@ function Navbar({ onPrimaryAction, primaryActionText }) {
                 className="btn-primary desktop-sell-btn" 
                 onClick={onPrimaryAction}
                 style={{
-                  padding: '0.55rem 1.15rem',
-                  fontSize: '0.88rem',
+                  padding: '0.45rem 0.95rem',
+                  fontSize: '0.85rem',
                   borderRadius: '9999px',
                   boxShadow: 'var(--shadow-blue)'
                 }}
               >
                 <i className="fa-solid fa-plus" />
-                {primaryActionText}
+                <span>{primaryActionText}</span>
               </button>
             )}
           </div>

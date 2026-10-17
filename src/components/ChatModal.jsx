@@ -69,21 +69,25 @@ function ChatModal({ isOpen = true, onClose, listing }) {
         setWsStatus('connecting');
         setError('');
 
-        // 1. Get or create 1-on-1 conversation
-        const conv = await apiFetch('/conversations/', {
-          method: 'POST',
-          body: JSON.stringify({
-            listing_id: listing.id,
-            recipient_id: listing.seller_id
-          })
-        });
+        // 1. Use existing conversation ID if available (e.g. from Inbox/Messages), or create/retrieve for listing
+        let convId = listing.conversation_id;
+        if (!convId) {
+          const conv = await apiFetch('/conversations/', {
+            method: 'POST',
+            body: JSON.stringify({
+              listing_id: listing.id,
+              recipient_id: listing.seller_id
+            })
+          });
+          convId = conv.id;
+        }
 
         if (!isMounted) return;
-        setConversationId(conv.id);
+        setConversationId(convId);
 
         // 2. Fetch history messages for this conversation
         try {
-          const historyData = await apiFetch(`/conversations/${conv.id}/messages`);
+          const historyData = await apiFetch(`/conversations/${convId}/messages`);
           if (isMounted) {
             setMessages(historyData.items || historyData || []);
           }
@@ -93,8 +97,8 @@ function ChatModal({ isOpen = true, onClose, listing }) {
           if (isMounted) setMessages(legacyHistory);
         }
 
-        // 3. Connect WebSocket using conversation.id
-        const wsUrl = getWebSocketUrl(conv.id, token);
+        // 3. Connect WebSocket using conversation ID
+        const wsUrl = getWebSocketUrl(convId, token);
 
         const socket = new WebSocket(wsUrl);
         ws.current = socket;

@@ -1,5 +1,31 @@
 @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&family=Inter:wght@400;500;600;700&display=swap');
 
+html, body {
+  max-width: 100vw !important;
+  overflow-x: hidden !important;
+  width: 100% !important;
+  position: relative;
+}
+
+#root {
+  max-width: 100vw !important;
+  overflow-x: hidden !important;
+  width: 100% !important;
+}
+
+* {
+  box-sizing: border-box;
+  overflow-wrap: break-word;
+}
+
+@media (max-width: 640px) {
+  .desktop-label {
+    display: none !important;
+  }
+}
+
+
+
 /* --- DEFAULT LIGHT THEME (White & Royal Blue) --- */
 :root, [data-theme="light"] {
   --brandblue: #2563eb;

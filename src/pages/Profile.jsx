@@ -136,21 +136,22 @@ function Profile() {
     <div style={{ backgroundColor: 'var(--bg-color)', minHeight: '100vh', paddingBottom: '6rem' }}>
       <Navbar />
 
-      <div style={{ maxWidth: '1280px', margin: '0 auto', padding: '0 1.25rem' }} className="animate-fade-in">
+      <div style={{ maxWidth: '1280px', margin: '0 auto', padding: '0 1rem', width: '100%', boxSizing: 'border-box', overflowX: 'hidden' }} className="animate-fade-in">
         
         {/* Header Profile Card */}
         <div style={{
           backgroundColor: 'var(--surface)',
           borderRadius: '24px',
-          padding: '2rem 1.5rem',
+          padding: '1.5rem 1.25rem',
           border: '1px solid var(--border)',
           boxShadow: 'var(--shadow-sm)',
-          marginBottom: '2rem',
+          marginBottom: '1.5rem',
           display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          flexWrap: 'wrap',
-          gap: '1.25rem'
+          flexDirection: 'column',
+          gap: '1.25rem',
+          width: '100%',
+          boxSizing: 'border-box',
+          overflowX: 'hidden'
         }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '1.25rem', flexWrap: 'wrap' }}>
             <div style={{
@@ -168,7 +169,7 @@ function Profile() {
               <i className="fa-solid fa-user-shield" />
             </div>
 
-            <div>
+            <div style={{ minWidth: 0, flex: 1, overflowWrap: 'anywhere' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem', marginBottom: '0.25rem', flexWrap: 'wrap' }}>
                 <h1 style={{
                   fontFamily: 'var(--font-display)',
@@ -189,61 +190,38 @@ function Profile() {
             </div>
           </div>
 
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.85rem', flexWrap: 'wrap' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', width: '100%', boxSizing: 'border-box' }}>
             <div style={{
-              padding: '0.65rem 1.1rem',
+              flex: 1,
+              padding: '0.75rem 1rem',
               backgroundColor: 'var(--bg-color)',
-              borderRadius: '14px',
+              borderRadius: '16px',
               border: '1px solid var(--border)',
-              textAlign: 'center',
-              minWidth: '90px'
+              textAlign: 'center'
             }}>
               <span style={{ fontSize: '0.72rem', fontWeight: '700', textTransform: 'uppercase', color: 'var(--text-light)', display: 'block' }}>
-                Active
+                Active Listings
               </span>
-              <span style={{ fontFamily: 'var(--font-display)', fontSize: '1.3rem', fontWeight: '800', color: 'var(--brandblue)' }}>
+              <span style={{ fontFamily: 'var(--font-display)', fontSize: '1.4rem', fontWeight: '800', color: 'var(--brandblue)' }}>
                 {myListings.filter(l => l.status !== 'sold').length}
               </span>
             </div>
 
             <div style={{
-              padding: '0.65rem 1.1rem',
+              flex: 1,
+              padding: '0.75rem 1rem',
               backgroundColor: 'var(--bg-color)',
-              borderRadius: '14px',
+              borderRadius: '16px',
               border: '1px solid var(--border)',
-              textAlign: 'center',
-              minWidth: '90px'
+              textAlign: 'center'
             }}>
               <span style={{ fontSize: '0.72rem', fontWeight: '700', textTransform: 'uppercase', color: 'var(--text-light)', display: 'block' }}>
-                Sold
+                Sold Listings
               </span>
-              <span style={{ fontFamily: 'var(--font-display)', fontSize: '1.3rem', fontWeight: '800', color: 'var(--text-main)' }}>
+              <span style={{ fontFamily: 'var(--font-display)', fontSize: '1.4rem', fontWeight: '800', color: 'var(--text-main)' }}>
                 {myListings.filter(l => l.status === 'sold').length}
               </span>
             </div>
-
-            <button
-              onClick={handleLogout}
-              style={{
-                padding: '0.75rem 1.2rem',
-                backgroundColor: 'rgba(239, 68, 68, 0.08)',
-                color: '#dc2626',
-                border: '1px solid rgba(239, 68, 68, 0.25)',
-                borderRadius: '14px',
-                fontFamily: 'var(--font-display)',
-                fontWeight: '700',
-                fontSize: '0.88rem',
-                cursor: 'pointer',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '0.5rem',
-                transition: 'all 0.15s ease'
-              }}
-              title="Sign out of this device"
-            >
-              <i className="fa-solid fa-right-from-bracket" />
-              <span>Log Out</span>
-            </button>
           </div>
         </div>
 

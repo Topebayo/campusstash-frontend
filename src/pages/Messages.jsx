@@ -46,27 +46,30 @@ function Messages() {
     <div style={{ backgroundColor: 'var(--bg-color)', minHeight: '100vh', paddingBottom: '5rem' }}>
       <Navbar />
 
-      <div className="container animate-fade-in" style={{ maxWidth: '960px', margin: '0 auto', padding: '0 1.5rem' }}>
+      <div className="container animate-fade-in" style={{ maxWidth: '960px', margin: '0 auto', padding: '0 1rem', width: '100%', boxSizing: 'border-box', overflowX: 'hidden' }}>
         
         {/* Header Banner */}
         <div style={{
           backgroundColor: 'var(--surface)',
-          borderRadius: '24px',
-          padding: '2.5rem 2rem',
+          borderRadius: '20px',
+          padding: '1.5rem 1.25rem',
           border: '1px solid var(--border)',
           boxShadow: 'var(--shadow-sm)',
-          marginBottom: '2rem'
+          marginBottom: '1.5rem',
+          width: '100%',
+          boxSizing: 'border-box'
         }}>
           <span className="badge-pill" style={{ marginBottom: '0.5rem' }}>
             <i className="fa-solid fa-comments" /> Masked Inbox
           </span>
           <h1 style={{
             fontFamily: 'var(--font-display)',
-            fontSize: '2.25rem',
+            fontSize: 'clamp(1.5rem, 5vw, 2.1rem)',
             fontWeight: '800',
             letterSpacing: '-0.03em',
             color: 'var(--text-main)',
-            marginBottom: '0.5rem'
+            marginBottom: '0.5rem',
+            wordBreak: 'break-word'
           }}>
             Campus <span className="text-brandgreen">Conversations</span>
           </h1>
