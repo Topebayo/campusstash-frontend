@@ -1,6 +1,11 @@
 import { Capacitor } from '@capacitor/core';
 
-// Current active PC Wi-Fi/LAN IP address
+// Production Cloud Backend on Render
+export const CLOUD_API_BASE = 'https://campusstash-backend.onrender.com/api/v1';
+export const CLOUD_WS_BASE = 'wss://campusstash-backend.onrender.com/api/v1/chat/ws';
+export const CLOUD_HOST = 'https://campusstash-backend.onrender.com';
+
+// Local PC Fallback for LAN testing
 export const DEFAULT_HOST_IP = '10.84.19.223';
 
 export const getServerHost = () => {
@@ -19,8 +24,11 @@ export const getApiBaseUrl = () => {
     return import.meta.env.VITE_API_URL;
   }
   if (Capacitor.isNativePlatform()) {
-    const host = getServerHost();
-    return `http://${host}:8000/api/v1`;
+    const customIp = localStorage.getItem('server_ip');
+    if (customIp && customIp.trim()) {
+      return `http://${customIp.trim()}:8000/api/v1`;
+    }
+    return CLOUD_API_BASE;
   }
   return '/api/v1';
 };
@@ -31,8 +39,11 @@ export const getWebSocketUrl = (conversationId, token = '') => {
     return `${import.meta.env.VITE_WS_URL}/${conversationId}${tokenQuery}`;
   }
   if (Capacitor.isNativePlatform()) {
-    const host = getServerHost();
-    return `ws://${host}:8000/api/v1/chat/ws/${conversationId}${tokenQuery}`;
+    const customIp = localStorage.getItem('server_ip');
+    if (customIp && customIp.trim()) {
+      return `ws://${customIp.trim()}:8000/api/v1/chat/ws/${conversationId}${tokenQuery}`;
+    }
+    return `${CLOUD_WS_BASE}/${conversationId}${tokenQuery}`;
   }
   const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
   return `${protocol}//${window.location.host}/api/v1/chat/ws/${conversationId}${tokenQuery}`;
@@ -48,12 +59,15 @@ export const getImageUrl = (url) => {
       const origin = new URL(import.meta.env.VITE_API_URL).origin;
       return `${origin}${url.startsWith('/') ? '' : '/'}${url}`;
     } catch (e) {
-      // fallback if not a valid URL
+      // fallback
     }
   }
   if (Capacitor.isNativePlatform()) {
-    const host = getServerHost();
-    return `http://${host}:8000${url.startsWith('/') ? '' : '/'}${url}`;
+    const customIp = localStorage.getItem('server_ip');
+    if (customIp && customIp.trim()) {
+      return `http://${customIp.trim()}:8000${url.startsWith('/') ? '' : '/'}${url}`;
+    }
+    return `${CLOUD_HOST}${url.startsWith('/') ? '' : '/'}${url}`;
   }
   return url;
 };
