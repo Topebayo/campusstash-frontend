@@ -4,6 +4,7 @@ import { apiFetch, getImageUrl, getServerHost, DEFAULT_HOST_IP } from '../api';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 import EditListingModal from '../components/EditListingModal';
+import SettingsModal from '../components/SettingsModal';
 
 function Profile() {
   const navigate = useNavigate();
@@ -22,6 +23,7 @@ function Profile() {
 
   // Edit Modal State
   const [editingListing, setEditingListing] = useState(null);
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
 
   const fetchProfile = async () => {
@@ -326,6 +328,16 @@ function Profile() {
                 {isSaving ? 'Saving Changes...' : 'Save Changes'}
               </button>
 
+              <button
+                type="button"
+                onClick={() => setIsSettingsOpen(true)}
+                className="btn-secondary"
+                style={{ width: '100%', marginTop: '0.65rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.45rem' }}
+              >
+                <i className="fa-solid fa-gear" style={{ color: 'var(--brandblue)' }} />
+                <span>Account & Security Settings</span>
+              </button>
+
 
             </form>
           </div>
@@ -524,6 +536,17 @@ function Profile() {
         listing={editingListing}
         onUpdated={() => {
           fetchMyListings();
+        }}
+      />
+
+      <SettingsModal
+        isOpen={isSettingsOpen}
+        onClose={() => setIsSettingsOpen(false)}
+        userProfile={profile}
+        onLogout={() => {
+          localStorage.removeItem('token');
+          localStorage.removeItem('user');
+          navigate('/auth');
         }}
       />
       <Footer />

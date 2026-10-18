@@ -5,6 +5,20 @@ html, body {
   overflow-x: hidden !important;
   width: 100% !important;
   position: relative;
+  -webkit-user-select: none !important;
+  -moz-user-select: none !important;
+  -ms-user-select: none !important;
+  user-select: none !important;
+  -webkit-touch-callout: none !important;
+}
+
+/* Allow text selection ONLY in input and editable fields */
+input, textarea, [contenteditable="true"] {
+  -webkit-user-select: text !important;
+  -moz-user-select: text !important;
+  -ms-user-select: text !important;
+  user-select: text !important;
+  -webkit-touch-callout: default !important;
 }
 
 #root {
@@ -13,9 +27,17 @@ html, body {
   width: 100% !important;
 }
 
-* {
+*, *::before, *::after {
   box-sizing: border-box;
   overflow-wrap: break-word;
+  -webkit-tap-highlight-color: transparent !important;
+  -webkit-focus-ring-color: transparent !important;
+}
+
+/* Smooth micro-interaction for touch & click */
+button:active, .btn-primary:active, .btn-secondary:active, .btn-dark:active, .price-pill-btn:active, .sort-refresh-btn:active {
+  transform: scale(0.975);
+  transition: transform 0.08s ease;
 }
 
 @media (max-width: 640px) {
@@ -674,7 +696,7 @@ select option {
 
 .sort-select-input {
   height: 38px;
-  padding: 0 0.75rem;
+  padding: 0 2rem 0 0.85rem;
   border-radius: 10px;
   border: 1px solid var(--border);
   background-color: var(--surface);
@@ -685,6 +707,18 @@ select option {
   cursor: pointer;
   outline: none;
   box-sizing: border-box;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%2364748b' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 0.75rem center;
+  background-size: 12px 12px;
+  line-height: normal;
+}
+
+[data-theme="dark"] .sort-select-input {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%2394a3b8' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
 }
 
 .sort-refresh-btn {

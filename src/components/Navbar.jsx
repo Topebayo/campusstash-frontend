@@ -68,6 +68,7 @@ function Navbar({ onPrimaryAction, primaryActionText }) {
   const [themeMode, setThemeMode] = useState(() => localStorage.getItem('theme') || 'system');
   const [token, setToken] = useState(() => localStorage.getItem('token'));
   const [unreadCount, setUnreadCount] = useState(0);
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
 
   const isHome = location.pathname === '/dashboard' || location.pathname === '/';
   const isProfile = location.pathname === '/profile';
@@ -233,7 +234,12 @@ function Navbar({ onPrimaryAction, primaryActionText }) {
                     </button>
                   );
                 })}
-              </nav>
+                    <SettingsModal 
+        isOpen={isSettingsOpen} 
+        onClose={() => setIsSettingsOpen(false)} 
+        onLogout={handleLogout} 
+      />
+    </nav>
             )}
           </div>
 
@@ -260,6 +266,30 @@ function Navbar({ onPrimaryAction, primaryActionText }) {
               <i className={themeMode === 'dark' ? "fa-solid fa-moon" : themeMode === 'light' ? "fa-solid fa-sun" : "fa-solid fa-desktop"} style={{ color: 'var(--brandblue)' }} />
               <span className="desktop-label" style={{ textTransform: 'capitalize' }}>{themeMode}</span>
             </button>
+
+            {token && (
+              <button
+                onClick={() => setIsSettingsOpen(true)}
+                title="Settings & Security"
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.35rem',
+                  padding: '0.45rem 0.75rem',
+                  borderRadius: '20px',
+                  border: '1px solid var(--border)',
+                  backgroundColor: 'var(--surface-alt)',
+                  color: 'var(--text-main)',
+                  fontFamily: 'var(--font-display)',
+                  fontWeight: '600',
+                  fontSize: '0.82rem',
+                  cursor: 'pointer'
+                }}
+              >
+                <i className="fa-solid fa-gear" style={{ color: 'var(--brandblue)' }} />
+                <span className="desktop-label">Settings</span>
+              </button>
+            )}
 
             {token ? (
               <button
