@@ -120,6 +120,25 @@ function ChatModal({ isOpen = true, onClose, listing }) {
                 }
                 return [...prev, newMsg];
               });
+              if (newMsg.sender_id && currentUserId && newMsg.sender_id !== currentUserId) {
+                try {
+                  const AudioContext = window.AudioContext || window.webkitAudioContext;
+                  if (AudioContext) {
+                    const ctx = new AudioContext();
+                    const osc = ctx.createOscillator();
+                    const gain = ctx.createGain();
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(587.33, ctx.currentTime);
+                    osc.frequency.setValueAtTime(880.00, ctx.currentTime + 0.08);
+                    gain.gain.setValueAtTime(0.18, ctx.currentTime);
+                    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.32);
+                    osc.connect(gain);
+                    gain.connect(ctx.destination);
+                    osc.start();
+                    osc.stop(ctx.currentTime + 0.32);
+                  }
+                } catch (e) {}
+              }
             }
           } catch (e) {
             console.error("Error parsing message", e);

@@ -1,6 +1,9 @@
-import React, { useState, useEffect } from 'react';
+﻿import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { apiFetch } from '../api';
+import { Capacitor } from '@capacitor/core';
+import { LocalNotifications } from '@capacitor/local-notifications';
+
 
 function playNotificationPing() {
   try {
@@ -26,6 +29,38 @@ function playNotificationPing() {
   }
 }
 
+
+async function triggerNotification(title, body) {
+  playNotificationPing();
+  if (Capacitor.isNativePlatform()) {
+    try {
+      const perm = await LocalNotifications.checkPermissions();
+      if (perm.display !== 'granted') {
+        await LocalNotifications.requestPermissions();
+      }
+      await LocalNotifications.schedule({
+        notifications: [
+          {
+            title: title || 'CampusStash: New Message',
+            body: body || 'You received a new message regarding a listing',
+            id: Math.floor(Math.random() * 1000000),
+            schedule: { at: new Date(Date.now() + 50) }
+          }
+        ]
+      });
+    } catch (e) {
+      console.warn('Native notification error:', e);
+    }
+  } else if ('Notification' in window && Notification.permission === 'granted') {
+    try {
+      new Notification(title || 'CampusStash: New Message', {
+        body: body || 'You received a new message regarding a listing',
+        icon: '/favicon.svg'
+      });
+    } catch (e) {}
+  }
+}
+
 function Navbar({ onPrimaryAction, primaryActionText }) {
   const navigate = useNavigate();
   const location = useLocation();
@@ -41,10 +76,14 @@ function Navbar({ onPrimaryAction, primaryActionText }) {
     setToken(localStorage.getItem('token'));
   }, [location.pathname]);
 
-  // Request notification permissions for background messaging
+  // Request notification permissions for background messaging & alerts
   useEffect(() => {
-    if (token && 'Notification' in window && Notification.permission === 'default') {
-      Notification.requestPermission().catch(() => {});
+    if (token) {
+      if (Capacitor.isNativePlatform()) {
+        LocalNotifications.requestPermissions().catch(() => {});
+      } else if ('Notification' in window && Notification.permission === 'default') {
+        Notification.requestPermission().catch(() => {});
+      }
     }
   }, [token]);
 
@@ -69,14 +108,11 @@ function Navbar({ onPrimaryAction, primaryActionText }) {
         if (isMounted && Array.isArray(convs)) {
           const total = convs.reduce((sum, c) => sum + (c.unread_count || 0), 0);
           setUnreadCount(prev => {
-            if (total > prev && prev !== 0) {
-              playNotificationPing();
-              if (document.hidden && 'Notification' in window && Notification.permission === 'granted') {
-                new Notification('CampusStash: New Message', {
-                  body: 'You received a new message regarding a listing',
-                  icon: '/favicon.svg'
-                });
-              }
+            if (total > prev) {
+              triggerNotification(
+                'CampusStash: New Message',
+                `You have ${total} unread message(s)`
+              );
             }
             return total;
           });
@@ -326,3 +362,4 @@ function Navbar({ onPrimaryAction, primaryActionText }) {
 }
 
 export default Navbar;
+

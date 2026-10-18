@@ -37,5 +37,12 @@ subprojects {
                 }
             }
         }
+        if (project.plugins.hasPlugin("org.jetbrains.kotlin.android") || project.plugins.hasPlugin("kotlin-android")) {
+            try {
+                kotlin {
+                    jvmToolchain(17)
+                }
+            } catch (Exception e) {}
+        }
     }
 }

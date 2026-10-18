@@ -1,6 +1,42 @@
 import React, { useState } from 'react';
 import { apiFetch } from '../api';
 
+
+const compressImage = (file, maxWidth = 800, maxHeight = 800, quality = 0.75) => {
+  return new Promise((resolve) => {
+    if (!file) return resolve(null);
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const img = new Image();
+      img.onload = () => {
+        let width = img.width;
+        let height = img.height;
+        if (width > height) {
+          if (width > maxWidth) {
+            height = Math.round((height * maxWidth) / width);
+            width = maxWidth;
+          }
+        } else {
+          if (height > maxHeight) {
+            width = Math.round((width * maxHeight) / height);
+            height = maxHeight;
+          }
+        }
+        const canvas = document.createElement('canvas');
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0, width, height);
+        resolve(canvas.toDataURL('image/jpeg', quality));
+      };
+      img.onerror = () => resolve(e.target.result);
+      img.src = e.target.result;
+    };
+    reader.onerror = () => resolve(null);
+    reader.readAsDataURL(file);
+  });
+};
+
 const CATEGORIES = [
   'Textbooks',
   'Electronics',
@@ -39,6 +75,14 @@ function CreateListingModal({ isOpen, onClose, onCreated }) {
       formData.append('price_kobo', priceKobo);
       formData.append('category', category);
       if (image) {
+        try {
+          const compressed = await compressImage(image);
+          if (compressed) {
+            formData.append('image_url', compressed);
+          }
+        } catch (e) {
+          console.warn('Image compression note:', e);
+        }
         formData.append('image', image);
       }
 
