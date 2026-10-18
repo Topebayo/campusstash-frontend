@@ -9,7 +9,9 @@ function ItemDetailModal({
   currentUserId,
   onEditListing,
   onToggleStatus,
-  onDeleteListing 
+  onDeleteListing,
+  allListings = [],
+  onSelectListing
 }) {
   if (!listing) return null;
 
@@ -20,6 +22,16 @@ function ItemDetailModal({
   const isSold = listing.status === 'sold';
 
   const priceFormatted = (listing.price_kobo ? (listing.price_kobo / 100) : (listing.price || 0)).toLocaleString(undefined, { minimumFractionDigits: 2 });
+
+  // Auto-suggest related/similar active items
+  const suggestedItems = (allListings || [])
+    .filter(item => item && item.id !== listing.id && item.status !== 'sold')
+    .sort((a, b) => {
+      if (a.category === listing.category && b.category !== listing.category) return -1;
+      if (b.category === listing.category && a.category !== listing.category) return 1;
+      return 0;
+    })
+    .slice(0, 4);
 
   const handleMessageClick = (e) => {
     if (e) e.stopPropagation();
@@ -273,6 +285,102 @@ function ItemDetailModal({
                 <strong style={{ color: 'var(--text-main)' }}>Campus Safety:</strong> Meet in public campus areas (cafeteria, library dropzones) for handovers.
               </div>
             </div>
+
+            {/* Auto-Suggested Related Items */}
+            {suggestedItems.length > 0 && (
+              <div style={{
+                borderTop: '1px solid var(--border)',
+                paddingTop: '1rem',
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '0.65rem'
+              }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <span style={{
+                    fontFamily: 'var(--font-display)',
+                    fontSize: '0.9rem',
+                    fontWeight: '700',
+                    color: 'var(--text-main)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '0.4rem'
+                  }}>
+                    <i className="fa-solid fa-wand-magic-sparkles" style={{ color: 'var(--brandblue)' }} />
+                    Suggested for You
+                  </span>
+                  <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                    {suggestedItems[0].category === listing.category ? `More in ${listing.category}` : 'Campus Deals'}
+                  </span>
+                </div>
+
+                <div style={{
+                  display: 'grid',
+                  gridTemplateColumns: 'repeat(auto-fill, minmax(115px, 1fr))',
+                  gap: '0.6rem'
+                }}>
+                  {suggestedItems.map(item => {
+                    const itemPrice = (item.price_kobo ? (item.price_kobo / 100) : (item.price || 0)).toLocaleString();
+                    return (
+                      <div
+                        key={item.id}
+                        onClick={() => onSelectListing && onSelectListing(item)}
+                        style={{
+                          borderRadius: '12px',
+                          border: '1px solid var(--border)',
+                          backgroundColor: 'var(--surface-alt)',
+                          padding: '0.45rem',
+                          cursor: 'pointer',
+                          display: 'flex',
+                          flexDirection: 'column',
+                          gap: '0.35rem',
+                          transition: 'all 0.15s ease'
+                        }}
+                      >
+                        <div style={{
+                          width: '100%',
+                          height: '70px',
+                          borderRadius: '8px',
+                          backgroundColor: 'var(--surface)',
+                          overflow: 'hidden'
+                        }}>
+                          {item.image_url ? (
+                            <img 
+                              src={getImageUrl(item.image_url)} 
+                              alt={item.title} 
+                              style={{ width: '100%', height: '100%', objectFit: 'cover' }} 
+                              onError={(e) => { e.currentTarget.style.display = 'none'; }}
+                            />
+                          ) : (
+                            <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-muted)' }}>
+                              <i className="fa-regular fa-image" style={{ fontSize: '1.2rem', opacity: 0.4 }} />
+                            </div>
+                          )}
+                        </div>
+                        <div style={{
+                          fontSize: '0.78rem',
+                          fontWeight: '700',
+                          color: 'var(--text-main)',
+                          whiteSpace: 'nowrap',
+                          overflow: 'hidden',
+                          textOverflow: 'ellipsis',
+                          fontFamily: 'var(--font-display)'
+                        }}>
+                          {item.title}
+                        </div>
+                        <div style={{
+                          fontSize: '0.82rem',
+                          fontWeight: '800',
+                          color: 'var(--brandblue)',
+                          fontFamily: 'var(--font-display)'
+                        }}>
+                          ₦{itemPrice}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
           </div>
         </div>
 

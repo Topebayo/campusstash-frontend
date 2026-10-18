@@ -266,12 +266,8 @@ function Landing() {
         </div>
       </main>
       
-      {/* Footer */}
-      <footer style={{ padding: '3rem 2rem', borderTop: '1px solid var(--border)', textAlign: 'center' }}>
-        <p style={{ fontSize: '0.9rem', color: 'var(--text-muted)' }}>
-          &copy; 2026 CampusStash. Designed for the modern student.
-        </p>
-      </footer>
+      {/* Global Modern Web Footer */}
+      <Footer />
     </div>
   );
 }

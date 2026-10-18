@@ -79,12 +79,12 @@ html, body {
   --brandblue-hover: #60a5fa;
   --brandblue-dark: #93c5fd;
   --lightblue: rgba(59, 130, 246, 0.18);
-  --darkblue: #eff6ff;
+  --darkblue: #93c5fd;
   
   --brandgreen: #3b82f6;
   --brandgreen-hover: #60a5fa;
   --lightgreen: rgba(59, 130, 246, 0.18);
-  --darkgreen: #eff6ff;
+  --darkgreen: #93c5fd;
   
   --coral: #f87171;
   --offwhite: #0b0f19;
@@ -124,12 +124,12 @@ html, body {
     --brandblue-hover: #60a5fa;
     --brandblue-dark: #93c5fd;
     --lightblue: rgba(59, 130, 246, 0.18);
-    --darkblue: #eff6ff;
+    --darkblue: #93c5fd;
     
     --brandgreen: #3b82f6;
     --brandgreen-hover: #60a5fa;
     --lightgreen: rgba(59, 130, 246, 0.18);
-    --darkgreen: #eff6ff;
+    --darkgreen: #93c5fd;
     
     --coral: #f87171;
     --offwhite: #0b0f19;
@@ -247,8 +247,8 @@ h1, h2, h3, h4, h5, h6, .font-display {
 }
 
 .btn-dark {
-  background-color: var(--darkblue);
-  color: #ffffff;
+  background-color: #1e3a8a;
+  color: #ffffff !important;
   font-family: var(--font-display);
   font-weight: 700;
   border: none;
@@ -263,7 +263,29 @@ h1, h2, h3, h4, h5, h6, .font-display {
 }
 
 .btn-dark:hover {
-  opacity: 0.9;
+  background-color: #1d4ed8;
+  color: #ffffff !important;
+}
+
+[data-theme="dark"] .btn-dark {
+  background-color: var(--brandblue) !important;
+  color: #ffffff !important;
+}
+
+[data-theme="dark"] .btn-dark:hover {
+  background-color: var(--brandblue-hover) !important;
+  color: #ffffff !important;
+}
+
+/* Global Dark Mode Contrast Helpers */
+input::placeholder, textarea::placeholder, select::placeholder {
+  color: var(--text-muted) !important;
+  opacity: 0.75;
+}
+
+select option {
+  background-color: var(--surface);
+  color: var(--text-main);
 }
 
 /* Form Controls */

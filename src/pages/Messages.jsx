@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { apiFetch } from '../api';
 import Navbar from '../components/Navbar';
+import Footer from '../components/Footer';
 import ChatModal from '../components/ChatModal';
 
 function Messages() {
@@ -73,9 +74,7 @@ function Messages() {
           }}>
             Campus <span className="text-brandgreen">Conversations</span>
           </h1>
-          <p style={{ color: 'var(--text-muted)', fontSize: '0.98rem' }}>
-            All chats are end-to-end masked with burner pseudonyms. Pick a conversation to view full history and negotiate.
-          </p>
+
         </div>
 
         {/* Inbox Content */}
@@ -274,6 +273,7 @@ function Messages() {
           listing={activeChatListing}
         />
       )}
+      <Footer />
     </div>
   );
 }

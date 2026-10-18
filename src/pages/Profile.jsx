@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { apiFetch, getImageUrl, getServerHost, DEFAULT_HOST_IP } from '../api';
 import Navbar from '../components/Navbar';
+import Footer from '../components/Footer';
 import EditListingModal from '../components/EditListingModal';
 
 function Profile() {
@@ -61,13 +62,7 @@ function Profile() {
     fetchMyListings();
   }, [navigate]);
 
-  const handleLogout = () => {
-    if (window.confirm('Are you sure you want to log out of your account?')) {
-      localStorage.removeItem('token');
-      localStorage.removeItem('user');
-      navigate('/auth');
-    }
-  };
+
 
   const handleSave = async (e) => {
     e.preventDefault();
@@ -185,7 +180,7 @@ function Profile() {
                 </span>
               </div>
               <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem', margin: 0 }}>
-                {profile?.email || 'Student Account'} • Masked Pseudonym Protected
+                {profile?.email || 'Student Account'}
               </p>
             </div>
           </div>
@@ -331,37 +326,7 @@ function Profile() {
                 {isSaving ? 'Saving Changes...' : 'Save Changes'}
               </button>
 
-              <div style={{
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center',
-                paddingTop: '1rem',
-                marginTop: '0.5rem',
-                borderTop: '1px solid var(--border)'
-              }}>
-                <span style={{ fontSize: '0.82rem', color: 'var(--text-muted)' }}>Device Session</span>
-                <button
-                  type="button"
-                  onClick={handleLogout}
-                  style={{
-                    background: 'none',
-                    border: 'none',
-                    color: '#dc2626',
-                    fontSize: '0.85rem',
-                    fontWeight: '700',
-                    cursor: 'pointer',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '0.4rem',
-                    padding: '0.35rem 0.6rem',
-                    borderRadius: '8px',
-                    transition: 'all 0.15s ease'
-                  }}
-                >
-                  <i className="fa-solid fa-right-from-bracket" />
-                  <span>Log Out of Account</span>
-                </button>
-              </div>
+
             </form>
           </div>
 
@@ -383,11 +348,11 @@ function Profile() {
                 </span>
               </div>
               <button 
-                className="btn-dark"
+                className="btn-primary"
                 onClick={() => navigate('/dashboard')}
-                style={{ padding: '0.5rem 0.9rem', fontSize: '0.82rem' }}
+                style={{ padding: '0.5rem 1rem', fontSize: '0.84rem' }}
               >
-                + Post Another Item
+                <i className="fa-solid fa-plus" /> Post Another Item
               </button>
             </div>
 
@@ -465,7 +430,7 @@ function Profile() {
                             backgroundColor: isSold ? '#4b5563' : 'var(--brandgreen)',
                             color: '#ffffff'
                           }}>
-                            {isSold ? '✓ Sold' : '● Active'}
+                            <i className={isSold ? 'fa-solid fa-circle-check' : 'fa-solid fa-bolt'} style={{ marginRight: '0.3rem' }} /> {isSold ? 'Sold' : 'Active'}
                           </div>
                         </div>
 
@@ -508,7 +473,7 @@ function Profile() {
                               cursor: 'pointer'
                             }}
                           >
-                            {isSold ? 'Relist' : 'Mark Sold'}
+                            <i className={isSold ? 'fa-solid fa-rotate-right' : 'fa-solid fa-circle-check'} style={{ marginRight: '0.3rem' }} /> {isSold ? 'Relist' : 'Mark Sold'}
                           </button>
 
                           <button
@@ -561,6 +526,7 @@ function Profile() {
           fetchMyListings();
         }}
       />
+      <Footer />
     </div>
   );
 }

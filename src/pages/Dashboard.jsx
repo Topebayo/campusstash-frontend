@@ -4,6 +4,7 @@ import { apiFetch, getImageUrl } from '../api';
 import { Capacitor } from '@capacitor/core';
 import { App as CapApp } from '@capacitor/app';
 import Navbar from '../components/Navbar';
+import Footer from '../components/Footer';
 import ItemDetailModal from '../components/ItemDetailModal';
 import ChatModal from '../components/ChatModal';
 import CreateListingModal from '../components/CreateListingModal';
@@ -284,9 +285,7 @@ function Dashboard() {
               Campus <span className="text-brandblue">Marketplace</span>
             </h1>
 
-            <p style={{ color: 'var(--text-muted)', fontSize: '1.02rem', lineHeight: '1.55', marginTop: '0.45rem' }}>
-              Browse verified student gear, negotiate anonymously in real-time, and close deals securely on your campus.
-            </p>
+
 
             {/* Interactive Live Search Input */}
             <div style={{ position: 'relative', width: '100%', marginTop: '1.35rem' }}>
@@ -448,9 +447,9 @@ function Dashboard() {
                 outline: 'none'
               }}
             >
-              <option value="newest">🕒 Newest First</option>
-              <option value="price_asc">💰 Price: Low to High</option>
-              <option value="price_desc">💎 Price: High to Low</option>
+              <option value="newest">Newest First</option>
+              <option value="price_asc">Price: Low to High</option>
+              <option value="price_desc">Price: High to Low</option>
             </select>
 
             <button 
@@ -483,6 +482,110 @@ function Dashboard() {
         </div>
 
         {/* Listings Grid */}
+                {/* Auto-Suggested Campus Gear */}
+        {!searchQuery && selectedCategory === 'All' && listings.length > 0 && (
+          <div style={{ marginBottom: '1.75rem' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.75rem' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem' }}>
+                <i className="fa-solid fa-wand-magic-sparkles" style={{ color: 'var(--brandblue)', fontSize: '1rem' }} />
+                <h3 style={{ fontFamily: 'var(--font-display)', fontSize: '1.05rem', fontWeight: '800', color: 'var(--text-main)', margin: 0 }}>
+                  Suggested for You
+                </h3>
+              </div>
+              <span style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>
+                Fresh campus posts
+              </span>
+            </div>
+
+            <div style={{
+              display: 'flex',
+              gap: '0.85rem',
+              overflowX: 'auto',
+              paddingBottom: '0.5rem',
+              scrollbarWidth: 'none'
+            }}>
+              {listings.filter(l => l.status !== 'sold').slice(0, 6).map(item => {
+                const itemPrice = (item.price_kobo ? (item.price_kobo / 100) : (item.price || 0)).toLocaleString();
+                return (
+                  <div
+                    key={item.id}
+                    onClick={() => setSelectedListing(item)}
+                    style={{
+                      flexShrink: 0,
+                      width: '155px',
+                      backgroundColor: 'var(--card-bg)',
+                      border: '1px solid var(--border)',
+                      borderRadius: '16px',
+                      padding: '0.55rem',
+                      cursor: 'pointer',
+                      transition: 'transform 0.15s ease, border-color 0.15s ease'
+                    }}
+                  >
+                    <div style={{
+                      width: '100%',
+                      height: '90px',
+                      borderRadius: '10px',
+                      backgroundColor: 'var(--surface-alt)',
+                      overflow: 'hidden',
+                      position: 'relative'
+                    }}>
+                      {item.image_url ? (
+                        <img 
+                          src={getImageUrl(item.image_url)} 
+                          alt={item.title} 
+                          style={{ width: '100%', height: '100%', objectFit: 'cover' }} 
+                          onError={(e) => { e.currentTarget.style.display = 'none'; }}
+                        />
+                      ) : (
+                        <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-muted)' }}>
+                          <i className="fa-regular fa-image" style={{ fontSize: '1.4rem', opacity: 0.4 }} />
+                        </div>
+                      )}
+                      <span style={{
+                        position: 'absolute',
+                        top: '0.35rem',
+                        left: '0.35rem',
+                        padding: '0.15rem 0.45rem',
+                        borderRadius: '9999px',
+                        fontSize: '0.65rem',
+                        fontWeight: '700',
+                        backgroundColor: 'var(--surface)',
+                        color: 'var(--brandblue)',
+                        fontFamily: 'var(--font-display)',
+                        boxShadow: '0 1px 4px rgba(0,0,0,0.15)'
+                      }}>
+                        {item.category || 'Gear'}
+                      </span>
+                    </div>
+                    <div style={{ marginTop: '0.45rem' }}>
+                      <div style={{
+                        fontSize: '0.82rem',
+                        fontWeight: '700',
+                        color: 'var(--text-main)',
+                        whiteSpace: 'nowrap',
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                        fontFamily: 'var(--font-display)'
+                      }}>
+                        {item.title}
+                      </div>
+                      <div style={{
+                        fontSize: '0.88rem',
+                        fontWeight: '800',
+                        color: 'var(--brandblue)',
+                        fontFamily: 'var(--font-display)',
+                        marginTop: '0.15rem'
+                      }}>
+                        ₦{itemPrice}
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
         {loading ? (
           <div style={{
             display: 'grid',
@@ -663,7 +766,7 @@ function Dashboard() {
                           @{listing.seller_handle || 'anonymous'}
                         </span>
                         <span style={{ fontSize: '0.7rem', color: 'var(--brandblue)', fontWeight: '600' }}>
-                          ✓ Verified
+                          <i className="fa-solid fa-circle-check" style={{ marginRight: '0.25rem' }} /> Verified
                         </span>
                       </div>
                     </div>
@@ -742,6 +845,8 @@ function Dashboard() {
         <ItemDetailModal 
           isOpen={true}
           listing={selectedListing}
+          allListings={listings}
+          onSelectListing={(item) => setSelectedListing(item)}
           onClose={() => setSelectedListing(null)}
           onMessageSeller={(targetListing) => {
             setSelectedListing(null);
@@ -795,6 +900,7 @@ function Dashboard() {
           </div>
         </div>
       )}
+      <Footer />
     </div>
   );
 }
