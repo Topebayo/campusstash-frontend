@@ -1,17 +1,25 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
+import { Capacitor } from '@capacitor/core';
 
 function Footer() {
   const navigate = useNavigate();
 
+  // NEVER render on Android / iOS mobile app
+  if (Capacitor.isNativePlatform()) {
+    return null;
+  }
+
   return (
-    <footer style={{
+    <footer className="web-only-footer" style={{
       borderTop: '1px solid var(--border)',
       backgroundColor: 'var(--surface)',
       marginTop: 'auto',
       padding: '2.5rem 1.5rem 2rem 1.5rem',
       color: 'var(--text-muted)',
       fontFamily: 'var(--font-sans)',
+      width: '100%',
+      boxSizing: 'border-box',
       transition: 'background-color 0.25s ease, border-color 0.25s ease'
     }}>
       <div style={{
@@ -165,7 +173,7 @@ function Footer() {
           fontSize: '0.8rem'
         }}>
           <div>
-            &copy; 2026 CampusStash. Built for students.
+            &copy; {new Date().getFullYear()} CampusStash. Built for students.
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--text-muted)' }}>
             <span style={{

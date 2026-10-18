@@ -238,13 +238,13 @@ function Dashboard() {
   };
 
   return (
-    <div style={{ backgroundColor: 'var(--bg-color)', minHeight: '100vh', paddingBottom: '6rem' }}>
+    <div style={{ backgroundColor: 'var(--bg-color)', minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
       <Navbar 
         onPrimaryAction={handleOpenCreateModal}
         primaryActionText="Sell an Item"
       />
 
-      <div style={{ maxWidth: '1280px', margin: '0 auto', padding: '0 1.25rem' }}>
+      <div style={{ maxWidth: '1280px', margin: '0 auto', padding: '0 1.25rem 2.5rem 1.25rem', width: '100%', boxSizing: 'border-box', flex: 1 }}>
         {/* Glassmorphic Hero & Search Header */}
         <div 
           className="animate-fade-in"
@@ -386,39 +386,16 @@ function Dashboard() {
         </div>
 
         {/* Secondary Filter & Sort Toolbar */}
-        <div style={{
-          display: 'flex',
-          justify: 'space-between',
-          alignItems: 'center',
-          gap: '1rem',
-          flexWrap: 'wrap',
-          marginBottom: '1.75rem',
-          padding: '0.75rem 1rem',
-          backgroundColor: 'var(--surface)',
-          border: '1px solid var(--border)',
-          borderRadius: '16px'
-        }}>
+        <div className="filter-sort-card">
           {/* Price Range Pills */}
-          <div style={{ display: 'flex', gap: '0.45rem', overflowX: 'auto', flexWrap: 'wrap' }}>
+          <div className="price-filter-track">
             {PRICE_RANGES.map((range, index) => {
               const active = priceRangeIndex === index;
               return (
                 <button
                   key={range.label}
                   onClick={() => setPriceRangeIndex(index)}
-                  style={{
-                    padding: '0.35rem 0.75rem',
-                    borderRadius: '10px',
-                    border: '1px solid',
-                    borderColor: active ? 'var(--brandblue)' : 'var(--border)',
-                    backgroundColor: active ? 'var(--lightblue)' : 'var(--surface-alt)',
-                    color: active ? 'var(--brandblue)' : 'var(--text-muted)',
-                    fontSize: '0.8rem',
-                    fontFamily: 'var(--font-display)',
-                    fontWeight: active ? '700' : '500',
-                    cursor: 'pointer',
-                    transition: 'all 0.15s ease'
-                  }}
+                  className={`price-pill-btn ${active ? 'active' : ''}`}
                 >
                   {range.label}
                 </button>
@@ -427,25 +404,14 @@ function Dashboard() {
           </div>
 
           {/* Sort Selector */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+          <div className="sort-controls-group">
             <span style={{ fontSize: '0.82rem', color: 'var(--text-muted)', fontFamily: 'var(--font-display)', fontWeight: '600' }}>
               Sort:
             </span>
             <select
               value={sortOption}
               onChange={(e) => setSortOption(e.target.value)}
-              style={{
-                padding: '0.4rem 0.75rem',
-                borderRadius: '10px',
-                border: '1px solid var(--border)',
-                backgroundColor: 'var(--surface)',
-                color: 'var(--text-main)',
-                fontFamily: 'var(--font-display)',
-                fontWeight: '600',
-                fontSize: '0.82rem',
-                cursor: 'pointer',
-                outline: 'none'
-              }}
+              className="sort-select-input"
             >
               <option value="newest">Newest First</option>
               <option value="price_asc">Price: Low to High</option>
@@ -453,10 +419,9 @@ function Dashboard() {
             </select>
 
             <button 
-              className="btn-secondary"
+              className="sort-refresh-btn"
               onClick={fetchListings}
               title="Refresh listings"
-              style={{ padding: '0.4rem 0.65rem', fontSize: '0.82rem', borderRadius: '10px' }}
             >
               <i className="fa-solid fa-rotate-right" />
             </button>
@@ -482,111 +447,7 @@ function Dashboard() {
         </div>
 
         {/* Listings Grid */}
-                {/* Auto-Suggested Campus Gear */}
-        {!searchQuery && selectedCategory === 'All' && listings.length > 0 && (
-          <div style={{ marginBottom: '1.75rem' }}>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.75rem' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem' }}>
-                <i className="fa-solid fa-wand-magic-sparkles" style={{ color: 'var(--brandblue)', fontSize: '1rem' }} />
-                <h3 style={{ fontFamily: 'var(--font-display)', fontSize: '1.05rem', fontWeight: '800', color: 'var(--text-main)', margin: 0 }}>
-                  Suggested for You
-                </h3>
-              </div>
-              <span style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>
-                Fresh campus posts
-              </span>
-            </div>
-
-            <div style={{
-              display: 'flex',
-              gap: '0.85rem',
-              overflowX: 'auto',
-              paddingBottom: '0.5rem',
-              scrollbarWidth: 'none'
-            }}>
-              {listings.filter(l => l.status !== 'sold').slice(0, 6).map(item => {
-                const itemPrice = (item.price_kobo ? (item.price_kobo / 100) : (item.price || 0)).toLocaleString();
-                return (
-                  <div
-                    key={item.id}
-                    onClick={() => setSelectedListing(item)}
-                    style={{
-                      flexShrink: 0,
-                      width: '155px',
-                      backgroundColor: 'var(--card-bg)',
-                      border: '1px solid var(--border)',
-                      borderRadius: '16px',
-                      padding: '0.55rem',
-                      cursor: 'pointer',
-                      transition: 'transform 0.15s ease, border-color 0.15s ease'
-                    }}
-                  >
-                    <div style={{
-                      width: '100%',
-                      height: '90px',
-                      borderRadius: '10px',
-                      backgroundColor: 'var(--surface-alt)',
-                      overflow: 'hidden',
-                      position: 'relative'
-                    }}>
-                      {item.image_url ? (
-                        <img 
-                          src={getImageUrl(item.image_url)} 
-                          alt={item.title} 
-                          style={{ width: '100%', height: '100%', objectFit: 'cover' }} 
-                          onError={(e) => { e.currentTarget.style.display = 'none'; }}
-                        />
-                      ) : (
-                        <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-muted)' }}>
-                          <i className="fa-regular fa-image" style={{ fontSize: '1.4rem', opacity: 0.4 }} />
-                        </div>
-                      )}
-                      <span style={{
-                        position: 'absolute',
-                        top: '0.35rem',
-                        left: '0.35rem',
-                        padding: '0.15rem 0.45rem',
-                        borderRadius: '9999px',
-                        fontSize: '0.65rem',
-                        fontWeight: '700',
-                        backgroundColor: 'var(--surface)',
-                        color: 'var(--brandblue)',
-                        fontFamily: 'var(--font-display)',
-                        boxShadow: '0 1px 4px rgba(0,0,0,0.15)'
-                      }}>
-                        {item.category || 'Gear'}
-                      </span>
-                    </div>
-                    <div style={{ marginTop: '0.45rem' }}>
-                      <div style={{
-                        fontSize: '0.82rem',
-                        fontWeight: '700',
-                        color: 'var(--text-main)',
-                        whiteSpace: 'nowrap',
-                        overflow: 'hidden',
-                        textOverflow: 'ellipsis',
-                        fontFamily: 'var(--font-display)'
-                      }}>
-                        {item.title}
-                      </div>
-                      <div style={{
-                        fontSize: '0.88rem',
-                        fontWeight: '800',
-                        color: 'var(--brandblue)',
-                        fontFamily: 'var(--font-display)',
-                        marginTop: '0.15rem'
-                      }}>
-                        ₦{itemPrice}
-                      </div>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-        )}
-
-        {loading ? (
+                {loading ? (
           <div style={{
             display: 'grid',
             gridTemplateColumns: 'repeat(auto-fill, minmax(270px, 1fr))',

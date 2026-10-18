@@ -128,10 +128,10 @@ function Profile() {
   };
 
   return (
-    <div style={{ backgroundColor: 'var(--bg-color)', minHeight: '100vh', paddingBottom: '6rem' }}>
+    <div style={{ backgroundColor: 'var(--bg-color)', minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
       <Navbar />
 
-      <div style={{ maxWidth: '1280px', margin: '0 auto', padding: '0 1rem', width: '100%', boxSizing: 'border-box', overflowX: 'hidden' }} className="animate-fade-in">
+      <div style={{ maxWidth: '1280px', margin: '0 auto', padding: '0 1rem 2.5rem 1rem', width: '100%', boxSizing: 'border-box', overflowX: 'hidden', flex: 1 }} className="animate-fade-in">
         
         {/* Header Profile Card */}
         <div style={{

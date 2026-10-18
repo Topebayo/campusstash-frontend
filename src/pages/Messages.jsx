@@ -44,10 +44,10 @@ function Messages() {
   }, [navigate]);
 
   return (
-    <div style={{ backgroundColor: 'var(--bg-color)', minHeight: '100vh', paddingBottom: '5rem' }}>
+    <div style={{ backgroundColor: 'var(--bg-color)', minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
       <Navbar />
 
-      <div className="container animate-fade-in" style={{ maxWidth: '960px', margin: '0 auto', padding: '0 1rem', width: '100%', boxSizing: 'border-box', overflowX: 'hidden' }}>
+      <div className="container animate-fade-in" style={{ maxWidth: '960px', margin: '0 auto', padding: '0 1rem 2.5rem 1rem', width: '100%', boxSizing: 'border-box', overflowX: 'hidden', flex: 1 }}>
         
         {/* Header Banner */}
         <div style={{
