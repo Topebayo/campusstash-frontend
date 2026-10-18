@@ -98,7 +98,7 @@ function Profile() {
     setListingActionId(listingId);
     const newStatus = currentStatus === 'sold' ? 'active' : 'sold';
     try {
-      const updated = await apiFetch(/listings//status, {
+      const updated = await apiFetch(`/listings/${listingId}/status`, {
         method: 'PATCH',
         body: JSON.stringify({ status: newStatus })
       });
@@ -116,7 +116,7 @@ function Profile() {
     }
     setListingActionId(listingId);
     try {
-      await apiFetch(/listings/, {
+      await apiFetch(`/listings/${listingId}`, {
         method: 'DELETE'
       });
       setMyListings(prev => prev.filter(item => item.id !== listingId));

@@ -75,15 +75,19 @@ function CreateListingModal({ isOpen, onClose, onCreated }) {
       formData.append('price_kobo', priceKobo);
       formData.append('category', category);
       if (image) {
+        let sentCompressed = false;
         try {
           const compressed = await compressImage(image);
           if (compressed) {
             formData.append('image_url', compressed);
+            sentCompressed = true;
           }
         } catch (e) {
           console.warn('Image compression note:', e);
         }
-        formData.append('image', image);
+        if (!sentCompressed) {
+          formData.append('image', image);
+        }
       }
 
       await apiFetch('/listings/', {
