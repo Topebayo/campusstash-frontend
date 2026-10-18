@@ -436,12 +436,20 @@ function Profile() {
                         {/* Image Container */}
                         <div style={{ position: 'relative', width: '100%', height: '160px', borderRadius: '14px', overflow: 'hidden', marginBottom: '0.85rem', backgroundColor: 'var(--surface-alt)' }}>
                           {listing.image_url ? (
-                            <img src={getImageUrl(listing.image_url)} alt={listing.title} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                          ) : (
-                            <div className="listing-placeholder" style={{ width: '100%', height: '100%', borderRadius: 0, margin: 0 }}>
-                              <i className="fa-regular fa-image" style={{ fontSize: '1.5rem', opacity: 0.4 }} />
-                            </div>
-                          )}
+                            <img 
+                              src={getImageUrl(listing.image_url)} 
+                              alt={listing.title} 
+                              style={{ width: '100%', height: '100%', objectFit: 'cover' }} 
+                              onError={(e) => {
+                                e.currentTarget.style.display = 'none';
+                                const fb = e.currentTarget.parentElement?.querySelector('.listing-placeholder');
+                                if (fb) fb.style.display = 'flex';
+                              }}
+                            />
+                          ) : null}
+                          <div className="listing-placeholder" style={{ width: '100%', height: '100%', borderRadius: 0, margin: 0, display: listing.image_url ? 'none' : 'flex' }}>
+                            <i className="fa-regular fa-image" style={{ fontSize: '1.5rem', opacity: 0.4 }} />
+                          </div>
                           
                           {/* Status Badge */}
                           <div style={{

@@ -1,6 +1,42 @@
 import React, { useState, useEffect } from 'react';
 import { apiFetch } from '../api';
 
+
+const compressImage = (file, maxWidth = 800, maxHeight = 800, quality = 0.75) => {
+  return new Promise((resolve) => {
+    if (!file) return resolve(null);
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const img = new Image();
+      img.onload = () => {
+        let width = img.width;
+        let height = img.height;
+        if (width > height) {
+          if (width > maxWidth) {
+            height = Math.round((height * maxWidth) / width);
+            width = maxWidth;
+          }
+        } else {
+          if (height > maxHeight) {
+            width = Math.round((width * maxHeight) / height);
+            height = maxHeight;
+          }
+        }
+        const canvas = document.createElement('canvas');
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0, width, height);
+        resolve(canvas.toDataURL('image/jpeg', quality));
+      };
+      img.onerror = () => resolve(e.target.result);
+      img.src = e.target.result;
+    };
+    reader.onerror = () => resolve(null);
+    reader.readAsDataURL(file);
+  });
+};
+
 const CATEGORIES = [
   'Textbooks',
   'Electronics',
@@ -15,6 +51,7 @@ function EditListingModal({ isOpen, onClose, listing, onUpdated }) {
   const [price, setPrice] = useState('');
   const [category, setCategory] = useState('Textbooks');
   const [status, setStatus] = useState('active');
+  const [newImage, setNewImage] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState('');
 
@@ -41,12 +78,26 @@ function EditListingModal({ isOpen, onClose, listing, onUpdated }) {
         throw new Error('Please enter a valid price in Naira.');
       }
 
+      let updatedImageUrl = listing.image_url;
+      if (newImage) {
+        try {
+          const compressed = await compressImage(newImage);
+          if (compressed) {
+            updatedImageUrl = compressed;
+          }
+        } catch (e) {
+          console.warn('Image compression note:', e);
+        }
+      }
+
       const payload = {
         title: title.trim(),
         description: description.trim(),
-        price: priceFloat, price_kobo: Math.round(priceFloat * 100),
+        price: priceFloat, 
+        price_kobo: Math.round(priceFloat * 100),
         category: category,
-        status: status
+        status: status,
+        image_url: updatedImageUrl
       };
 
       await apiFetch(`/listings/${listing.id}`, {
@@ -237,6 +288,43 @@ function EditListingModal({ isOpen, onClose, listing, onUpdated }) {
               placeholder="Provide details about condition..."
               style={{ resize: 'none' }}
             />
+          </div>
+
+                    <div>
+            <label className="form-label">Update Photo (Optional)</label>
+            <div style={{
+              border: '2px dashed var(--border)',
+              borderRadius: '12px',
+              padding: '1rem',
+              textAlign: 'center',
+              backgroundColor: 'var(--bg-color)',
+              cursor: 'pointer',
+              position: 'relative'
+            }}>
+              <input 
+                type="file"
+                accept="image/*"
+                onChange={(e) => setNewImage(e.target.files[0])}
+                style={{
+                  position: 'absolute',
+                  top: 0,
+                  left: 0,
+                  width: '100%',
+                  height: '100%',
+                  opacity: 0,
+                  cursor: 'pointer'
+                }}
+              />
+              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.35rem' }}>
+                <i className="fa-solid fa-camera" style={{ fontSize: '1.4rem', color: 'var(--brandblue)' }} />
+                <span style={{ fontSize: '0.85rem', fontWeight: '600', color: 'var(--text-main)' }}>
+                  {newImage ? newImage.name : (listing.image_url ? 'Choose a new photo to replace current image' : 'Upload an item photo')}
+                </span>
+                <span style={{ fontSize: '0.72rem', color: 'var(--text-light)' }}>
+                  PNG, JPG, or WEBP (auto-compressed & stored permanently)
+                </span>
+              </div>
+            </div>
           </div>
 
           <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.75rem', marginTop: '0.75rem' }}>

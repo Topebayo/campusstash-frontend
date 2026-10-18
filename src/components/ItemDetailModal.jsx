@@ -81,13 +81,17 @@ function ItemDetailModal({
                 src={getImageUrl(listing.image_url)} 
                 alt={listing.title} 
                 style={{ width: '100%', height: '100%', objectFit: 'cover' }} 
+                onError={(e) => {
+                  e.currentTarget.style.display = 'none';
+                  const fb = e.currentTarget.parentElement?.querySelector('.detail-img-placeholder');
+                  if (fb) fb.style.display = 'block';
+                }}
               />
-            ) : (
-              <div style={{ color: 'var(--text-muted)', textAlign: 'center', fontFamily: 'var(--font-display)' }}>
-                <i className="fa-regular fa-image" style={{ fontSize: '2.2rem', marginBottom: '0.4rem', display: 'block', opacity: 0.4 }} />
-                <span style={{ fontSize: '0.9rem', fontWeight: '500' }}>No image provided</span>
-              </div>
-            )}
+            ) : null}
+            <div className="detail-img-placeholder" style={{ color: 'var(--text-muted)', textAlign: 'center', fontFamily: 'var(--font-display)', display: listing.image_url ? 'none' : 'block' }}>
+              <i className="fa-regular fa-image" style={{ fontSize: '2.2rem', marginBottom: '0.4rem', display: 'block', opacity: 0.4 }} />
+              <span style={{ fontSize: '0.9rem', fontWeight: '500' }}>No image provided</span>
+            </div>
 
             {/* Gradient shadow for header badges */}
             <div style={{

@@ -528,12 +528,16 @@ function Dashboard() {
                         src={getImageUrl(listing.image_url)} 
                         alt={listing.title} 
                         loading="lazy" decoding="async" style={{ width: '100%', height: '100%', objectFit: 'cover' }} 
+                        onError={(e) => {
+                          e.currentTarget.style.display = 'none';
+                          const fb = e.currentTarget.parentElement?.querySelector('.listing-placeholder');
+                          if (fb) fb.style.display = 'flex';
+                        }}
                       />
-                    ) : (
-                      <div className="listing-placeholder" style={{ width: '100%', height: '100%', borderRadius: 0, margin: 0 }}>
-                        <i className="fa-regular fa-image" style={{ fontSize: '2rem', opacity: 0.35 }} />
-                      </div>
-                    )}
+                    ) : null}
+                    <div className="listing-placeholder" style={{ width: '100%', height: '100%', borderRadius: 0, margin: 0, display: listing.image_url ? 'none' : 'flex' }}>
+                      <i className="fa-regular fa-image" style={{ fontSize: '2rem', opacity: 0.35 }} />
+                    </div>
                     
                     {/* Category & Status Badges */}
                     <div style={{
