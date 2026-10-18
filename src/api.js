@@ -118,9 +118,33 @@ export const apiFetch = async (endpoint, options = {}) => {
 };
 
 
-// Warmup ping to ensure Render cloud instance wakes up from cold sleep immediately
-if (typeof window !== 'undefined') {
+// ─── Render Keep-Alive System ───────────────────────────────────────────────
+// Render free instances spin down after 15 minutes of inactivity.
+// We ping every 13 minutes to keep the backend warm, and also fire an
+// immediate ping whenever the user returns to the tab or app.
+const KEEPALIVE_URL = 'https://campusstash-backend.onrender.com/health';
+const KEEPALIVE_INTERVAL_MS = 13 * 60 * 1000; // 13 minutes
+
+function pingBackend() {
   try {
-    fetch('https://campusstash-backend.onrender.com/health', { method: 'GET', mode: 'no-cors' }).catch(() => {});
+    fetch(KEEPALIVE_URL, { method: 'GET', mode: 'no-cors' }).catch(() => {});
   } catch (e) {}
+}
+
+if (typeof window !== 'undefined') {
+  // 1. Immediate ping on load
+  pingBackend();
+
+  // 2. Recurring ping every 13 minutes
+  let keepAliveTimer = setInterval(pingBackend, KEEPALIVE_INTERVAL_MS);
+
+  // 3. Ping immediately when user returns to the tab (browser visibility API)
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'visible') {
+      pingBackend();
+      // Reset the interval so next ping is 13 minutes from NOW
+      clearInterval(keepAliveTimer);
+      keepAliveTimer = setInterval(pingBackend, KEEPALIVE_INTERVAL_MS);
+    }
+  });
 }

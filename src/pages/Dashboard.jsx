@@ -1,6 +1,8 @@
 import React, { useEffect, useState, useCallback, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { apiFetch, getImageUrl } from '../api';
+import { Capacitor } from '@capacitor/core';
+import { App as CapApp } from '@capacitor/app';
 import Navbar from '../components/Navbar';
 import ItemDetailModal from '../components/ItemDetailModal';
 import ChatModal from '../components/ChatModal';
@@ -141,7 +143,17 @@ function Dashboard() {
       }
     } catch (err) {
       console.error("Failed to fetch listings", err);
-      setListings([]);
+      // Don't wipe listings on error — keep showing cached data so images stay visible
+      // while the Render backend cold-starts. Only fall back to empty if nothing cached.
+      setListings(prev => {
+        if (prev.length > 0) return prev;
+        try {
+          const cached = localStorage.getItem('cs_cached_listings');
+          return cached ? JSON.parse(cached) : [];
+        } catch (e) {
+          return [];
+        }
+      });
     } finally {
       setLoading(false);
     }
@@ -149,6 +161,29 @@ function Dashboard() {
 
   useEffect(() => {
     fetchListings();
+  }, [fetchListings]);
+
+  // Re-fetch when user returns to the tab after being away
+  useEffect(() => {
+    const handleVisibility = () => {
+      if (document.visibilityState === 'visible') {
+        fetchListings();
+      }
+    };
+    document.addEventListener('visibilitychange', handleVisibility);
+
+    // Also handle Android app resume from background
+    let capListener = null;
+    if (Capacitor.isNativePlatform()) {
+      CapApp.addListener('appStateChange', ({ isActive }) => {
+        if (isActive) fetchListings();
+      }).then(listener => { capListener = listener; });
+    }
+
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibility);
+      if (capListener) capListener.remove();
+    };
   }, [fetchListings]);
 
   // Instant client-side search & filtering fallback for instantaneous UI response
