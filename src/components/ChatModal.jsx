@@ -1,4 +1,4 @@
-﻿import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { apiFetch, getWebSocketUrl } from '../api';
 import { Capacitor } from '@capacitor/core';
 
@@ -414,7 +414,7 @@ function ChatModal({ isOpen = true, onClose, listing }) {
                     boxShadow: 'var(--shadow-md)'
                   }}>
                     <p style={{ fontSize: '0.82rem', color: 'var(--darkgreen)', fontWeight: '700', margin: '0 0 0.4rem 0' }}>
-                      ðŸ“ PROPOSED MEETUP SPOT
+                      <i className="fa-solid fa-location-dot" style={{ marginRight: '0.35rem' }} /> PROPOSED MEETUP SPOT
                     </p>
                     <p style={{ fontSize: '0.95rem', fontWeight: '800', fontFamily: 'var(--font-display)', color: 'var(--text-main)', margin: '0 0 0.75rem 0' }}>
                       {dzName}
@@ -445,7 +445,7 @@ function ChatModal({ isOpen = true, onClose, listing }) {
                     textAlign: 'center'
                   }}>
                     <p style={{ fontSize: '0.82rem', color: 'var(--darkgreen)', fontWeight: '800', margin: 0 }}>
-                      âœ… MEETUP SPOT AGREED: {dzName}
+                      <i className="fa-solid fa-circle-check" style={{ marginRight: '0.35rem' }} /> MEETUP SPOT AGREED: {dzName}
                     </p>
                   </div>
                 );
@@ -513,7 +513,7 @@ function ChatModal({ isOpen = true, onClose, listing }) {
               backgroundColor: 'var(--bg-color)',
               color: 'var(--text-main)',
               outline: 'none',
-              fontSize: '0.9rem'
+              fontSize: '16px'
             }}
             onFocus={(e) => e.target.style.borderColor = 'var(--brandgreen)'}
             onBlur={(e) => e.target.style.borderColor = 'var(--border)'}

@@ -553,7 +553,7 @@ function Profile() {
         </div>
       </div>
 
-      <EditListingModal isOpen={true} 
+      <EditListingModal 
         isOpen={isEditModalOpen}
         onClose={() => setIsEditModalOpen(false)}
         listing={editingListing}
