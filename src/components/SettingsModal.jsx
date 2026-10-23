@@ -1,8 +1,16 @@
 import React, { useState, useEffect } from 'react';
 import { apiFetch } from '../api';
 
-function SettingsModal({ isOpen, onClose, onLogout, userProfile }) {
-  const [activeTab, setActiveTab] = useState('security'); // 'security' | 'notifications' | 'appearance' | 'safety'
+function SettingsModal({ isOpen, onClose, onLogout, userProfile, onUpdateUser }) {
+  const [activeTab, setActiveTab] = useState('account'); // 'account' | 'security' | 'notifications' | 'appearance' | 'safety'
+
+  // Account Profile state
+  const [handle, setHandle] = useState('');
+  const [phone, setPhone] = useState('');
+  const [name, setName] = useState('');
+  const [email, setEmail] = useState('');
+  const [accountLoading, setAccountLoading] = useState(false);
+  const [accountMessage, setAccountMessage] = useState({ text: '', type: '' });
   
   // Password form state
   const [currentPassword, setCurrentPassword] = useState('');
@@ -33,14 +41,68 @@ function SettingsModal({ isOpen, onClose, onLogout, userProfile }) {
   useEffect(() => {
     if (isOpen) {
       setPwMessage({ text: '', type: '' });
+      setAccountMessage({ text: '', type: '' });
       setCurrentPassword('');
       setNewPassword('');
       setConfirmPassword('');
       setCacheCleared(false);
+
+      if (userProfile) {
+        setHandle(userProfile.profile?.burner_handle || '');
+        setPhone(userProfile.phone || '');
+        setName(userProfile.name || '');
+        setEmail(userProfile.email || '');
+      }
+      
+      apiFetch('/users/me')
+        .then(data => {
+          if (data) {
+            setHandle(data.profile?.burner_handle || '');
+            setPhone(data.phone || '');
+            setName(data.name || '');
+            setEmail(data.email || '');
+          }
+        })
+        .catch(err => console.warn('Could not load user profile in settings:', err));
     }
-  }, [isOpen]);
+  }, [isOpen, userProfile]);
 
   if (!isOpen) return null;
+
+  const handleAccountSubmit = async (e) => {
+    e.preventDefault();
+    setAccountMessage({ text: '', type: '' });
+    if (!handle.trim()) {
+      setAccountMessage({ text: 'Username / Burner Handle cannot be empty.', type: 'error' });
+      return;
+    }
+    if (!phone.trim()) {
+      setAccountMessage({ text: 'Phone number cannot be empty.', type: 'error' });
+      return;
+    }
+    setAccountLoading(true);
+    try {
+      const updated = await apiFetch('/users/me', {
+        method: 'PUT',
+        body: JSON.stringify({
+          burner_handle: handle.trim(),
+          phone: phone.trim(),
+          name: name.trim() || null
+        })
+      });
+      setAccountMessage({ text: 'Profile updated successfully!', type: 'success' });
+      setHandle(updated.profile?.burner_handle || handle.trim());
+      setPhone(updated.phone || phone.trim());
+      setName(updated.name || '');
+      if (onUpdateUser) {
+        onUpdateUser(updated);
+      }
+    } catch (err) {
+      setAccountMessage({ text: err.message || 'Failed to update profile.', type: 'error' });
+    } finally {
+      setAccountLoading(false);
+    }
+  };
 
   const handlePasswordSubmit = async (e) => {
     e.preventDefault();
@@ -211,6 +273,7 @@ function SettingsModal({ isOpen, onClose, onLogout, userProfile }) {
           scrollbarWidth: 'none'
         }}>
           {[
+            { id: 'account', label: 'Account', icon: 'fa-user' },
             { id: 'security', label: 'Security', icon: 'fa-lock' },
             { id: 'notifications', label: 'Alerts', icon: 'fa-bell' },
             { id: 'appearance', label: 'Theme', icon: 'fa-palette' },
@@ -256,6 +319,138 @@ function SettingsModal({ isOpen, onClose, onLogout, userProfile }) {
           flexDirection: 'column',
           gap: '1.25rem'
         }}>
+          {/* TAB 0: ACCOUNT / PROFILE */}
+          {activeTab === 'account' && (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+              <div>
+                <h4 style={{ fontFamily: 'var(--font-display)', fontSize: '1rem', fontWeight: '700', color: 'var(--text-main)', margin: '0 0 0.35rem 0' }}>
+                  Student Profile & Identity
+                </h4>
+                <p style={{ fontSize: '0.82rem', color: 'var(--text-muted)', margin: 0 }}>
+                  Update your anonymous campus handle, phone number, and account details.
+                </p>
+              </div>
+
+              {accountMessage.text && (
+                <div style={{
+                  padding: '0.75rem 1rem',
+                  borderRadius: '12px',
+                  fontSize: '0.85rem',
+                  fontWeight: '600',
+                  backgroundColor: accountMessage.type === 'success' ? 'rgba(34, 197, 94, 0.12)' : 'rgba(239, 68, 68, 0.12)',
+                  color: accountMessage.type === 'success' ? '#16a34a' : '#ef4444',
+                  border: `1px solid ${accountMessage.type === 'success' ? '#86efac' : '#fca5a5'}`
+                }}>
+                  <i className={`fa-solid ${accountMessage.type === 'success' ? 'fa-circle-check' : 'fa-triangle-exclamation'}`} style={{ marginRight: '0.45rem' }} />
+                  {accountMessage.text}
+                </div>
+              )}
+
+              <form onSubmit={handleAccountSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '0.95rem' }}>
+                <div>
+                  <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: '700', color: 'var(--text-main)', marginBottom: '0.35rem', fontFamily: 'var(--font-display)' }}>
+                    Burner Handle / Username
+                  </label>
+                  <div style={{ position: 'relative' }}>
+                    <span style={{
+                      position: 'absolute',
+                      left: '1rem',
+                      top: '50%',
+                      transform: 'translateY(-50%)',
+                      color: 'var(--text-light)',
+                      fontWeight: '700'
+                    }}>
+                      @
+                    </span>
+                    <input
+                      type="text"
+                      className="form-input"
+                      value={handle}
+                      onChange={(e) => setHandle(e.target.value)}
+                      placeholder="e.g. shadow99"
+                      style={{ paddingLeft: '2.2rem' }}
+                      required
+                    />
+                  </div>
+                  <span style={{ fontSize: '0.74rem', color: 'var(--text-muted)', marginTop: '0.25rem', display: 'block' }}>
+                    This is your public alias shown on item listings and chats.
+                  </span>
+                </div>
+
+                <div>
+                  <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: '700', color: 'var(--text-main)', marginBottom: '0.35rem', fontFamily: 'var(--font-display)' }}>
+                    Phone Number
+                  </label>
+                  <input
+                    type="tel"
+                    className="form-input"
+                    value={phone}
+                    onChange={(e) => setPhone(e.target.value)}
+                    placeholder="e.g. 08012345678"
+                    required
+                  />
+                  <span style={{ fontSize: '0.74rem', color: 'var(--text-muted)', marginTop: '0.25rem', display: 'block' }}>
+                    Used for SMS security and verified buyer/seller badge.
+                  </span>
+                </div>
+
+                <div>
+                  <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: '700', color: 'var(--text-main)', marginBottom: '0.35rem', fontFamily: 'var(--font-display)' }}>
+                    Display Name (Optional)
+                  </label>
+                  <input
+                    type="text"
+                    className="form-input"
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                    placeholder="e.g. Alex Adebayo"
+                  />
+                </div>
+
+                <div>
+                  <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: '700', color: 'var(--text-main)', marginBottom: '0.35rem', fontFamily: 'var(--font-display)' }}>
+                    Registered Email (Read-only)
+                  </label>
+                  <input
+                    type="email"
+                    className="form-input"
+                    value={email}
+                    disabled
+                    style={{ backgroundColor: 'var(--surface-alt)', opacity: 0.75, cursor: 'not-allowed' }}
+                  />
+                </div>
+
+                <button
+                  type="submit"
+                  className="btn-primary"
+                  disabled={accountLoading}
+                  style={{
+                    padding: '0.8rem',
+                    fontSize: '0.9rem',
+                    fontWeight: '700',
+                    marginTop: '0.5rem',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '0.5rem'
+                  }}
+                >
+                  {accountLoading ? (
+                    <>
+                      <i className="fa-solid fa-circle-notch fa-spin" />
+                      <span>Saving Profile...</span>
+                    </>
+                  ) : (
+                    <>
+                      <i className="fa-solid fa-floppy-disk" />
+                      <span>Save Profile Changes</span>
+                    </>
+                  )}
+                </button>
+              </form>
+            </div>
+          )}
+
           {/* TAB 1: SECURITY (Change Password & Session) */}
           {activeTab === 'security' && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>

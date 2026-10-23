@@ -59,7 +59,8 @@ function EditListingModal({ isOpen, onClose, listing, onUpdated }) {
     if (listing) {
       setTitle(listing.title || '');
       setDescription(listing.description || '');
-      setPrice(listing.price_kobo ? (listing.price_kobo / 100).toString() : (listing.price || '').toString());
+      const rawKobo = listing.price_kobo !== undefined && listing.price_kobo !== null ? listing.price_kobo : listing.price;
+      setPrice(rawKobo ? (rawKobo / 100).toString() : '0');
       setCategory(listing.category || 'Textbooks');
       setStatus(listing.status || 'active');
     }
@@ -90,11 +91,12 @@ function EditListingModal({ isOpen, onClose, listing, onUpdated }) {
         }
       }
 
+      const priceKobo = Math.round(priceFloat * 100);
       const payload = {
         title: title.trim(),
         description: description.trim(),
-        price: priceFloat, 
-        price_kobo: Math.round(priceFloat * 100),
+        price: priceKobo,
+        price_kobo: priceKobo,
         category: category,
         status: status,
         image_url: updatedImageUrl

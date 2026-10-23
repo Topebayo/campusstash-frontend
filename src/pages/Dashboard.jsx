@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useCallback, useMemo } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { apiFetch, getImageUrl } from '../api';
 import { Capacitor } from '@capacitor/core';
 import { App as CapApp } from '@capacitor/app';
@@ -8,6 +8,7 @@ import Footer from '../components/Footer';
 import ItemDetailModal from '../components/ItemDetailModal';
 import ChatModal from '../components/ChatModal';
 import CreateListingModal from '../components/CreateListingModal';
+import EditListingModal from '../components/EditListingModal';
 
 function decodeJwt(token) {
   try {
@@ -40,6 +41,7 @@ const PRICE_RANGES = [
 
 function Dashboard() {
   const navigate = useNavigate();
+  const location = useLocation();
   const [listings, setListings] = useState(() => {
     try {
       const cached = localStorage.getItem('cs_cached_listings');
@@ -66,6 +68,7 @@ function Dashboard() {
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [showAuthPrompt, setShowAuthPrompt] = useState(false);
   const [currentUserId, setCurrentUserId] = useState(null);
+  const [editingListing, setEditingListing] = useState(null);
 
   // Bookmarked item IDs saved in localStorage
   const [savedItemIds, setSavedItemIds] = useState(() => {
@@ -217,6 +220,13 @@ function Dashboard() {
       return new Date(b.created_at || 0) - new Date(a.created_at || 0);
     });
   }, [listings, selectedCategory, searchQuery, priceRangeIndex, sortOption]);
+
+    useEffect(() => {
+    if (location.state?.openCreateModal) {
+      handleOpenCreateModal();
+      window.history.replaceState({}, document.title);
+    }
+  }, [location]);
 
   const handleOpenCreateModal = () => {
     const token = localStorage.getItem('token');
@@ -709,11 +719,28 @@ function Dashboard() {
           allListings={listings}
           onSelectListing={(item) => setSelectedListing(item)}
           onClose={() => setSelectedListing(null)}
+          onEditListing={(item) => {
+            setSelectedListing(null);
+            setEditingListing(item);
+          }}
           onMessageSeller={(targetListing) => {
             setSelectedListing(null);
             handleOpenChat(targetListing);
           }}
           currentUserId={currentUserId}
+        />
+      )}
+
+      {/* Edit Listing Modal */}
+      {editingListing && (
+        <EditListingModal 
+          isOpen={!!editingListing}
+          listing={editingListing}
+          onClose={() => setEditingListing(null)}
+          onUpdated={() => {
+            setEditingListing(null);
+            fetchListings();
+          }}
         />
       )}
 

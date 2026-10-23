@@ -4,6 +4,7 @@ import { apiFetch, getImageUrl, getServerHost, DEFAULT_HOST_IP } from '../api';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 import EditListingModal from '../components/EditListingModal';
+import CreateListingModal from '../components/CreateListingModal';
 import SettingsModal from '../components/SettingsModal';
 
 function Profile() {
@@ -25,6 +26,7 @@ function Profile() {
   const [editingListing, setEditingListing] = useState(null);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [isCreateOpen, setIsCreateOpen] = useState(false);
 
   const fetchProfile = async () => {
     setIsLoading(true);
@@ -79,10 +81,12 @@ function Profile() {
         method: 'PUT',
         body: JSON.stringify({
           phone: phone.trim(),
-          burner_handle: burnerHandle.trim()
+          burner_handle: burnerHandle.trim().replace(/^@+/, '')
         })
       });
       setProfile(updated);
+      setPhone(updated.phone || '');
+      setBurnerHandle(updated.profile?.burner_handle || '');
       if (serverIp.trim()) { localStorage.setItem('server_ip', serverIp.trim()); } else { localStorage.removeItem('server_ip'); }
       setMessage('Profile settings updated successfully!');
     } catch (err) {
@@ -361,7 +365,7 @@ function Profile() {
               </div>
               <button 
                 className="btn-primary"
-                onClick={() => navigate('/dashboard')}
+                onClick={() => setIsCreateOpen(true)}
                 style={{ padding: '0.5rem 1rem', fontSize: '0.84rem' }}
               >
                 <i className="fa-solid fa-plus" /> Post Another Item
@@ -384,7 +388,7 @@ function Profile() {
                 <p style={{ fontSize: '0.85rem', marginBottom: '1.1rem' }}>
                   Have an old textbook, calculator, or phone charger lying around?
                 </p>
-                <button className="btn-primary" onClick={() => navigate('/dashboard')}>
+                <button className="btn-primary" onClick={() => setIsCreateOpen(true)}>
                   Post Your First Listing
                 </button>
               </div>
