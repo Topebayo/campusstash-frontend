@@ -862,11 +862,7 @@ function Dashboard() {
                 </div>
               </div>
             ) : (
-              <div style={{
-                display: 'grid',
-                gridTemplateColumns: 'repeat(auto-fill, minmax(270px, 1fr))',
-                gap: '1.5rem'
-              }}>
+              <div className="listings-grid">
                 {filteredListings.map(listing => {
                   const isSold = listing.status === 'sold';
                   const priceFormatted = (listing.price_kobo ? (listing.price_kobo / 100) : (listing.price || 0)).toLocaleString(undefined, { minimumFractionDigits: 2 });
@@ -882,12 +878,7 @@ function Dashboard() {
                       style={{
                         cursor: 'pointer',
                         opacity: isSold ? 0.78 : 1,
-                        position: 'relative',
-                        border: '1px solid var(--border)',
-                        borderRadius: '20px',
-                        backgroundColor: 'var(--card-bg)',
-                        overflow: 'hidden',
-                        transition: 'transform 0.2s ease, box-shadow 0.2s ease'
+                        position: 'relative'
                       }}
                     >
                       {/* Thumbnail Container */}
@@ -976,37 +967,18 @@ function Dashboard() {
                       </div>
 
                       {/* Card Content Body */}
-                      <div style={{ padding: '1.1rem', display: 'flex', flexDirection: 'column', flex: 1, justifyContent: 'space-between' }}>
+                      <div className="listing-card-body">
                         <div>
-                          <h3 style={{
-                            fontFamily: 'var(--font-display)',
-                            fontSize: '1.1rem',
-                            fontWeight: '700',
-                            lineHeight: '1.35',
-                            color: 'var(--text-main)',
-                            marginBottom: '0.35rem',
-                            display: '-webkit-box',
-                            WebkitLineClamp: 2,
-                            WebkitBoxOrient: 'vertical',
-                            overflow: 'hidden'
-                          }}>
+                          <h3 className="listing-card-title">
                             {listing.title}
                           </h3>
 
-                          <p style={{
-                            fontSize: '0.82rem',
-                            color: 'var(--text-muted)',
-                            display: '-webkit-box',
-                            WebkitLineClamp: 2,
-                            WebkitBoxOrient: 'vertical',
-                            overflow: 'hidden',
-                            marginBottom: '0.85rem'
-                          }}>
+                          <p className="listing-card-desc">
                             {listing.description || 'No description provided.'}
                           </p>
 
                           {/* Seller Tag */}
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', fontSize: '0.78rem', color: 'var(--text-muted)', marginBottom: '0.85rem' }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', fontSize: '0.78rem', color: 'var(--text-muted)', marginBottom: '0.5rem' }}>
                             <i className="fa-solid fa-user-shield" style={{ color: 'var(--brandblue)' }} />
                             <span style={{ fontWeight: '600', color: 'var(--text-main)', fontFamily: 'var(--font-display)' }}>
                               @{listing.seller_handle || 'anonymous'}
@@ -1018,15 +990,7 @@ function Dashboard() {
                         </div>
 
                         {/* Card Action Footer */}
-                        <div style={{
-                          display: 'flex',
-                          justifyContent: 'space-between',
-                          alignItems: 'center',
-                          gap: '1.25rem',
-                          paddingTop: '0.85rem',
-                          marginTop: '0.5rem',
-                          borderTop: '1px solid var(--border)'
-                        }}>
+                        <div className="listing-card-footer">
                           <div>
                             <span style={{
                               fontFamily: 'var(--font-display)',
@@ -1216,9 +1180,12 @@ function Dashboard() {
                             backgroundColor: 'var(--lightblue)',
                             color: 'var(--brandblue)',
                             padding: '0.22rem 0.6rem',
-                            borderRadius: '9999px'
+                            borderRadius: '9999px',
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '0.25rem'
                           }}>
-                            🏫 {campusBadge}
+                            <i className="fa-solid fa-graduation-cap" /> {campusBadge}
                           </span>
 
                           <span style={{
@@ -1234,11 +1201,12 @@ function Dashboard() {
                         {/* Request Title */}
                         <h4 style={{
                           fontFamily: 'var(--font-display)',
-                          fontSize: '1.1rem',
+                          fontSize: '1.05rem',
                           fontWeight: '800',
                           color: 'var(--text-main)',
                           marginBottom: '0.4rem',
-                          lineHeight: '1.3'
+                          lineHeight: '1.3',
+                          minHeight: '2.6rem'
                         }}>
                           Looking for: {req.title}
                         </h4>

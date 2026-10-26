@@ -374,389 +374,122 @@ function Navbar({ onPrimaryAction, primaryActionText }) {
 
       {/* Top Header Navigation (Desktop & Mobile) */}
 
-      <header className="main-navbar-header" style={{ width: '100%', maxWidth: '100vw', overflowX: 'hidden' }}>
-
-        <div className="navbar-container" style={{ width: '100%', maxWidth: '1280px', margin: '0 auto', padding: '0.65rem 1rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '0.5rem', boxSizing: 'border-box' }}>
-
+      <header className="main-navbar-header">
+        <div className="navbar-container">
           
-
-          {/* Brand Logo & Back Button Group */}
-
-          <div className="navbar-brand-group" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', minWidth: 0, flexShrink: 1 }}>
-
+          {/* Left: Brand Logo & Back Button */}
+          <div className="navbar-brand-group">
             {!isHome && (
-
               <button
-
+                className="navbar-back-btn"
                 onClick={handleBack}
-
-                style={{
-
-                  display: 'flex',
-
-                  alignItems: 'center',
-
-                  gap: '0.3rem',
-
-                  padding: '0.4rem 0.65rem',
-
-                  borderRadius: '20px',
-
-                  backgroundColor: 'var(--lightblue)',
-
-                  border: '1px solid rgba(59, 130, 246, 0.3)',
-
-                  color: 'var(--brandblue)',
-
-                  fontSize: '0.8rem',
-
-                  fontFamily: 'var(--font-display)',
-
-                  fontWeight: '700',
-
-                  cursor: 'pointer',
-
-                  flexShrink: 0
-
-                }}
-
                 title="Go Back"
-
               >
-
                 <i className="fa-solid fa-arrow-left" />
-
                 <span className="desktop-label">{isProfile ? 'Market' : 'Back'}</span>
-
               </button>
-
             )}
-
-
 
             <div 
-
               onClick={() => navigate('/dashboard')}
-
               className="brand-logo"
-
-              style={{ fontSize: '1.25rem', whiteSpace: 'nowrap', cursor: 'pointer' }}
-
             >
-
               Campus<span className="text-brandblue">Stash</span>
-
             </div>
-
-{/* Campus Selector Dropdown */}
-            <div style={{
-              display: 'flex',
-              alignItems: 'center',
-              backgroundColor: 'var(--surface-alt)',
-              border: '1px solid var(--border)',
-              borderRadius: '9999px',
-              padding: '0.22rem 0.55rem',
-              marginLeft: '0.35rem',
-              flexShrink: 0
-            }}>
-              <i className="fa-solid fa-graduation-cap" style={{ color: 'var(--brandblue)', fontSize: '0.82rem', marginRight: '0.35rem' }} />
-              <select
-                value={selectedCampusId}
-                onChange={handleCampusSelect}
-                title="Filter by Campus"
-                style={{
-                  border: 'none',
-                  background: 'transparent',
-                  color: 'var(--text-main)',
-                  fontSize: '0.8rem',
-                  fontFamily: 'var(--font-display)',
-                  fontWeight: '700',
-                  outline: 'none',
-                  cursor: 'pointer',
-                  maxWidth: '120px'
-                }}
-              >
-                <option value="">All Campuses</option>
-                {campuses.map(c => (
-                  <option key={c.id} value={c.id}>
-                    {c.acronym}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-
-
-            {/* Desktop Navigation Links */}
-
-            {!isProfile && (
-
-              <nav className="desktop-nav-links" style={{ marginLeft: '0.75rem', display: 'flex', gap: '0.4rem' }}>
-
-                {navLinks.map((link) => {
-
-                  const isActive = location.pathname === link.path;
-
-                  return (
-
-                    <button
-
-                      key={link.path}
-
-                      onClick={() => navigate(link.path)}
-
-                      className={`nav-pill ${isActive ? 'active' : ''}`}
-
-                    >
-
-                      <i className={link.icon} />
-
-                      <span>{link.label}</span>
-
-                      {link.path === '/messages' && unreadCount > 0 && (
-
-                        <span className="nav-unread-badge">
-
-                          {unreadCount > 99 ? '99+' : unreadCount}
-
-                        </span>
-
-                      )}
-
-                    </button>
-
-                  );
-
-                })}
-
-              </nav>
-
-            )}
-
           </div>
 
+          {/* Center: Campus Filter Dropdown */}
+          <div className="navbar-campus-selector">
+            <i className="fa-solid fa-graduation-cap" style={{ color: 'var(--brandblue)', fontSize: '0.85rem' }} />
+            <select
+              value={selectedCampusId}
+              onChange={handleCampusSelect}
+              className="navbar-campus-select"
+              title="Filter by Campus"
+            >
+              <option value="">All Campuses</option>
+              {campuses.map(c => (
+                <option key={c.id} value={c.id}>
+                  {c.acronym}
+                </option>
+              ))}
+            </select>
+          </div>
 
-
-          {/* Action Buttons & Theme Toggle */}
-
-          <div className="navbar-action-group" style={{ display: 'flex', alignItems: 'center', gap: '0.45rem', flexShrink: 0 }}>
+          {/* Right: Desktop Navigation, Theme Toggle, Settings & Actions */}
+          <div className="navbar-action-group">
+            {!isProfile && (
+              <nav className="desktop-nav-links">
+                {navLinks.map((link) => {
+                  const isActive = location.pathname === link.path;
+                  return (
+                    <button
+                      key={link.path}
+                      onClick={() => navigate(link.path)}
+                      className={`nav-pill ${isActive ? 'active' : ''}`}
+                    >
+                      <i className={link.icon} />
+                      <span>{link.label}</span>
+                      {link.path === '/messages' && unreadCount > 0 && (
+                        <span className="nav-unread-badge">
+                          {unreadCount > 99 ? '99+' : unreadCount}
+                        </span>
+                      )}
+                    </button>
+                  );
+                })}
+              </nav>
+            )}
 
             <button
-
+              className="nav-action-icon-btn"
               onClick={cycleTheme}
-
               title={`Theme: ${themeMode}`}
-
-              style={{
-
-                display: 'flex',
-
-                alignItems: 'center',
-
-                gap: '0.35rem',
-
-                padding: '0.45rem 0.75rem',
-
-                borderRadius: '20px',
-
-                border: '1px solid var(--border)',
-
-                backgroundColor: 'var(--surface-alt)',
-
-                color: 'var(--text-main)',
-
-                fontFamily: 'var(--font-display)',
-
-                fontWeight: '600',
-
-                fontSize: '0.82rem',
-
-                cursor: 'pointer'
-
-              }}
-
             >
-
-              <i className={themeMode === 'dark' ? "fa-solid fa-moon" : themeMode === 'light' ? "fa-solid fa-sun" : "fa-solid fa-desktop"} style={{ color: 'var(--brandblue)' }} />
-
-              <span className="desktop-label" style={{ textTransform: 'capitalize' }}>{themeMode}</span>
-
+              <i className={themeMode === 'dark' ? "fa-solid fa-moon" : themeMode === 'light' ? "fa-solid fa-sun" : "fa-solid fa-desktop"} />
             </button>
 
-
-
             {token && (
-
               <button
-
+                className="nav-action-icon-btn"
                 onClick={() => setIsSettingsOpen(true)}
-
                 title="Settings & Security"
-
-                style={{
-
-                  display: 'flex',
-
-                  alignItems: 'center',
-
-                  gap: '0.35rem',
-
-                  padding: '0.45rem 0.75rem',
-
-                  borderRadius: '20px',
-
-                  border: '1px solid var(--border)',
-
-                  backgroundColor: 'var(--surface-alt)',
-
-                  color: 'var(--text-main)',
-
-                  fontFamily: 'var(--font-display)',
-
-                  fontWeight: '600',
-
-                  fontSize: '0.82rem',
-
-                  cursor: 'pointer'
-
-                }}
-
               >
-
-                <i className="fa-solid fa-gear" style={{ color: 'var(--brandblue)' }} />
-
-                <span className="desktop-label">Settings</span>
-
+                <i className="fa-solid fa-gear" />
               </button>
-
             )}
-
-
 
             {token ? (
-
               <button
-
+                className="nav-logout-btn"
                 onClick={handleLogout}
-
                 title="Log Out of Account"
-
-                style={{
-
-                  display: 'flex',
-
-                  alignItems: 'center',
-
-                  gap: '0.35rem',
-
-                  padding: '0.45rem 0.75rem',
-
-                  borderRadius: '20px',
-
-                  border: '1px solid rgba(239, 68, 68, 0.25)',
-
-                  backgroundColor: 'rgba(239, 68, 68, 0.08)',
-
-                  color: '#dc2626',
-
-                  fontFamily: 'var(--font-display)',
-
-                  fontWeight: '600',
-
-                  fontSize: '0.82rem',
-
-                  cursor: 'pointer'
-
-                }}
-
               >
-
                 <i className="fa-solid fa-right-from-bracket" />
-
                 <span className="desktop-label">Log Out</span>
-
               </button>
-
             ) : (
-
               <button
-
+                className="nav-signin-btn"
                 onClick={() => navigate('/auth')}
-
-                style={{
-
-                  display: 'flex',
-
-                  alignItems: 'center',
-
-                  gap: '0.35rem',
-
-                  padding: '0.45rem 0.75rem',
-
-                  borderRadius: '20px',
-
-                  border: '1px solid var(--border)',
-
-                  backgroundColor: 'var(--surface-alt)',
-
-                  color: 'var(--brandblue)',
-
-                  fontFamily: 'var(--font-display)',
-
-                  fontWeight: '700',
-
-                  fontSize: '0.82rem',
-
-                  cursor: 'pointer'
-
-                }}
-
               >
-
                 <i className="fa-solid fa-arrow-right-to-bracket" />
-
                 <span className="desktop-label">Sign In</span>
-
               </button>
-
             )}
-
-
 
             {!isProfile && onPrimaryAction && primaryActionText && (
-
               <button 
-
                 className="btn-primary desktop-sell-btn" 
-
                 onClick={onPrimaryAction}
-
-                style={{
-
-                  padding: '0.45rem 0.95rem',
-
-                  fontSize: '0.85rem',
-
-                  borderRadius: '9999px',
-
-                  boxShadow: 'var(--shadow-blue)'
-
-                }}
-
               >
-
                 <i className="fa-solid fa-plus" />
-
                 <span>{primaryActionText}</span>
-
               </button>
-
             )}
-
           </div>
 
         </div>
-
       </header>
 
 

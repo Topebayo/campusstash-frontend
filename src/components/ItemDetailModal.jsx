@@ -462,7 +462,7 @@ function ItemDetailModal({
               gap: '0.75rem',
               lineHeight: '1.45'
             }}>
-              <span style={{ fontSize: '1.25rem', lineHeight: 1, flexShrink: 0 }}>???</span>
+              <span style={{ fontSize: '1.25rem', lineHeight: 1, flexShrink: 0, color: 'var(--brandgreen)' }}><i className="fa-solid fa-shield-halved" /></span>
               <div style={{ fontSize: '0.82rem' }}>
                 <strong style={{ color: 'var(--brandgreen)', display: 'block', marginBottom: '0.2rem' }}>
                   Safe Campus Handshake
@@ -486,8 +486,8 @@ function ItemDetailModal({
                   <i className="fa-brands fa-whatsapp" style={{ fontSize: '1.1rem' }} /> Share on WhatsApp
                 </span>
                 {copyFeedback && (
-                  <span style={{ fontSize: '0.75rem', color: '#128C7E', fontWeight: '700' }}>
-                    Link Copied! ??
+                  <span style={{ fontSize: '0.75rem', color: '#128C7E', fontWeight: '700', display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
+                    <i className="fa-solid fa-circle-check" /> Link Copied!
                   </span>
                 )}
               </div>

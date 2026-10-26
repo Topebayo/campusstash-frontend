@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { apiFetch, getImageUrl } from '../api';
 
 const compressImage = (file, maxWidth = 800, maxHeight = 800, quality = 0.75) => {
@@ -55,11 +55,13 @@ function EditListingModal({ isOpen, onClose, listing, onUpdated }) {
   const [currentCoverUrl, setCurrentCoverUrl] = useState('');
   const [newImage1, setNewImage1] = useState(null);
   const [newImage1Preview, setNewImage1Preview] = useState(null);
+  const fileInput1Ref = useRef(null);
 
   // Photo 2 state
   const [currentDetailUrl, setCurrentDetailUrl] = useState('');
   const [newImage2, setNewImage2] = useState(null);
   const [newImage2Preview, setNewImage2Preview] = useState(null);
+  const fileInput2Ref = useRef(null);
 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState('');
@@ -97,7 +99,7 @@ function EditListingModal({ isOpen, onClose, listing, onUpdated }) {
   if (!isOpen || !listing) return null;
 
   const handleImage1Change = (e) => {
-    const file = e.target.files[0];
+    const file = e.target.files && e.target.files[0];
     if (file) {
       setNewImage1(file);
       setNewImage1Preview(URL.createObjectURL(file));
@@ -105,7 +107,7 @@ function EditListingModal({ isOpen, onClose, listing, onUpdated }) {
   };
 
   const handleImage2Change = (e) => {
-    const file = e.target.files[0];
+    const file = e.target.files && e.target.files[0];
     if (file) {
       setNewImage2(file);
       setNewImage2Preview(URL.createObjectURL(file));
@@ -118,6 +120,7 @@ function EditListingModal({ isOpen, onClose, listing, onUpdated }) {
     setNewImage1(null);
     setNewImage1Preview(null);
     setCurrentCoverUrl('');
+    if (fileInput1Ref.current) fileInput1Ref.current.value = '';
   };
 
   const clearPhoto2 = (e) => {
@@ -126,6 +129,7 @@ function EditListingModal({ isOpen, onClose, listing, onUpdated }) {
     setNewImage2(null);
     setNewImage2Preview(null);
     setCurrentDetailUrl('');
+    if (fileInput2Ref.current) fileInput2Ref.current.value = '';
   };
 
   const handleSubmit = async (e) => {
@@ -145,8 +149,8 @@ function EditListingModal({ isOpen, onClose, listing, onUpdated }) {
         try {
           const comp1 = await compressImage(newImage1);
           if (comp1) updatedCoverUrl = comp1;
-        } catch (e) {
-          console.warn('Image 1 compression note:', e);
+        } catch (err) {
+          console.warn('Image 1 compression note:', err);
         }
       }
 
@@ -156,8 +160,8 @@ function EditListingModal({ isOpen, onClose, listing, onUpdated }) {
         try {
           const comp2 = await compressImage(newImage2);
           if (comp2) updatedDetailUrl = comp2;
-        } catch (e) {
-          console.warn('Image 2 compression note:', e);
+        } catch (err) {
+          console.warn('Image 2 compression note:', err);
         }
       }
 
@@ -177,7 +181,7 @@ function EditListingModal({ isOpen, onClose, listing, onUpdated }) {
         images: allImagesList
       };
 
-      await apiFetch(/listings/, {
+      await apiFetch(`/listings/${listing.id}`, {
         method: 'PUT',
         body: JSON.stringify(payload)
       });
@@ -199,33 +203,50 @@ function EditListingModal({ isOpen, onClose, listing, onUpdated }) {
       <div 
         className="modal-content animate-fade-in" 
         onClick={(e) => e.stopPropagation()} 
-        style={{ maxWidth: '560px', padding: '2rem' }}
+        style={{ maxWidth: '560px', padding: '1.75rem', maxHeight: '90vh', overflowY: 'auto' }}
       >
+        {/* Hidden File Inputs */}
+        <input 
+          ref={fileInput1Ref}
+          type="file"
+          accept="image/*"
+          onChange={handleImage1Change}
+          style={{ display: 'none' }}
+        />
+        <input 
+          ref={fileInput2Ref}
+          type="file"
+          accept="image/*"
+          onChange={handleImage2Change}
+          style={{ display: 'none' }}
+        />
+
         {/* Header */}
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1.25rem' }}>
           <div>
             <span className="badge-pill" style={{ marginBottom: '0.4rem' }}>
               <i className="fa-solid fa-pen-to-square" /> Seller Control
             </span>
-            <h2 style={{ fontFamily: 'var(--font-display)', fontSize: '1.6rem', fontWeight: '800', letterSpacing: '-0.02em', color: 'var(--text-main)' }}>
+            <h2 style={{ fontFamily: 'var(--font-display)', fontSize: '1.5rem', fontWeight: '800', letterSpacing: '-0.02em', color: 'var(--text-main)', margin: 0 }}>
               Edit Listing
             </h2>
           </div>
           <button 
+            type="button"
             onClick={onClose}
             style={{
               background: 'var(--surface-alt)',
-              border: 'none',
+              border: '1px solid var(--border)',
               borderRadius: '50%',
-              width: '36px',
-              height: '36px',
+              width: '34px',
+              height: '34px',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              fontSize: '1.1rem',
+              fontSize: '1rem',
               cursor: 'pointer',
               color: 'var(--text-muted)',
-              transition: 'background 0.2s'
+              transition: 'all 0.2s'
             }}
           >
             <i className="fa-solid fa-xmark" />
@@ -283,15 +304,15 @@ function EditListingModal({ isOpen, onClose, listing, onUpdated }) {
               <div style={{ position: 'relative' }}>
                 <span style={{
                   position: 'absolute',
-                  left: '1rem',
+                  left: '0.9rem',
                   top: '50%',
                   transform: 'translateY(-50%)',
-                  color: 'var(--brandgreen)',
+                  color: 'var(--brandblue)',
                   fontFamily: 'var(--font-display)',
                   fontWeight: '700',
                   fontSize: '1rem'
                 }}>
-                  ?
+                  ₦
                 </span>
                 <input 
                   className="form-input"
@@ -301,7 +322,7 @@ function EditListingModal({ isOpen, onClose, listing, onUpdated }) {
                   value={price}
                   onChange={(e) => setPrice(e.target.value)}
                   placeholder="0.00"
-                  style={{ paddingLeft: '2.4rem' }}
+                  style={{ paddingLeft: '2.2rem' }}
                 />
               </div>
             </div>
@@ -319,7 +340,7 @@ function EditListingModal({ isOpen, onClose, listing, onUpdated }) {
                   borderRadius: '10px',
                   border: '1px solid',
                   borderColor: status === 'active' ? 'var(--brandgreen)' : 'var(--border)',
-                  backgroundColor: status === 'active' ? 'var(--lightgreen)' : '#ffffff',
+                  backgroundColor: status === 'active' ? 'var(--lightgreen)' : 'var(--surface)',
                   color: status === 'active' ? 'var(--darkgreen)' : 'var(--text-muted)',
                   fontWeight: status === 'active' ? '700' : '500',
                   fontFamily: 'var(--font-display)',
@@ -327,7 +348,8 @@ function EditListingModal({ isOpen, onClose, listing, onUpdated }) {
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  gap: '0.4rem'
+                  gap: '0.4rem',
+                  transition: 'all 0.15s ease'
                 }}
               >
                 <i className="fa-solid fa-store" /> Active
@@ -340,16 +362,17 @@ function EditListingModal({ isOpen, onClose, listing, onUpdated }) {
                   padding: '0.65rem',
                   borderRadius: '10px',
                   border: '1px solid',
-                  borderColor: status === 'sold' ? '#e07a5f' : 'var(--border)',
-                  backgroundColor: status === 'sold' ? '#fdf2f0' : '#ffffff',
-                  color: status === 'sold' ? '#c04e30' : 'var(--text-muted)',
+                  borderColor: status === 'sold' ? '#ef4444' : 'var(--border)',
+                  backgroundColor: status === 'sold' ? '#fee2e2' : 'var(--surface)',
+                  color: status === 'sold' ? '#b91c1c' : 'var(--text-muted)',
                   fontWeight: status === 'sold' ? '700' : '500',
                   fontFamily: 'var(--font-display)',
                   cursor: 'pointer',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  gap: '0.4rem'
+                  gap: '0.4rem',
+                  transition: 'all 0.15s ease'
                 }}
               >
                 <i className="fa-solid fa-circle-check" /> Sold
@@ -365,32 +388,36 @@ function EditListingModal({ isOpen, onClose, listing, onUpdated }) {
               rows="3"
               value={description}
               onChange={(e) => setDescription(e.target.value)}
-              placeholder="Provide details about condition..."
+              placeholder="Provide details about condition, usage, inclusions..."
               style={{ resize: 'none' }}
             />
           </div>
 
           {/* Dual Photo Management */}
           <div>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.4rem' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.45rem' }}>
               <label className="form-label" style={{ margin: 0 }}>Item Photos (Up to 2)</label>
-              <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Cover + Detail Angle</span>
+              <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Tap image to change or upload</span>
             </div>
 
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.85rem' }}>
               {/* Photo 1: Cover Photo */}
-              <div style={{
-                border: '2px dashed var(--border)',
-                borderRadius: '12px',
-                height: '130px',
-                backgroundColor: 'var(--bg-color)',
-                position: 'relative',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                overflow: 'hidden',
-                cursor: 'pointer'
-              }}>
+              <div 
+                onClick={() => fileInput1Ref.current && fileInput1Ref.current.click()}
+                style={{
+                  border: '2px dashed var(--border)',
+                  borderRadius: '14px',
+                  height: '140px',
+                  backgroundColor: 'var(--surface-alt)',
+                  position: 'relative',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  overflow: 'hidden',
+                  cursor: 'pointer',
+                  transition: 'border-color 0.2s ease'
+                }}
+              >
                 {displayCover ? (
                   <>
                     <img 
@@ -400,16 +427,36 @@ function EditListingModal({ isOpen, onClose, listing, onUpdated }) {
                     />
                     <div style={{
                       position: 'absolute',
-                      top: '0.35rem',
-                      left: '0.35rem',
+                      top: '0.4rem',
+                      left: '0.4rem',
                       backgroundColor: 'rgba(15, 23, 42, 0.75)',
                       color: '#fff',
                       fontSize: '0.68rem',
                       fontWeight: '700',
-                      padding: '0.2rem 0.45rem',
-                      borderRadius: '6px'
+                      padding: '0.2rem 0.5rem',
+                      borderRadius: '6px',
+                      backdropFilter: 'blur(4px)'
                     }}>
                       Cover
+                    </div>
+                    <div style={{
+                      position: 'absolute',
+                      bottom: '0.4rem',
+                      left: '50%',
+                      transform: 'translateX(-50%)',
+                      backgroundColor: 'rgba(15, 23, 42, 0.75)',
+                      color: '#fff',
+                      fontSize: '0.7rem',
+                      fontWeight: '600',
+                      padding: '0.2rem 0.55rem',
+                      borderRadius: '9999px',
+                      whiteSpace: 'nowrap',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '0.3rem',
+                      backdropFilter: 'blur(4px)'
+                    }}>
+                      <i className="fa-solid fa-camera" /> Change
                     </div>
                     <button
                       type="button"
@@ -417,66 +464,55 @@ function EditListingModal({ isOpen, onClose, listing, onUpdated }) {
                       title="Remove image"
                       style={{
                         position: 'absolute',
-                        top: '0.35rem',
-                        right: '0.35rem',
+                        top: '0.4rem',
+                        right: '0.4rem',
                         backgroundColor: 'rgba(239, 68, 68, 0.9)',
                         color: '#fff',
                         border: 'none',
                         borderRadius: '50%',
-                        width: '24px',
-                        height: '24px',
+                        width: '26px',
+                        height: '26px',
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
                         cursor: 'pointer',
-                        fontSize: '0.75rem'
+                        fontSize: '0.75rem',
+                        zIndex: 2
                       }}
                     >
                       <i className="fa-solid fa-xmark" />
                     </button>
                   </>
                 ) : (
-                  <>
-                    <input 
-                      type="file"
-                      accept="image/*"
-                      onChange={handleImage1Change}
-                      style={{
-                        position: 'absolute',
-                        top: 0,
-                        left: 0,
-                        width: '100%',
-                        height: '100%',
-                        opacity: 0,
-                        cursor: 'pointer'
-                      }}
-                    />
-                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.3rem', padding: '0.5rem', textAlign: 'center' }}>
-                      <i className="fa-solid fa-camera" style={{ fontSize: '1.3rem', color: 'var(--brandgreen)' }} />
-                      <span style={{ fontSize: '0.8rem', fontWeight: '700', color: 'var(--text-main)' }}>
-                        Photo 1 (Cover)
-                      </span>
-                      <span style={{ fontSize: '0.7rem', color: 'var(--text-light)' }}>
-                        Front view
-                      </span>
-                    </div>
-                  </>
+                  <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.35rem', padding: '0.75rem', textAlign: 'center' }}>
+                    <i className="fa-solid fa-camera" style={{ fontSize: '1.4rem', color: 'var(--brandblue)' }} />
+                    <span style={{ fontSize: '0.8rem', fontWeight: '700', color: 'var(--text-main)', fontFamily: 'var(--font-display)' }}>
+                      Photo 1 (Cover)
+                    </span>
+                    <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>
+                      Tap to upload
+                    </span>
+                  </div>
                 )}
               </div>
 
               {/* Photo 2: Detail / Back Photo */}
-              <div style={{
-                border: '2px dashed var(--border)',
-                borderRadius: '12px',
-                height: '130px',
-                backgroundColor: 'var(--bg-color)',
-                position: 'relative',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                overflow: 'hidden',
-                cursor: 'pointer'
-              }}>
+              <div 
+                onClick={() => fileInput2Ref.current && fileInput2Ref.current.click()}
+                style={{
+                  border: '2px dashed var(--border)',
+                  borderRadius: '14px',
+                  height: '140px',
+                  backgroundColor: 'var(--surface-alt)',
+                  position: 'relative',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  overflow: 'hidden',
+                  cursor: 'pointer',
+                  transition: 'border-color 0.2s ease'
+                }}
+              >
                 {displayDetail ? (
                   <>
                     <img 
@@ -486,16 +522,36 @@ function EditListingModal({ isOpen, onClose, listing, onUpdated }) {
                     />
                     <div style={{
                       position: 'absolute',
-                      top: '0.35rem',
-                      left: '0.35rem',
+                      top: '0.4rem',
+                      left: '0.4rem',
                       backgroundColor: 'rgba(15, 23, 42, 0.75)',
                       color: '#fff',
                       fontSize: '0.68rem',
                       fontWeight: '700',
-                      padding: '0.2rem 0.45rem',
-                      borderRadius: '6px'
+                      padding: '0.2rem 0.5rem',
+                      borderRadius: '6px',
+                      backdropFilter: 'blur(4px)'
                     }}>
                       Detail
+                    </div>
+                    <div style={{
+                      position: 'absolute',
+                      bottom: '0.4rem',
+                      left: '50%',
+                      transform: 'translateX(-50%)',
+                      backgroundColor: 'rgba(15, 23, 42, 0.75)',
+                      color: '#fff',
+                      fontSize: '0.7rem',
+                      fontWeight: '600',
+                      padding: '0.2rem 0.55rem',
+                      borderRadius: '9999px',
+                      whiteSpace: 'nowrap',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '0.3rem',
+                      backdropFilter: 'blur(4px)'
+                    }}>
+                      <i className="fa-solid fa-camera" /> Change
                     </div>
                     <button
                       type="button"
@@ -503,50 +559,35 @@ function EditListingModal({ isOpen, onClose, listing, onUpdated }) {
                       title="Remove image"
                       style={{
                         position: 'absolute',
-                        top: '0.35rem',
-                        right: '0.35rem',
+                        top: '0.4rem',
+                        right: '0.4rem',
                         backgroundColor: 'rgba(239, 68, 68, 0.9)',
                         color: '#fff',
                         border: 'none',
                         borderRadius: '50%',
-                        width: '24px',
-                        height: '24px',
+                        width: '26px',
+                        height: '26px',
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
                         cursor: 'pointer',
-                        fontSize: '0.75rem'
+                        fontSize: '0.75rem',
+                        zIndex: 2
                       }}
                     >
                       <i className="fa-solid fa-xmark" />
                     </button>
                   </>
                 ) : (
-                  <>
-                    <input 
-                      type="file"
-                      accept="image/*"
-                      onChange={handleImage2Change}
-                      style={{
-                        position: 'absolute',
-                        top: 0,
-                        left: 0,
-                        width: '100%',
-                        height: '100%',
-                        opacity: 0,
-                        cursor: 'pointer'
-                      }}
-                    />
-                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.3rem', padding: '0.5rem', textAlign: 'center' }}>
-                      <i className="fa-solid fa-plus" style={{ fontSize: '1.3rem', color: 'var(--text-muted)' }} />
-                      <span style={{ fontSize: '0.8rem', fontWeight: '700', color: 'var(--text-main)' }}>
-                        Photo 2 (Optional)
-                      </span>
-                      <span style={{ fontSize: '0.7rem', color: 'var(--text-light)' }}>
-                        Back or detail
-                      </span>
-                    </div>
-                  </>
+                  <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.35rem', padding: '0.75rem', textAlign: 'center' }}>
+                    <i className="fa-solid fa-plus" style={{ fontSize: '1.4rem', color: 'var(--text-muted)' }} />
+                    <span style={{ fontSize: '0.8rem', fontWeight: '700', color: 'var(--text-main)', fontFamily: 'var(--font-display)' }}>
+                      Photo 2 (Optional)
+                    </span>
+                    <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>
+                      Back or detail angle
+                    </span>
+                  </div>
                 )}
               </div>
             </div>

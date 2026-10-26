@@ -250,7 +250,7 @@ function CreateListingModal({ isOpen, onClose, onCreated }) {
 
             <div>
               <h3 style={{ fontFamily: 'var(--font-display)', fontSize: '1.45rem', fontWeight: '800', color: 'var(--text-main)', marginBottom: '0.35rem' }}>
-                Listing Published! ??
+                Listing Published!
               </h3>
               <p style={{ fontSize: '0.88rem', color: 'var(--text-muted)', maxWidth: '380px', lineHeight: '1.5' }}>
                 Your item is live. Share it to your WhatsApp Status and hostel group chats right now to find a student buyer today!
@@ -313,7 +313,7 @@ function CreateListingModal({ isOpen, onClose, onCreated }) {
                   gap: '0.4rem'
                 }}
               >
-                <i className="fa-regular fa-copy" /> {copiedLink ? 'Link Copied! ??' : 'Copy Listing Link'}
+                <i className="fa-regular fa-copy" /> {copiedLink ? 'Link Copied!' : 'Copy Listing Link'}
               </button>
             </div>
 
