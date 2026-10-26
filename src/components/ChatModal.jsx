@@ -72,12 +72,12 @@ function ChatModal({ isOpen = true, onClose, listing }) {
         // 1. Use existing conversation ID if available (e.g. from Inbox/Messages), or create/retrieve for listing
         let convId = listing.conversation_id;
         if (!convId) {
+          const bodyPayload = listing.request_id 
+            ? { request_id: listing.request_id }
+            : { listing_id: listing.id, recipient_id: listing.seller_id };
           const conv = await apiFetch('/conversations/', {
             method: 'POST',
-            body: JSON.stringify({
-              listing_id: listing.id,
-              recipient_id: listing.seller_id
-            })
+            body: JSON.stringify(bodyPayload)
           });
           convId = conv.id;
         }
@@ -307,6 +307,23 @@ function ChatModal({ isOpen = true, onClose, listing }) {
               <i className="fa-solid fa-xmark" />
             </button>
           </div>
+        </div>
+
+        {/* Safe Campus Handshake Badge */}
+        <div style={{
+          backgroundColor: 'var(--surface-alt)',
+          borderBottom: '1px solid var(--border)',
+          padding: '0.65rem 1rem',
+          display: 'flex',
+          alignItems: 'center',
+          gap: '0.6rem',
+          fontSize: '0.78rem',
+          color: 'var(--text-muted)'
+        }}>
+          <span style={{ fontSize: '1.05rem', flexShrink: 0 }}>🛡️</span>
+          <span style={{ lineHeight: '1.35' }}>
+            <strong style={{ color: 'var(--brandgreen)' }}>Safe Campus Handshake:</strong> Always meet at a designated public spot (e.g., Library Gate, Student Union Building). Inspect the item physically before paying via cash or direct bank transfer.
+          </span>
         </div>
 
         {/* Dropzone Selection Tray */}

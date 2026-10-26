@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { apiFetch } from '../api';
+import { apiFetch, getCampuses, getActiveCampusId } from '../api';
 
 const compressImage = (file, maxWidth = 800, maxHeight = 800, quality = 0.75) => {
   return new Promise((resolve) => {
@@ -49,12 +49,34 @@ function CreateListingModal({ isOpen, onClose, onCreated }) {
   const [description, setDescription] = useState('');
   const [price, setPrice] = useState('');
   const [category, setCategory] = useState('Textbooks');
+  const [campusId, setCampusId] = useState('');
+  const [campuses, setCampuses] = useState([]);
+  const [createdItem, setCreatedItem] = useState(null);
+  const [copiedLink, setCopiedLink] = useState(false);
   const [image1, setImage1] = useState(null);
   const [image1Preview, setImage1Preview] = useState(null);
   const [image2, setImage2] = useState(null);
   const [image2Preview, setImage2Preview] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState('');
+
+  React.useEffect(() => {
+    if (isOpen) {
+      setCreatedItem(null);
+      setCopiedLink(false);
+      getCampuses().then(data => {
+        if (Array.isArray(data)) {
+          setCampuses(data);
+          const active = getActiveCampusId();
+          if (active) {
+            setCampusId(active);
+          } else if (data.length > 0) {
+            setCampusId(data[0].id);
+          }
+        }
+      }).catch(() => {});
+    }
+  }, [isOpen]);
 
   if (!isOpen) return null;
 
@@ -120,6 +142,9 @@ function CreateListingModal({ isOpen, onClose, onCreated }) {
       formData.append('description', description.trim());
       formData.append('price_kobo', priceKobo);
       formData.append('category', category);
+      if (campusId) {
+        formData.append('campus_id', campusId);
+      }
 
       // Primary Image (Cover)
       if (image1) {
@@ -155,14 +180,13 @@ function CreateListingModal({ isOpen, onClose, onCreated }) {
         }
       }
 
-      await apiFetch('/listings/', {
+      const createdData = await apiFetch('/listings/', {
         method: 'POST',
         body: formData
       });
 
-      resetForm();
       onCreated();
-      onClose();
+      setCreatedItem(createdData);
     } catch (err) {
       setError(err.message || 'Failed to create listing');
     } finally {
@@ -208,6 +232,105 @@ function CreateListingModal({ isOpen, onClose, onCreated }) {
           </button>
         </div>
 
+        {createdItem ? (
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center', padding: '1rem 0', gap: '1.25rem' }}>
+            <div style={{
+              width: '72px',
+              height: '72px',
+              borderRadius: '50%',
+              backgroundColor: 'var(--lightgreen)',
+              color: 'var(--brandgreen)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              fontSize: '2rem'
+            }}>
+              <i className="fa-solid fa-check" />
+            </div>
+
+            <div>
+              <h3 style={{ fontFamily: 'var(--font-display)', fontSize: '1.45rem', fontWeight: '800', color: 'var(--text-main)', marginBottom: '0.35rem' }}>
+                Listing Published! ??
+              </h3>
+              <p style={{ fontSize: '0.88rem', color: 'var(--text-muted)', maxWidth: '380px', lineHeight: '1.5' }}>
+                Your item is live. Share it to your WhatsApp Status and hostel group chats right now to find a student buyer today!
+              </p>
+            </div>
+
+            <div style={{ width: '100%', display: 'flex', flexDirection: 'column', gap: '0.65rem' }}>
+              <button
+                type="button"
+                                  onClick={() => {
+                    const origin = window.location.origin;
+                    const shareUrl = `${origin}/?item=${createdItem.id}`;
+                    const campusTag = campuses.find(c => c.id === createdItem.campus_id)?.acronym || 'Campus';
+                    const priceStr = (createdItem.price_kobo ? (createdItem.price_kobo / 100) : (createdItem.price || 0)).toLocaleString();
+                    const text = `📦 Selling on CampusStash: ${createdItem.title} for ₦${priceStr} at ${campusTag}! View details & negotiate safely here: ${shareUrl}`;
+                    window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(text)}`, '_blank');
+                  }}
+                style={{
+                  width: '100%',
+                  backgroundColor: '#25D366',
+                  color: '#ffffff',
+                  border: 'none',
+                  borderRadius: '12px',
+                  padding: '0.85rem',
+                  fontSize: '0.95rem',
+                  fontWeight: '700',
+                  fontFamily: 'var(--font-display)',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '0.5rem',
+                  boxShadow: '0 4px 12px rgba(37, 211, 102, 0.3)'
+                }}
+              >
+                <i className="fa-brands fa-whatsapp" style={{ fontSize: '1.2rem' }} /> Share to WhatsApp Status
+              </button>
+
+              <button
+                type="button"
+                onClick={() => {
+                  const shareUrl = `${window.location.origin}/?item=${createdItem.id}`;
+                  navigator.clipboard.writeText(shareUrl);
+                  setCopiedLink(true);
+                  setTimeout(() => setCopiedLink(false), 2500);
+                }}
+                style={{
+                  width: '100%',
+                  backgroundColor: 'var(--surface-alt)',
+                  color: 'var(--text-main)',
+                  border: '1px solid var(--border)',
+                  borderRadius: '12px',
+                  padding: '0.75rem',
+                  fontSize: '0.88rem',
+                  fontWeight: '600',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '0.4rem'
+                }}
+              >
+                <i className="fa-regular fa-copy" /> {copiedLink ? 'Link Copied! ??' : 'Copy Listing Link'}
+              </button>
+            </div>
+
+            <button
+              type="button"
+              className="btn-secondary"
+              onClick={() => {
+                resetForm();
+                onClose();
+              }}
+              style={{ width: '100%', padding: '0.75rem' }}
+            >
+              Done
+            </button>
+          </div>
+        ) : (
+        <>
         {error && (
           <div style={{
             color: '#b91c1c',
@@ -478,6 +601,23 @@ function CreateListingModal({ isOpen, onClose, onCreated }) {
             </div>
           </div>
 
+          {/* Campus selection field */}
+          <div>
+            <label className="form-label">Campus Location</label>
+            <select 
+              className="form-input"
+              value={campusId}
+              onChange={(e) => setCampusId(e.target.value)}
+              style={{ cursor: 'pointer', backgroundColor: 'var(--surface)' }}
+            >
+              {campuses.map(c => (
+                <option key={c.id} value={c.id}>
+                  {c.acronym} - {c.name}
+                </option>
+              ))}
+            </select>
+          </div>
+
           <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.75rem', marginTop: '0.5rem' }}>
             <button type="button" className="btn-secondary" onClick={onClose} disabled={isSubmitting}>
               Cancel
@@ -497,6 +637,8 @@ function CreateListingModal({ isOpen, onClose, onCreated }) {
             </button>
           </div>
         </form>
+        </>
+        )}
       </div>
     </div>
   );

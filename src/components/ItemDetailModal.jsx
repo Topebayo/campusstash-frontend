@@ -6,6 +6,7 @@ function ItemDetailModal({
   onClose, 
   listing, 
   onMessageSeller, 
+  onRequireAuth, 
   currentUserId,
   onEditListing,
   onToggleStatus,
@@ -53,8 +54,55 @@ function ItemDetailModal({
     })
     .slice(0, 4);
 
+    const [copyFeedback, setCopyFeedback] = React.useState(false);
+
+  const getShareUrl = () => {
+    const origin = window.location.origin;
+    return `${origin}/?item=${listing.id}`;
+  };
+
+  const handleWhatsAppShare = (e) => {
+    if (e) e.stopPropagation();
+    const shareUrl = getShareUrl();
+    const campusTag = listing.campus_acronym || (listing.campus_name ? listing.campus_name : 'Campus');
+    const msg = `📦 Selling on CampusStash: ${listing.title} for ₦${priceFormatted} at ${campusTag}! View details & negotiate safely here: ${shareUrl}`;
+    const waUrl = `https://api.whatsapp.com/send?text=${encodeURIComponent(msg)}`;
+    window.open(waUrl, '_blank');
+  };
+
+  const handleCopyLinkAndImage = async (e) => {
+    if (e) e.stopPropagation();
+    const shareUrl = getShareUrl();
+    if (navigator.clipboard) {
+      await navigator.clipboard.writeText(shareUrl).catch(() => {});
+    }
+    setCopyFeedback(true);
+    setTimeout(() => setCopyFeedback(false), 2500);
+
+    if (listing.image_url) {
+      try {
+        const link = document.createElement('a');
+        link.href = getImageUrl(listing.image_url);
+        link.download = `campusstash-${listing.id}.jpg`;
+        link.target = '_blank';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+      } catch (err) {}
+    }
+  };
+
   const handleMessageClick = (e) => {
     if (e) e.stopPropagation();
+    const token = localStorage.getItem('token');
+    if (!token) {
+      if (onRequireAuth) {
+        onRequireAuth();
+      } else {
+        window.location.href = '/auth';
+      }
+      return;
+    }
     onClose();
     if (onMessageSeller) {
       onMessageSeller(listing);
@@ -62,17 +110,7 @@ function ItemDetailModal({
   };
 
   const handleShareClick = (e) => {
-    if (e) e.stopPropagation();
-    if (navigator.share) {
-      navigator.share({
-        title: listing.title,
-        text: `Check out ${listing.title} on CampusStash for ₦${priceFormatted}`,
-        url: window.location.href,
-      }).catch(() => {});
-    } else {
-      navigator.clipboard.writeText(window.location.href);
-      alert('Listing link copied to clipboard!');
-    }
+    handleWhatsAppShare(e);
   };
 
   return (
@@ -413,19 +451,93 @@ function ItemDetailModal({
               </p>
             </div>
 
-            {/* Campus Safety Tip */}
+            {/* Safe Campus Handshake Card */}
             <div style={{
               backgroundColor: 'var(--surface-alt)',
               border: '1px solid var(--border)',
               borderRadius: '14px',
-              padding: '0.75rem 0.9rem',
+              padding: '0.85rem 1rem',
               display: 'flex',
-              alignItems: 'center',
+              alignItems: 'flex-start',
+              gap: '0.75rem',
+              lineHeight: '1.45'
+            }}>
+              <span style={{ fontSize: '1.25rem', lineHeight: 1, flexShrink: 0 }}>???</span>
+              <div style={{ fontSize: '0.82rem' }}>
+                <strong style={{ color: 'var(--brandgreen)', display: 'block', marginBottom: '0.2rem' }}>
+                  Safe Campus Handshake
+                </strong>
+                Always meet at a designated public spot (e.g. Library Gate, Student Union Building). Inspect the item physically before paying via cash or direct bank transfer.
+              </div>
+            </div>
+
+            {/* Viral WhatsApp Share Card */}
+            <div style={{
+              backgroundColor: 'rgba(37, 211, 102, 0.08)',
+              border: '1px solid rgba(37, 211, 102, 0.35)',
+              borderRadius: '14px',
+              padding: '0.85rem 1rem',
+              display: 'flex',
+              flexDirection: 'column',
               gap: '0.65rem'
             }}>
-              <i className="fa-solid fa-shield-halved" style={{ color: 'var(--brandblue)', fontSize: '1.15rem', flexShrink: 0 }} />
-              <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', lineHeight: '1.4' }}>
-                <strong style={{ color: 'var(--text-main)' }}>Campus Safety:</strong> Meet in public campus areas (cafeteria, library dropzones) for handovers.
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <span style={{ fontSize: '0.84rem', fontWeight: '700', color: '#128C7E', display: 'flex', alignItems: 'center', gap: '0.4rem', fontFamily: 'var(--font-display)' }}>
+                  <i className="fa-brands fa-whatsapp" style={{ fontSize: '1.1rem' }} /> Share on WhatsApp
+                </span>
+                {copyFeedback && (
+                  <span style={{ fontSize: '0.75rem', color: '#128C7E', fontWeight: '700' }}>
+                    Link Copied! ??
+                  </span>
+                )}
+              </div>
+              <p style={{ fontSize: '0.78rem', color: 'var(--text-muted)', margin: 0, lineHeight: '1.4' }}>
+                Post directly to your WhatsApp Status or hostel groups to find student buyers quickly.
+              </p>
+              <div style={{ display: 'flex', gap: '0.5rem' }}>
+                <button
+                  type="button"
+                  onClick={handleWhatsAppShare}
+                  style={{
+                    flex: 1,
+                    backgroundColor: '#25D366',
+                    color: '#ffffff',
+                    border: 'none',
+                    borderRadius: '10px',
+                    padding: '0.65rem 0.85rem',
+                    fontSize: '0.84rem',
+                    fontWeight: '700',
+                    fontFamily: 'var(--font-display)',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '0.45rem',
+                    boxShadow: '0 2px 8px rgba(37, 211, 102, 0.3)'
+                  }}
+                >
+                  <i className="fa-brands fa-whatsapp" /> Share to WhatsApp Status
+                </button>
+                <button
+                  type="button"
+                  onClick={handleCopyLinkAndImage}
+                  style={{
+                    backgroundColor: 'var(--surface)',
+                    color: 'var(--text-main)',
+                    border: '1px solid var(--border)',
+                    borderRadius: '10px',
+                    padding: '0.65rem 0.85rem',
+                    fontSize: '0.84rem',
+                    fontWeight: '600',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '0.35rem'
+                  }}
+                  title="Copy Link"
+                >
+                  <i className="fa-solid fa-copy" /> Copy Link & Image
+                </button>
               </div>
             </div>
 

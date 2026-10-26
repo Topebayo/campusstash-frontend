@@ -148,3 +148,45 @@ if (typeof window !== 'undefined') {
     }
   });
 }
+
+// Campus & Request Helpers
+export const getCampuses = async () => {
+  return await apiFetch('/campuses/');
+};
+
+export const getActiveCampusId = () => {
+  return localStorage.getItem('campusstash_campus_id') || '';
+};
+
+export const setActiveCampusId = (campusId) => {
+  if (campusId) {
+    localStorage.setItem('campusstash_campus_id', campusId);
+  } else {
+    localStorage.removeItem('campusstash_campus_id');
+  }
+  window.dispatchEvent(new CustomEvent('campusstash:campus_changed', { detail: campusId }));
+};
+
+export const getItemRequests = async (campusId = '') => {
+  const query = campusId ? `?campus_id=${campusId}` : '';
+  return await apiFetch(`/requests/${query}`);
+};
+
+export const createItemRequest = async (payload) => {
+  return await apiFetch('/requests/', {
+    method: 'POST',
+    body: JSON.stringify(payload)
+  });
+};
+
+export const fulfillItemRequest = async (requestId) => {
+  return await apiFetch(`/requests/${requestId}/fulfill`, {
+    method: 'PATCH'
+  });
+};
+
+export const deleteItemRequest = async (requestId) => {
+  return await apiFetch(`/requests/${requestId}`, {
+    method: 'DELETE'
+  });
+};
