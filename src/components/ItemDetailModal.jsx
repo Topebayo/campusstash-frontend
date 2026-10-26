@@ -13,7 +13,27 @@ function ItemDetailModal({
   allListings = [],
   onSelectListing
 }) {
+  const [activeImageIdx, setActiveImageIdx] = React.useState(0);
+
+  React.useEffect(() => {
+    setActiveImageIdx(0);
+  }, [listing?.id]);
+
   if (!listing) return null;
+
+  const allImages = (() => {
+    const list = [];
+    if (listing.image_url) list.push(listing.image_url);
+    if (Array.isArray(listing.images)) {
+      listing.images.forEach(img => {
+        const u = typeof img === 'string' ? img : img?.image_url;
+        if (u && !list.includes(u)) list.push(u);
+      });
+    }
+    return list;
+  })();
+
+  const currentDisplayImage = allImages[activeImageIdx] || listing.image_url;
 
   const isMyListing = currentUserId && (
     String(listing.seller_id).toLowerCase() === String(currentUserId).toLowerCase() || 
@@ -80,7 +100,7 @@ function ItemDetailModal({
           <div style={{
             position: 'relative',
             width: '100%',
-            height: '210px',
+            height: '225px',
             flexShrink: 0,
             backgroundColor: 'var(--surface-alt)',
             display: 'flex',
@@ -88,11 +108,12 @@ function ItemDetailModal({
             justifyContent: 'center',
             overflow: 'hidden'
           }}>
-            {listing.image_url ? (
+            {currentDisplayImage ? (
               <img 
-                src={getImageUrl(listing.image_url)} 
+                key={currentDisplayImage}
+                src={getImageUrl(currentDisplayImage)} 
                 alt={listing.title} 
-                style={{ width: '100%', height: '100%', objectFit: 'cover' }} 
+                style={{ width: '100%', height: '100%', objectFit: 'cover', transition: 'opacity 0.2s ease-in-out' }} 
                 onError={(e) => {
                   e.currentTarget.style.display = 'none';
                   const fb = e.currentTarget.parentElement?.querySelector('.detail-img-placeholder');
@@ -100,10 +121,93 @@ function ItemDetailModal({
                 }}
               />
             ) : null}
-            <div className="detail-img-placeholder" style={{ color: 'var(--text-muted)', textAlign: 'center', fontFamily: 'var(--font-display)', display: listing.image_url ? 'none' : 'block' }}>
+            <div className="detail-img-placeholder" style={{ color: 'var(--text-muted)', textAlign: 'center', fontFamily: 'var(--font-display)', display: currentDisplayImage ? 'none' : 'block' }}>
               <i className="fa-regular fa-image" style={{ fontSize: '2.2rem', marginBottom: '0.4rem', display: 'block', opacity: 0.4 }} />
               <span style={{ fontSize: '0.9rem', fontWeight: '500' }}>No image provided</span>
             </div>
+
+            {/* If multiple images: Previous / Next Chevron Buttons */}
+            {allImages.length > 1 && (
+              <>
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setActiveImageIdx((prev) => (prev > 0 ? prev - 1 : allImages.length - 1));
+                  }}
+                  style={{
+                    position: 'absolute',
+                    left: '0.85rem',
+                    top: '50%',
+                    transform: 'translateY(-50%)',
+                    width: '32px',
+                    height: '32px',
+                    borderRadius: '50%',
+                    backgroundColor: 'rgba(15, 23, 42, 0.75)',
+                    color: '#fff',
+                    border: '1px solid rgba(255, 255, 255, 0.15)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    cursor: 'pointer',
+                    zIndex: 10,
+                    backdropFilter: 'blur(4px)'
+                  }}
+                  title="Previous photo"
+                >
+                  <i className="fa-solid fa-chevron-left" style={{ fontSize: '0.8rem' }} />
+                </button>
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setActiveImageIdx((prev) => (prev < allImages.length - 1 ? prev + 1 : 0));
+                  }}
+                  style={{
+                    position: 'absolute',
+                    right: '0.85rem',
+                    top: '50%',
+                    transform: 'translateY(-50%)',
+                    width: '32px',
+                    height: '32px',
+                    borderRadius: '50%',
+                    backgroundColor: 'rgba(15, 23, 42, 0.75)',
+                    color: '#fff',
+                    border: '1px solid rgba(255, 255, 255, 0.15)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    cursor: 'pointer',
+                    zIndex: 10,
+                    backdropFilter: 'blur(4px)'
+                  }}
+                  title="Next photo"
+                >
+                  <i className="fa-solid fa-chevron-right" style={{ fontSize: '0.8rem' }} />
+                </button>
+
+                {/* Photo Count Pill Badge */}
+                <div style={{
+                  position: 'absolute',
+                  bottom: '0.85rem',
+                  right: '0.85rem',
+                  backgroundColor: 'rgba(15, 23, 42, 0.8)',
+                  color: '#fff',
+                  fontSize: '0.72rem',
+                  fontWeight: '700',
+                  padding: '0.22rem 0.55rem',
+                  borderRadius: '10px',
+                  backdropFilter: 'blur(4px)',
+                  border: '1px solid rgba(255, 255, 255, 0.15)',
+                  zIndex: 8,
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.35rem'
+                }}>
+                  <i className="fa-regular fa-image" /> {activeImageIdx + 1} / {allImages.length}
+                </div>
+              </>
+            )}
 
             {/* Gradient shadow for header badges */}
             <div style={{
@@ -199,6 +303,45 @@ function ItemDetailModal({
               )}
             </div>
           </div>
+
+          {/* Thumbnail Selector Strip (if 2+ images) */}
+          {allImages.length > 1 && (
+            <div style={{
+              display: 'flex',
+              gap: '0.65rem',
+              padding: '0.65rem 1.25rem',
+              backgroundColor: 'var(--surface-alt)',
+              borderBottom: '1px solid var(--border)'
+            }}>
+              {allImages.map((imgUrl, idx) => (
+                <button
+                  key={idx}
+                  type="button"
+                  onClick={() => setActiveImageIdx(idx)}
+                  style={{
+                    width: '52px',
+                    height: '52px',
+                    borderRadius: '8px',
+                    overflow: 'hidden',
+                    border: activeImageIdx === idx ? '2px solid var(--brandgreen)' : '1px solid var(--border)',
+                    padding: 0,
+                    cursor: 'pointer',
+                    opacity: activeImageIdx === idx ? 1 : 0.6,
+                    transform: activeImageIdx === idx ? 'scale(1.05)' : 'none',
+                    transition: 'all 0.15s ease-in-out',
+                    backgroundColor: 'var(--surface)'
+                  }}
+                  title="View photo"
+                >
+                  <img 
+                    src={getImageUrl(imgUrl)} 
+                    alt="Thumbnail" 
+                    style={{ width: '100%', height: '100%', objectFit: 'cover' }} 
+                  />
+                </button>
+              ))}
+            </div>
+          )}
 
           {/* Body Information Section */}
           <div style={{ padding: '1.25rem 1.25rem 1rem 1.25rem', display: 'flex', flexDirection: 'column', gap: '1.1rem' }}>

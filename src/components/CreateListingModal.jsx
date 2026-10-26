@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { apiFetch } from '../api';
 
-
 const compressImage = (file, maxWidth = 800, maxHeight = 800, quality = 0.75) => {
   return new Promise((resolve) => {
     if (!file) return resolve(null);
@@ -50,11 +49,58 @@ function CreateListingModal({ isOpen, onClose, onCreated }) {
   const [description, setDescription] = useState('');
   const [price, setPrice] = useState('');
   const [category, setCategory] = useState('Textbooks');
-  const [image, setImage] = useState(null);
+  const [image1, setImage1] = useState(null);
+  const [image1Preview, setImage1Preview] = useState(null);
+  const [image2, setImage2] = useState(null);
+  const [image2Preview, setImage2Preview] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState('');
 
   if (!isOpen) return null;
+
+  const handleImage1Change = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      setImage1(file);
+      setImage1Preview(URL.createObjectURL(file));
+    }
+  };
+
+  const handleImage2Change = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      setImage2(file);
+      setImage2Preview(URL.createObjectURL(file));
+    }
+  };
+
+  const removeImage1 = (e) => {
+    e.stopPropagation();
+    if (image1Preview) URL.revokeObjectURL(image1Preview);
+    setImage1(null);
+    setImage1Preview(null);
+  };
+
+  const removeImage2 = (e) => {
+    e.stopPropagation();
+    if (image2Preview) URL.revokeObjectURL(image2Preview);
+    setImage2(null);
+    setImage2Preview(null);
+  };
+
+  const resetForm = () => {
+    setTitle('');
+    setDescription('');
+    setPrice('');
+    setCategory('Textbooks');
+    if (image1Preview) URL.revokeObjectURL(image1Preview);
+    if (image2Preview) URL.revokeObjectURL(image2Preview);
+    setImage1(null);
+    setImage1Preview(null);
+    setImage2(null);
+    setImage2Preview(null);
+    setError('');
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -74,19 +120,38 @@ function CreateListingModal({ isOpen, onClose, onCreated }) {
       formData.append('description', description.trim());
       formData.append('price_kobo', priceKobo);
       formData.append('category', category);
-      if (image) {
-        let sentCompressed = false;
+
+      // Primary Image (Cover)
+      if (image1) {
+        let sentCompressed1 = false;
         try {
-          const compressed = await compressImage(image);
-          if (compressed) {
-            formData.append('image_url', compressed);
-            sentCompressed = true;
+          const compressed1 = await compressImage(image1);
+          if (compressed1) {
+            formData.append('image_url', compressed1);
+            sentCompressed1 = true;
           }
         } catch (e) {
-          console.warn('Image compression note:', e);
+          console.warn('Image 1 compression note:', e);
         }
-        if (!sentCompressed) {
-          formData.append('image', image);
+        if (!sentCompressed1) {
+          formData.append('image', image1);
+        }
+      }
+
+      // Secondary Image (Detail / Back)
+      if (image2) {
+        let sentCompressed2 = false;
+        try {
+          const compressed2 = await compressImage(image2);
+          if (compressed2) {
+            formData.append('image_2_url', compressed2);
+            sentCompressed2 = true;
+          }
+        } catch (e) {
+          console.warn('Image 2 compression note:', e);
+        }
+        if (!sentCompressed2) {
+          formData.append('image_2', image2);
         }
       }
 
@@ -95,12 +160,7 @@ function CreateListingModal({ isOpen, onClose, onCreated }) {
         body: formData
       });
 
-      setTitle('');
-      setDescription('');
-      setPrice('');
-      setCategory('Textbooks');
-      setImage(null);
-      
+      resetForm();
       onCreated();
       onClose();
     } catch (err) {
@@ -115,10 +175,10 @@ function CreateListingModal({ isOpen, onClose, onCreated }) {
       <div 
         className="modal-content animate-fade-in" 
         onClick={(e) => e.stopPropagation()} 
-        style={{ maxWidth: '540px', padding: '2rem' }}
+        style={{ maxWidth: '560px', padding: '2rem' }}
       >
         {/* Header */}
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1.5rem' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1.25rem' }}>
           <div>
             <span className="badge-pill" style={{ marginBottom: '0.4rem' }}>
               <i className="fa-solid fa-tag" /> New Item
@@ -207,7 +267,7 @@ function CreateListingModal({ isOpen, onClose, onCreated }) {
                   fontWeight: '700',
                   fontSize: '1rem'
                 }}>
-                  ₦
+                  ?
                 </span>
                 <input 
                   className="form-input"
@@ -236,44 +296,189 @@ function CreateListingModal({ isOpen, onClose, onCreated }) {
             />
           </div>
 
+          {/* Dual Image Uploaders */}
           <div>
-            <label className="form-label">Item Photo (Optional)</label>
-            <div style={{
-              border: '2px dashed var(--border)',
-              borderRadius: '12px',
-              padding: '1.25rem',
-              textAlign: 'center',
-              backgroundColor: 'var(--bg-color)',
-              cursor: 'pointer',
-              position: 'relative'
-            }}>
-              <input 
-                type="file"
-                accept="image/*"
-                onChange={(e) => setImage(e.target.files[0])}
-                style={{
-                  position: 'absolute',
-                  top: 0,
-                  left: 0,
-                  width: '100%',
-                  height: '100%',
-                  opacity: 0,
-                  cursor: 'pointer'
-                }}
-              />
-              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.4rem' }}>
-                <i className="fa-solid fa-cloud-arrow-up" style={{ fontSize: '1.5rem', color: 'var(--brandgreen)' }} />
-                <span style={{ fontSize: '0.88rem', fontWeight: '600', color: 'var(--text-main)' }}>
-                  {image ? image.name : 'Click or tap to upload a photo'}
-                </span>
-                <span style={{ fontSize: '0.75rem', color: 'var(--text-light)' }}>
-                  PNG, JPG, or WEBP up to 5MB
-                </span>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.4rem' }}>
+              <label className="form-label" style={{ margin: 0 }}>Item Photos (Up to 2)</label>
+              <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Cover + Detail Angle</span>
+            </div>
+
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.85rem' }}>
+              {/* Photo 1: Cover Photo */}
+              <div style={{
+                border: '2px dashed var(--border)',
+                borderRadius: '12px',
+                height: '130px',
+                backgroundColor: 'var(--bg-color)',
+                position: 'relative',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                overflow: 'hidden',
+                cursor: 'pointer'
+              }}>
+                {image1Preview ? (
+                  <>
+                    <img 
+                      src={image1Preview} 
+                      alt="Cover Preview" 
+                      style={{ width: '100%', height: '100%', objectFit: 'cover' }} 
+                    />
+                    <div style={{
+                      position: 'absolute',
+                      top: '0.35rem',
+                      left: '0.35rem',
+                      backgroundColor: 'rgba(15, 23, 42, 0.75)',
+                      color: '#fff',
+                      fontSize: '0.68rem',
+                      fontWeight: '700',
+                      padding: '0.2rem 0.45rem',
+                      borderRadius: '6px'
+                    }}>
+                      Cover
+                    </div>
+                    <button
+                      type="button"
+                      onClick={removeImage1}
+                      title="Remove image"
+                      style={{
+                        position: 'absolute',
+                        top: '0.35rem',
+                        right: '0.35rem',
+                        backgroundColor: 'rgba(239, 68, 68, 0.9)',
+                        color: '#fff',
+                        border: 'none',
+                        borderRadius: '50%',
+                        width: '24px',
+                        height: '24px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        cursor: 'pointer',
+                        fontSize: '0.75rem'
+                      }}
+                    >
+                      <i className="fa-solid fa-xmark" />
+                    </button>
+                  </>
+                ) : (
+                  <>
+                    <input 
+                      type="file"
+                      accept="image/*"
+                      onChange={handleImage1Change}
+                      style={{
+                        position: 'absolute',
+                        top: 0,
+                        left: 0,
+                        width: '100%',
+                        height: '100%',
+                        opacity: 0,
+                        cursor: 'pointer'
+                      }}
+                    />
+                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.3rem', padding: '0.5rem', textAlign: 'center' }}>
+                      <i className="fa-solid fa-camera" style={{ fontSize: '1.3rem', color: 'var(--brandgreen)' }} />
+                      <span style={{ fontSize: '0.8rem', fontWeight: '700', color: 'var(--text-main)' }}>
+                        Photo 1 (Cover)
+                      </span>
+                      <span style={{ fontSize: '0.7rem', color: 'var(--text-light)' }}>
+                        Front view
+                      </span>
+                    </div>
+                  </>
+                )}
+              </div>
+
+              {/* Photo 2: Detail / Back Photo */}
+              <div style={{
+                border: '2px dashed var(--border)',
+                borderRadius: '12px',
+                height: '130px',
+                backgroundColor: 'var(--bg-color)',
+                position: 'relative',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                overflow: 'hidden',
+                cursor: 'pointer'
+              }}>
+                {image2Preview ? (
+                  <>
+                    <img 
+                      src={image2Preview} 
+                      alt="Detail Preview" 
+                      style={{ width: '100%', height: '100%', objectFit: 'cover' }} 
+                    />
+                    <div style={{
+                      position: 'absolute',
+                      top: '0.35rem',
+                      left: '0.35rem',
+                      backgroundColor: 'rgba(15, 23, 42, 0.75)',
+                      color: '#fff',
+                      fontSize: '0.68rem',
+                      fontWeight: '700',
+                      padding: '0.2rem 0.45rem',
+                      borderRadius: '6px'
+                    }}>
+                      Detail
+                    </div>
+                    <button
+                      type="button"
+                      onClick={removeImage2}
+                      title="Remove image"
+                      style={{
+                        position: 'absolute',
+                        top: '0.35rem',
+                        right: '0.35rem',
+                        backgroundColor: 'rgba(239, 68, 68, 0.9)',
+                        color: '#fff',
+                        border: 'none',
+                        borderRadius: '50%',
+                        width: '24px',
+                        height: '24px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        cursor: 'pointer',
+                        fontSize: '0.75rem'
+                      }}
+                    >
+                      <i className="fa-solid fa-xmark" />
+                    </button>
+                  </>
+                ) : (
+                  <>
+                    <input 
+                      type="file"
+                      accept="image/*"
+                      onChange={handleImage2Change}
+                      style={{
+                        position: 'absolute',
+                        top: 0,
+                        left: 0,
+                        width: '100%',
+                        height: '100%',
+                        opacity: 0,
+                        cursor: 'pointer'
+                      }}
+                    />
+                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.3rem', padding: '0.5rem', textAlign: 'center' }}>
+                      <i className="fa-solid fa-plus" style={{ fontSize: '1.3rem', color: 'var(--text-muted)' }} />
+                      <span style={{ fontSize: '0.8rem', fontWeight: '700', color: 'var(--text-main)' }}>
+                        Photo 2 (Optional)
+                      </span>
+                      <span style={{ fontSize: '0.7rem', color: 'var(--text-light)' }}>
+                        Back or detail
+                      </span>
+                    </div>
+                  </>
+                )}
               </div>
             </div>
           </div>
 
-          <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.75rem', marginTop: '0.75rem' }}>
+          <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.75rem', marginTop: '0.5rem' }}>
             <button type="button" className="btn-secondary" onClick={onClose} disabled={isSubmitting}>
               Cancel
             </button>
