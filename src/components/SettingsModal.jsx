@@ -85,8 +85,6 @@ function SettingsModal({ isOpen, onClose, onLogout, userProfile, onUpdateUser })
       const updated = await apiFetch('/users/me', {
         method: 'PUT',
         body: JSON.stringify({
-          burner_handle: handle.trim(),
-          phone: phone.trim(),
           name: name.trim() || null
         })
       });
@@ -366,14 +364,13 @@ function SettingsModal({ isOpen, onClose, onLogout, userProfile, onUpdateUser })
                       type="text"
                       className="form-input"
                       value={handle}
-                      onChange={(e) => setHandle(e.target.value)}
+                      disabled
                       placeholder="e.g. shadow99"
-                      style={{ paddingLeft: '2.2rem' }}
-                      required
+                      style={{ paddingLeft: '2.2rem', backgroundColor: 'var(--surface-alt)', opacity: 0.85, cursor: 'not-allowed' }}
                     />
                   </div>
-                  <span style={{ fontSize: '0.74rem', color: 'var(--text-muted)', marginTop: '0.25rem', display: 'block' }}>
-                    This is your public alias shown on item listings and chats.
+                  <span style={{ fontSize: '0.74rem', color: 'var(--brandblue)', marginTop: '0.25rem', display: 'flex', alignItems: 'center', gap: '0.3rem', fontWeight: '600' }}>
+                    <i className="fa-solid fa-lock" /> Permanent username (cannot be changed once verified)
                   </span>
                 </div>
 
@@ -385,12 +382,12 @@ function SettingsModal({ isOpen, onClose, onLogout, userProfile, onUpdateUser })
                     type="tel"
                     className="form-input"
                     value={phone}
-                    onChange={(e) => setPhone(e.target.value)}
+                    disabled
                     placeholder="e.g. 08012345678"
-                    required
+                    style={{ backgroundColor: 'var(--surface-alt)', opacity: 0.85, cursor: 'not-allowed' }}
                   />
-                  <span style={{ fontSize: '0.74rem', color: 'var(--text-muted)', marginTop: '0.25rem', display: 'block' }}>
-                    Used for SMS security and verified buyer/seller badge.
+                  <span style={{ fontSize: '0.74rem', color: 'var(--brandgreen)', marginTop: '0.25rem', display: 'flex', alignItems: 'center', gap: '0.3rem', fontWeight: '600' }}>
+                    <i className="fa-solid fa-shield-halved" /> Verified phone number (locked for campus security)
                   </span>
                 </div>
 
@@ -798,9 +795,7 @@ function SettingsModal({ isOpen, onClose, onLogout, userProfile, onUpdateUser })
           justifyContent: 'space-between',
           alignItems: 'center'
         }}>
-          <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
-            CampusStash v2.0 • Release
-          </span>
+
           <button
             type="button"
             onClick={() => {

@@ -882,7 +882,7 @@ function Dashboard() {
                       }}
                     >
                       {/* Thumbnail Container */}
-                      <div style={{ position: 'relative', width: '100%', height: '190px', backgroundColor: 'var(--surface-alt)', overflow: 'hidden' }}>
+                      <div className="listing-thumbnail-container">
                         {listing.image_url ? (
                           <img 
                             src={getImageUrl(listing.image_url)} 
@@ -1143,11 +1143,7 @@ function Dashboard() {
                 </button>
               </div>
             ) : (
-              <div style={{
-                display: 'grid',
-                gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))',
-                gap: '1.25rem'
-              }}>
+              <div className="requests-grid">
                 {requests.map(req => {
                   const isMine = currentUserId && req.user_id === currentUserId;
                   const budgetFormatted = (req.budget_naira || (req.budget_kobo ? req.budget_kobo / 100 : 0)).toLocaleString();
@@ -1156,18 +1152,7 @@ function Dashboard() {
                   return (
                     <div
                       key={req.id}
-                      style={{
-                        backgroundColor: 'var(--card-bg)',
-                        border: '1px solid var(--border)',
-                        borderRadius: '20px',
-                        padding: '1.25rem',
-                        display: 'flex',
-                        flexDirection: 'column',
-                        justifyContent: 'space-between',
-                        gap: '1rem',
-                        boxShadow: 'var(--shadow-sm)',
-                        transition: 'transform 0.15s ease, box-shadow 0.15s ease'
-                      }}
+                      className="request-card"
                     >
                       <div>
                         {/* Top Badge Row */}

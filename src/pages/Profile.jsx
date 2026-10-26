@@ -77,13 +77,8 @@ function Profile() {
     setIsSaving(true);
     setMessage('');
     try {
-      const updated = await apiFetch('/users/me', {
-        method: 'PUT',
-        body: JSON.stringify({
-          phone: phone.trim(),
-          burner_handle: burnerHandle.trim().replace(/^@+/, '')
-        })
-      });
+      if (serverIp.trim()) { localStorage.setItem('server_ip', serverIp.trim()); } else { localStorage.removeItem('server_ip'); }
+      setMessage('Profile settings up to date.');
       setProfile(updated);
       setPhone(updated.phone || '');
       setBurnerHandle(updated.profile?.burner_handle || '');
@@ -302,12 +297,14 @@ function Profile() {
                   <input 
                     className="form-input"
                     type="text" 
-                    required
+                    disabled
                     value={burnerHandle} 
-                    onChange={(e) => setBurnerHandle(e.target.value)}
                     placeholder="e.g. shadow99"
-                    style={{ paddingLeft: '2.25rem' }} 
+                    style={{ paddingLeft: '2.25rem', backgroundColor: '#f9fafb', color: 'var(--text-muted)', cursor: 'not-allowed' }} 
                   />
+                  <span style={{ fontSize: '0.74rem', color: 'var(--brandblue)', marginTop: '0.3rem', display: 'flex', alignItems: 'center', gap: '0.3rem', fontWeight: '600' }}>
+                    <i className="fa-solid fa-lock" /> Username is permanently locked
+                  </span>
                 </div>
               </div>
 
@@ -316,11 +313,14 @@ function Profile() {
                 <input 
                   className="form-input"
                   type="tel" 
-                  required
+                  disabled
                   value={phone} 
-                  onChange={(e) => setPhone(e.target.value)}
                   placeholder="e.g. +234 800 000 0000"
+                  style={{ backgroundColor: '#f9fafb', color: 'var(--text-muted)', cursor: 'not-allowed' }}
                 />
+                <span style={{ fontSize: '0.74rem', color: 'var(--brandgreen)', marginTop: '0.3rem', display: 'flex', alignItems: 'center', gap: '0.3rem', fontWeight: '600' }}>
+                  <i className="fa-solid fa-shield-halved" /> Verified phone number (locked for security)
+                </span>
               </div>
 
               <button 
