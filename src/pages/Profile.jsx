@@ -277,20 +277,23 @@ function Profile() {
                   type="email" 
                   disabled
                   value={profile?.email || ''} 
-                  style={{ backgroundColor: '#f9fafb', color: 'var(--text-muted)', cursor: 'not-allowed' }}
+                  style={{ backgroundColor: 'var(--surface-alt)', color: 'var(--text-muted)', cursor: 'not-allowed', border: '1px solid var(--border)' }}
                 />
               </div>
 
               <div>
                 <label className="form-label">Burner Handle (Public Alias)</label>
-                <div style={{ position: 'relative' }}>
+                <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
                   <span style={{
                     position: 'absolute',
                     left: '1rem',
                     top: '50%',
                     transform: 'translateY(-50%)',
-                    color: 'var(--text-light)',
-                    fontWeight: '600'
+                    color: 'var(--text-muted)',
+                    fontWeight: '700',
+                    lineHeight: 1,
+                    pointerEvents: 'none',
+                    userSelect: 'none'
                   }}>
                     @
                   </span>
@@ -300,12 +303,12 @@ function Profile() {
                     disabled
                     value={burnerHandle} 
                     placeholder="e.g. shadow99"
-                    style={{ paddingLeft: '2.25rem', backgroundColor: '#f9fafb', color: 'var(--text-muted)', cursor: 'not-allowed' }} 
+                    style={{ paddingLeft: '2.25rem', backgroundColor: 'var(--surface-alt)', color: 'var(--text-muted)', cursor: 'not-allowed', border: '1px solid var(--border)' }} 
                   />
-                  <span style={{ fontSize: '0.74rem', color: 'var(--brandblue)', marginTop: '0.3rem', display: 'flex', alignItems: 'center', gap: '0.3rem', fontWeight: '600' }}>
-                    <i className="fa-solid fa-lock" /> Username is permanently locked
-                  </span>
                 </div>
+                <span style={{ fontSize: '0.74rem', color: 'var(--brandblue)', marginTop: '0.35rem', display: 'flex', alignItems: 'center', gap: '0.35rem', fontWeight: '600' }}>
+                  <i className="fa-solid fa-lock" /> Username is permanently locked
+                </span>
               </div>
 
               <div>
@@ -316,7 +319,7 @@ function Profile() {
                   disabled
                   value={phone} 
                   placeholder="e.g. +234 800 000 0000"
-                  style={{ backgroundColor: '#f9fafb', color: 'var(--text-muted)', cursor: 'not-allowed' }}
+                  style={{ backgroundColor: 'var(--surface-alt)', color: 'var(--text-muted)', cursor: 'not-allowed', border: '1px solid var(--border)' }}
                 />
                 <span style={{ fontSize: '0.74rem', color: 'var(--brandgreen)', marginTop: '0.3rem', display: 'flex', alignItems: 'center', gap: '0.3rem', fontWeight: '600' }}>
                   <i className="fa-solid fa-shield-halved" /> Verified phone number (locked for security)
