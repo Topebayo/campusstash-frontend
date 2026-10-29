@@ -417,23 +417,11 @@ function Dashboard() {
         primaryActionText="Sell an Item"
       />
 
-      <div style={{ maxWidth: '1280px', margin: '0 auto', padding: '0 1.25rem 2.5rem 1.25rem', width: '100%', boxSizing: 'border-box', flex: 1 }}>
+      <div className="dashboard-main-container" style={{ maxWidth: '1280px', margin: '0 auto', width: '100%', boxSizing: 'border-box', flex: 1 }}>
         
         {/* Glassmorphic Hero & Search Header */}
         <div 
-          className="animate-fade-in"
-          style={{
-            position: 'relative',
-            borderRadius: '28px',
-            padding: '2.5rem 2rem',
-            marginBottom: '1.5rem',
-            background: 'var(--hero-bg)',
-            backdropFilter: 'blur(20px) saturate(180%)',
-            WebkitBackdropFilter: 'blur(20px) saturate(180%)',
-            border: '1px solid var(--border)',
-            boxShadow: 'var(--shadow-md)',
-            overflow: 'hidden'
-          }}
+          className="dashboard-hero animate-fade-in"
         >
           {/* Ambient Glowing Aura */}
           <div style={{
@@ -450,7 +438,7 @@ function Dashboard() {
           <div style={{ maxWidth: '820px', position: 'relative', zIndex: 1 }}>
             
             {/* Campus Scope Badge */}
-            <div style={{
+            <div className="dashboard-hero-badge" style={{
               display: 'inline-flex',
               alignItems: 'center',
               gap: '0.45rem',
@@ -468,24 +456,11 @@ function Dashboard() {
               <span>Campus: {activeCampusName} ({activeCampusAcronym})</span>
             </div>
 
-            <h1 style={{
-              fontFamily: 'var(--font-display)',
-              fontSize: '2.4rem',
-              fontWeight: '800',
-              letterSpacing: '-0.035em',
-              color: 'var(--text-main)',
-              lineHeight: '1.18'
-            }}>
+            <h1 className="dashboard-hero-title">
               Campus <span className="text-brandblue">Marketplace</span> & Wanted Board
             </h1>
 
-            <p style={{
-              fontSize: '1rem',
-              color: 'var(--text-muted)',
-              marginTop: '0.5rem',
-              marginBottom: '1.25rem',
-              lineHeight: '1.5'
-            }}>
+            <p className="dashboard-hero-sub">
               Buy, sell, and request items directly from trusted students on your campus. Zero platform fees, safe public meetups.
             </p>
 
@@ -600,125 +575,72 @@ function Dashboard() {
           </div>
         </div>
 
-        {/* Top-Level Tabs: [Available Items] | [Student Requests (Wanted Board)] */}
-        <div style={{
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          gap: '1rem',
-          marginBottom: '1.5rem',
-          flexWrap: 'wrap'
-        }}>
-          <div style={{
-            display: 'inline-flex',
-            backgroundColor: 'var(--surface-alt)',
-            padding: '0.35rem',
-            borderRadius: '9999px',
-            border: '1px solid var(--border)'
-          }}>
+        {/* Top-Level Tabs: [Available Items] | [Student Requests] */}
+        <div className="dashboard-tabs-wrapper">
+          <div className="dashboard-segmented-tabs">
             <button
               onClick={() => setActiveTab('items')}
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '0.45rem',
-                padding: '0.55rem 1.15rem',
-                borderRadius: '9999px',
-                border: 'none',
-                backgroundColor: activeTab === 'items' ? 'var(--brandblue)' : 'transparent',
-                color: activeTab === 'items' ? '#ffffff' : 'var(--text-muted)',
-                fontFamily: 'var(--font-display)',
-                fontWeight: '700',
-                fontSize: '0.88rem',
-                cursor: 'pointer',
-                transition: 'all 0.15s ease',
-                boxShadow: activeTab === 'items' ? 'var(--shadow-blue)' : 'none'
-              }}
+              className={`dashboard-tab-pill ${activeTab === 'items' ? 'active' : ''}`}
             >
               <i className="fa-solid fa-store" />
-              <span>Available Items</span>
-              <span style={{
-                backgroundColor: activeTab === 'items' ? 'rgba(255,255,255,0.25)' : 'var(--surface)',
-                color: activeTab === 'items' ? '#ffffff' : 'var(--brandblue)',
-                padding: '0.15rem 0.5rem',
-                borderRadius: '9999px',
-                fontSize: '0.75rem',
-                marginLeft: '0.2rem'
-              }}>
+              <span className="tab-text-full">Available Items</span>
+              <span className="tab-text-short">Marketplace</span>
+              <span className="tab-count-badge">
                 {filteredListings.length}
               </span>
             </button>
 
             <button
               onClick={() => setActiveTab('requests')}
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '0.45rem',
-                padding: '0.55rem 1.15rem',
-                borderRadius: '9999px',
-                border: 'none',
-                backgroundColor: activeTab === 'requests' ? 'var(--brandblue)' : 'transparent',
-                color: activeTab === 'requests' ? '#ffffff' : 'var(--text-muted)',
-                fontFamily: 'var(--font-display)',
-                fontWeight: '700',
-                fontSize: '0.88rem',
-                cursor: 'pointer',
-                transition: 'all 0.15s ease',
-                boxShadow: activeTab === 'requests' ? 'var(--shadow-blue)' : 'none'
-              }}
+              className={`dashboard-tab-pill ${activeTab === 'requests' ? 'active' : ''}`}
             >
               <i className="fa-solid fa-bullhorn" />
-              <span>Student Requests (Wanted Board)</span>
-              <span style={{
-                backgroundColor: activeTab === 'requests' ? 'rgba(255,255,255,0.25)' : 'var(--surface)',
-                color: activeTab === 'requests' ? '#ffffff' : 'var(--brandblue)',
-                padding: '0.15rem 0.5rem',
-                borderRadius: '9999px',
-                fontSize: '0.75rem',
-                marginLeft: '0.2rem'
-              }}>
+              <span className="tab-text-full">Student Requests</span>
+              <span className="tab-text-short">Requests</span>
+              <span className="tab-count-badge">
                 {requests.length}
               </span>
             </button>
           </div>
 
-          {/* Quick Action Button */}
-          {activeTab === 'requests' ? (
-            <button
-              className="btn-primary"
-              onClick={handleOpenCreateRequest}
-              style={{
-                padding: '0.55rem 1.15rem',
-                fontSize: '0.88rem',
-                borderRadius: '9999px',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '0.4rem',
-                boxShadow: 'var(--shadow-blue)'
-              }}
-            >
-              <i className="fa-solid fa-plus" />
-              <span>Post What You Need</span>
-            </button>
-          ) : (
-            <button
-              className="btn-primary"
-              onClick={handleOpenCreateModal}
-              style={{
-                padding: '0.55rem 1.15rem',
-                fontSize: '0.88rem',
-                borderRadius: '9999px',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '0.4rem',
-                boxShadow: 'var(--shadow-blue)'
-              }}
-            >
-              <i className="fa-solid fa-plus" />
-              <span>Sell an Item</span>
-            </button>
-          )}
+          {/* Quick Action Button - inline on desktop, hidden on mobile in favor of bottom dock */}
+          <div className="dashboard-quick-action-desktop">
+            {activeTab === 'requests' ? (
+              <button
+                className="btn-primary"
+                onClick={handleOpenCreateRequest}
+                style={{
+                  padding: '0.55rem 1.15rem',
+                  fontSize: '0.88rem',
+                  borderRadius: '9999px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.4rem',
+                  boxShadow: 'var(--shadow-blue)'
+                }}
+              >
+                <i className="fa-solid fa-plus" />
+                <span>Post Request</span>
+              </button>
+            ) : (
+              <button
+                className="btn-primary"
+                onClick={handleOpenCreateModal}
+                style={{
+                  padding: '0.55rem 1.15rem',
+                  fontSize: '0.88rem',
+                  borderRadius: '9999px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.4rem',
+                  boxShadow: 'var(--shadow-blue)'
+                }}
+              >
+                <i className="fa-solid fa-plus" />
+                <span>Sell an Item</span>
+              </button>
+            )}
+          </div>
         </div>
 
         {/* ============================================================== */}
@@ -865,7 +787,8 @@ function Dashboard() {
               <div className="listings-grid">
                 {filteredListings.map(listing => {
                   const isSold = listing.status === 'sold';
-                  const priceFormatted = (listing.price_kobo ? (listing.price_kobo / 100) : (listing.price || 0)).toLocaleString(undefined, { minimumFractionDigits: 2 });
+                  const rawPrice = listing.price_kobo ? (listing.price_kobo / 100) : (listing.price || 0);
+                  const priceFormatted = rawPrice.toLocaleString(undefined, { maximumFractionDigits: (rawPrice % 1 === 0 ? 0 : 2) });
                   const isMine = currentUserId && listing.seller_id === currentUserId;
                   const isBookmarked = savedItemIds.includes(listing.id);
                   const campusBadge = listing.campus_acronym || 'Campus';
@@ -902,39 +825,45 @@ function Dashboard() {
                         {/* Category & Campus Badges */}
                         <div style={{
                           position: 'absolute',
-                          top: '0.65rem',
-                          left: '0.65rem',
+                          top: '0.55rem',
+                          left: '0.55rem',
                           display: 'flex',
-                          gap: '0.4rem',
+                          gap: '0.35rem',
                           alignItems: 'center',
-                          flexWrap: 'wrap'
+                          maxWidth: 'calc(100% - 46px)',
+                          zIndex: 2
                         }}>
                           <div style={{
-                            padding: '0.28rem 0.65rem',
+                            padding: '0.22rem 0.55rem',
                             borderRadius: '9999px',
-                            fontSize: '0.72rem',
+                            fontSize: '0.68rem',
                             fontFamily: 'var(--font-display)',
                             fontWeight: '700',
                             textTransform: 'uppercase',
                             backgroundColor: isSold ? '#4b5563' : 'var(--surface)',
                             color: isSold ? '#ffffff' : 'var(--brandblue)',
-                            boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
-                            backdropFilter: 'blur(8px)'
+                            boxShadow: '0 2px 8px rgba(0,0,0,0.18)',
+                            backdropFilter: 'blur(8px)',
+                            whiteSpace: 'nowrap'
                           }}>
                             {isSold ? 'Sold' : (listing.category || 'Gear')}
                           </div>
 
-                          <div style={{
-                            padding: '0.28rem 0.65rem',
-                            borderRadius: '9999px',
-                            fontSize: '0.72rem',
-                            fontFamily: 'var(--font-display)',
-                            fontWeight: '700',
-                            textTransform: 'uppercase',
-                            backgroundColor: 'var(--brandblue)',
-                            color: '#ffffff',
-                            boxShadow: '0 2px 8px rgba(0,0,0,0.15)'
-                          }}>
+                          <div 
+                            className="listing-thumb-campus-badge"
+                            style={{
+                              padding: '0.22rem 0.55rem',
+                              borderRadius: '9999px',
+                              fontSize: '0.68rem',
+                              fontFamily: 'var(--font-display)',
+                              fontWeight: '700',
+                              textTransform: 'uppercase',
+                              backgroundColor: 'var(--brandblue)',
+                              color: '#ffffff',
+                              boxShadow: '0 2px 8px rgba(0,0,0,0.18)',
+                              whiteSpace: 'nowrap'
+                            }}
+                          >
                             {campusBadge}
                           </div>
                         </div>
@@ -978,13 +907,13 @@ function Dashboard() {
                           </p>
 
                           {/* Seller Tag */}
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', fontSize: '0.78rem', color: 'var(--text-muted)', marginBottom: '0.5rem' }}>
-                            <i className="fa-solid fa-user-shield" style={{ color: 'var(--brandblue)' }} />
-                            <span style={{ fontWeight: '600', color: 'var(--text-main)', fontFamily: 'var(--font-display)' }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', fontSize: '0.75rem', color: 'var(--text-muted)', marginBottom: '0.4rem', overflow: 'hidden' }}>
+                            <i className="fa-solid fa-user-shield" style={{ color: 'var(--brandblue)', flexShrink: 0 }} />
+                            <span style={{ fontWeight: '600', color: 'var(--text-main)', fontFamily: 'var(--font-display)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: '80px' }}>
                               @{listing.seller_handle || 'anonymous'}
                             </span>
-                            <span style={{ fontSize: '0.7rem', color: 'var(--brandblue)', fontWeight: '600' }}>
-                              <i className="fa-solid fa-circle-check" style={{ marginRight: '0.25rem' }} /> Verified
+                            <span style={{ fontSize: '0.66rem', color: 'var(--brandblue)', fontWeight: '700', backgroundColor: 'var(--lightblue)', padding: '0.1rem 0.35rem', borderRadius: '4px', flexShrink: 0 }}>
+                              {campusBadge}
                             </span>
                           </div>
                         </div>
@@ -992,52 +921,33 @@ function Dashboard() {
                         {/* Card Action Footer */}
                         <div className="listing-card-footer">
                           <div>
-                            <span style={{
-                              fontFamily: 'var(--font-display)',
-                              fontSize: '1.3rem',
-                              fontWeight: '800',
-                              color: 'var(--brandblue)',
-                              letterSpacing: '-0.02em'
-                            }}>
+                            <span className="listing-card-price">
                               ₦{priceFormatted}
                             </span>
                           </div>
 
-                          <div style={{ display: 'flex', gap: '0.4rem' }}>
+                          <div style={{ display: 'flex', gap: '0.4rem', alignItems: 'center' }}>
                             {isMine ? (
                               <span style={{
-                                fontSize: '0.75rem',
+                                fontSize: '0.72rem',
                                 fontFamily: 'var(--font-display)',
                                 fontWeight: '700',
                                 color: 'var(--brandblue)',
                                 backgroundColor: 'var(--lightblue)',
-                                padding: '0.3rem 0.65rem',
-                                borderRadius: '9999px'
+                                padding: '0.22rem 0.5rem',
+                                borderRadius: '9999px',
+                                whiteSpace: 'nowrap'
                               }}>
-                                Your Item
+                                You
                               </span>
                             ) : (
                               <button
+                                className="listing-chat-action-btn"
                                 onClick={(e) => handleOpenChat(listing, e)}
-                                style={{
-                                  backgroundColor: 'var(--brandblue)',
-                                  color: '#ffffff',
-                                  border: 'none',
-                                  borderRadius: '10px',
-                                  padding: '0.45rem 0.85rem',
-                                  fontSize: '0.82rem',
-                                  fontFamily: 'var(--font-display)',
-                                  fontWeight: '700',
-                                  cursor: 'pointer',
-                                  display: 'flex',
-                                  alignItems: 'center',
-                                  gap: '0.35rem',
-                                  boxShadow: 'var(--shadow-blue)',
-                                  transition: 'transform 0.15s ease'
-                                }}
+                                title={`Chat with @${listing.seller_handle || 'seller'}`}
                               >
                                 <i className="fa-regular fa-comment-dots" />
-                                Chat
+                                <span className="chat-btn-label">Chat</span>
                               </button>
                             )}
                           </div>
