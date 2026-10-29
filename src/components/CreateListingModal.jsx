@@ -390,7 +390,7 @@ function CreateListingModal({ isOpen, onClose, onCreated }) {
                   fontWeight: '700',
                   fontSize: '1rem'
                 }}>
-                  ?
+                  {'\u20A6'}
                 </span>
                 <input 
                   className="form-input"

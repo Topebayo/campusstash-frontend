@@ -167,7 +167,7 @@ function CreateRequestModal({ isOpen, onClose, onCreated }) {
                   fontWeight: '700',
                   fontSize: '0.95rem'
                 }}>
-                  ?
+                  {'\u20A6'}
                 </span>
                 <input 
                   className="form-input"
