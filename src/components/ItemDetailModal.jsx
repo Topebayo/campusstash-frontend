@@ -1,5 +1,5 @@
 import React from 'react';
-import { getImageUrl } from '../api';
+import { getImageUrl, CLOUD_HOST } from '../api';
 
 function ItemDetailModal({ 
   isOpen = true, 
@@ -57,8 +57,9 @@ function ItemDetailModal({
     const [copyFeedback, setCopyFeedback] = React.useState(false);
 
   const getShareUrl = () => {
-    const origin = window.location.origin;
-    return `${origin}/?item=${listing.id}`;
+    // Generates the viral OpenGraph preview link hosted by FastAPI
+    const base = CLOUD_HOST || window.location.origin;
+    return `${base}/l/${listing.id}`;
   };
 
   const handleWhatsAppShare = (e) => {

@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useCallback, useMemo } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useNavigate, useLocation, useParams } from 'react-router-dom';
 import { 
   apiFetch, 
   getImageUrl, 
@@ -52,6 +52,7 @@ const PRICE_RANGES = [
 function Dashboard() {
   const navigate = useNavigate();
   const location = useLocation();
+  const { id: routeItemId } = useParams();
 
   // Active top-level tab: 'items' (Available Items) vs 'requests' (Student Requests / Wanted Board)
   const [activeTab, setActiveTab] = useState('items');
@@ -248,10 +249,10 @@ function Dashboard() {
     }
   }, [activeTab, fetchRequests]);
 
-  // Deep-linking: auto-open listing if URL contains ?item={id}
+  // Deep-linking: auto-open listing if URL contains ?item={id} or /listing/:id route
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
-    const itemId = params.get('item');
+    const itemId = routeItemId || params.get('item');
     if (itemId) {
       const match = listings.find(l => l.id === itemId);
       if (match) {
@@ -264,7 +265,7 @@ function Dashboard() {
           .catch(() => {});
       }
     }
-  }, [listings]);
+  }, [listings, routeItemId]);
 
   // Re-fetch when user returns to the tab after being away
   useEffect(() => {

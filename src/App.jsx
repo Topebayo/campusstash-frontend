@@ -63,8 +63,11 @@ function App() {
       <Route path="/" element={<Dashboard />} />
       <Route path="/auth" element={<Auth />} />
       <Route path="/dashboard" element={<Dashboard />} />
+      <Route path="/listing/:id" element={<Dashboard />} />
+      <Route path="/l/:id" element={<Dashboard />} />
       <Route path="/profile" element={<Profile />} />
       <Route path="/messages" element={<Messages />} />
+      <Route path="*" element={<Dashboard />} />
     </Routes>
   );
 }

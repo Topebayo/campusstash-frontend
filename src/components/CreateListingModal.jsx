@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { apiFetch, getCampuses, getActiveCampusId } from '../api';
+import { apiFetch, getCampuses, getActiveCampusId, CLOUD_HOST } from '../api';
 
 const compressImage = (file, maxWidth = 800, maxHeight = 800, quality = 0.75) => {
   return new Promise((resolve) => {
@@ -57,6 +57,10 @@ function CreateListingModal({ isOpen, onClose, onCreated }) {
   const [image1Preview, setImage1Preview] = useState(null);
   const [image2, setImage2] = useState(null);
   const [image2Preview, setImage2Preview] = useState(null);
+  const [compressedImage1, setCompressedImage1] = useState(null);
+  const [compressedImage2, setCompressedImage2] = useState(null);
+  const [isCompressing1, setIsCompressing1] = useState(false);
+  const [isCompressing2, setIsCompressing2] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState('');
 
@@ -85,6 +89,11 @@ function CreateListingModal({ isOpen, onClose, onCreated }) {
     if (file) {
       setImage1(file);
       setImage1Preview(URL.createObjectURL(file));
+      setIsCompressing1(true);
+      compressImage(file)
+        .then(c => setCompressedImage1(c))
+        .catch(err => console.warn('Compression note 1:', err))
+        .finally(() => setIsCompressing1(false));
     }
   };
 
@@ -93,6 +102,11 @@ function CreateListingModal({ isOpen, onClose, onCreated }) {
     if (file) {
       setImage2(file);
       setImage2Preview(URL.createObjectURL(file));
+      setIsCompressing2(true);
+      compressImage(file)
+        .then(c => setCompressedImage2(c))
+        .catch(err => console.warn('Compression note 2:', err))
+        .finally(() => setIsCompressing2(false));
     }
   };
 
@@ -101,6 +115,8 @@ function CreateListingModal({ isOpen, onClose, onCreated }) {
     if (image1Preview) URL.revokeObjectURL(image1Preview);
     setImage1(null);
     setImage1Preview(null);
+    setCompressedImage1(null);
+    setIsCompressing1(false);
   };
 
   const removeImage2 = (e) => {
@@ -108,6 +124,8 @@ function CreateListingModal({ isOpen, onClose, onCreated }) {
     if (image2Preview) URL.revokeObjectURL(image2Preview);
     setImage2(null);
     setImage2Preview(null);
+    setCompressedImage2(null);
+    setIsCompressing2(false);
   };
 
   const resetForm = () => {
@@ -121,6 +139,10 @@ function CreateListingModal({ isOpen, onClose, onCreated }) {
     setImage1Preview(null);
     setImage2(null);
     setImage2Preview(null);
+    setCompressedImage1(null);
+    setCompressedImage2(null);
+    setIsCompressing1(false);
+    setIsCompressing2(false);
     setError('');
   };
 
@@ -147,35 +169,25 @@ function CreateListingModal({ isOpen, onClose, onCreated }) {
       }
 
       // Primary Image (Cover)
-      if (image1) {
-        let sentCompressed1 = false;
-        try {
-          const compressed1 = await compressImage(image1);
-          if (compressed1) {
-            formData.append('image_url', compressed1);
-            sentCompressed1 = true;
-          }
-        } catch (e) {
-          console.warn('Image 1 compression note:', e);
-        }
-        if (!sentCompressed1) {
+      if (compressedImage1) {
+        formData.append('image_url', compressedImage1);
+      } else if (image1) {
+        const c1 = await compressImage(image1).catch(() => null);
+        if (c1) {
+          formData.append('image_url', c1);
+        } else {
           formData.append('image', image1);
         }
       }
 
       // Secondary Image (Detail / Back)
-      if (image2) {
-        let sentCompressed2 = false;
-        try {
-          const compressed2 = await compressImage(image2);
-          if (compressed2) {
-            formData.append('image_2_url', compressed2);
-            sentCompressed2 = true;
-          }
-        } catch (e) {
-          console.warn('Image 2 compression note:', e);
-        }
-        if (!sentCompressed2) {
+      if (compressedImage2) {
+        formData.append('image_2_url', compressedImage2);
+      } else if (image2) {
+        const c2 = await compressImage(image2).catch(() => null);
+        if (c2) {
+          formData.append('image_2_url', c2);
+        } else {
           formData.append('image_2', image2);
         }
       }
@@ -261,8 +273,8 @@ function CreateListingModal({ isOpen, onClose, onCreated }) {
               <button
                 type="button"
                                   onClick={() => {
-                    const origin = window.location.origin;
-                    const shareUrl = `${origin}/?item=${createdItem.id}`;
+                    const shareBase = CLOUD_HOST || window.location.origin;
+                    const shareUrl = `${shareBase}/l/${createdItem.id}`;
                     const campusTag = campuses.find(c => c.id === createdItem.campus_id)?.acronym || 'Campus';
                     const priceStr = (createdItem.price_kobo ? (createdItem.price_kobo / 100) : (createdItem.price || 0)).toLocaleString();
                     const text = `📦 Selling on CampusStash: ${createdItem.title} for ₦${priceStr} at ${campusTag}! View details & negotiate safely here: ${shareUrl}`;
@@ -460,6 +472,41 @@ function CreateListingModal({ isOpen, onClose, onCreated }) {
                     }}>
                       Cover
                     </div>
+                    {isCompressing1 ? (
+                      <div style={{
+                        position: 'absolute',
+                        bottom: '0.35rem',
+                        left: '0.35rem',
+                        backgroundColor: 'rgba(15, 23, 42, 0.85)',
+                        color: 'var(--brandblue)',
+                        fontSize: '0.68rem',
+                        fontWeight: '700',
+                        padding: '0.2rem 0.45rem',
+                        borderRadius: '6px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '0.3rem'
+                      }}>
+                        <i className="fa-solid fa-circle-notch fa-spin" /> Optimizing...
+                      </div>
+                    ) : compressedImage1 ? (
+                      <div style={{
+                        position: 'absolute',
+                        bottom: '0.35rem',
+                        left: '0.35rem',
+                        backgroundColor: 'rgba(16, 185, 129, 0.9)',
+                        color: '#fff',
+                        fontSize: '0.65rem',
+                        fontWeight: '700',
+                        padding: '0.15rem 0.4rem',
+                        borderRadius: '6px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '0.25rem'
+                      }}>
+                        <i className="fa-solid fa-bolt" /> Ready
+                      </div>
+                    ) : null}
                     <button
                       type="button"
                       onClick={removeImage1}
@@ -546,6 +593,41 @@ function CreateListingModal({ isOpen, onClose, onCreated }) {
                     }}>
                       Detail
                     </div>
+                    {isCompressing2 ? (
+                      <div style={{
+                        position: 'absolute',
+                        bottom: '0.35rem',
+                        left: '0.35rem',
+                        backgroundColor: 'rgba(15, 23, 42, 0.85)',
+                        color: 'var(--brandblue)',
+                        fontSize: '0.68rem',
+                        fontWeight: '700',
+                        padding: '0.2rem 0.45rem',
+                        borderRadius: '6px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '0.3rem'
+                      }}>
+                        <i className="fa-solid fa-circle-notch fa-spin" /> Optimizing...
+                      </div>
+                    ) : compressedImage2 ? (
+                      <div style={{
+                        position: 'absolute',
+                        bottom: '0.35rem',
+                        left: '0.35rem',
+                        backgroundColor: 'rgba(16, 185, 129, 0.9)',
+                        color: '#fff',
+                        fontSize: '0.65rem',
+                        fontWeight: '700',
+                        padding: '0.15rem 0.4rem',
+                        borderRadius: '6px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '0.25rem'
+                      }}>
+                        <i className="fa-solid fa-bolt" /> Ready
+                      </div>
+                    ) : null}
                     <button
                       type="button"
                       onClick={removeImage2}
