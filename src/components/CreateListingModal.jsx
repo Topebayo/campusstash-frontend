@@ -79,10 +79,13 @@ function CreateListingModal({ isOpen, onClose, onCreated }) {
         if (Array.isArray(data)) {
           setCampuses(data);
           const active = getActiveCampusId();
+          const userSaved = localStorage.getItem('campusstash_user_campus');
           if (active) {
             setCampusId(active);
-          } else if (data.length > 0) {
-            setCampusId(data[0].id);
+          } else if (userSaved) {
+            setCampusId(userSaved);
+          } else {
+            setCampusId('');
           }
         }
       }).catch(() => {});
@@ -352,19 +355,33 @@ function CreateListingModal({ isOpen, onClose, onCreated }) {
         <>
         {error && (
           <div style={{
-            color: '#b91c1c',
-            backgroundColor: '#fee2e2',
-            border: '1px solid #fecaca',
-            padding: '0.75rem 1rem',
-            borderRadius: '12px',
+            color: 'var(--text-main)',
+            backgroundColor: 'var(--surface-alt)',
+            border: '1px solid var(--border)',
+            padding: '0.8rem 1rem',
+            borderRadius: '14px',
             marginBottom: '1.25rem',
-            fontSize: '0.88rem',
+            fontSize: '0.86rem',
             display: 'flex',
             alignItems: 'center',
-            gap: '0.5rem'
+            gap: '0.65rem',
+            boxShadow: 'var(--shadow-sm)'
           }}>
-            <i className="fa-solid fa-circle-exclamation" />
-            {error}
+            <div style={{
+              width: '24px',
+              height: '24px',
+              borderRadius: '50%',
+              backgroundColor: 'var(--lightblue)',
+              color: 'var(--brandblue)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              fontSize: '0.78rem',
+              flexShrink: 0
+            }}>
+              <i className="fa-solid fa-circle-info" />
+            </div>
+            <span style={{ fontWeight: '500' }}>{error}</span>
           </div>
         )}
 
@@ -379,6 +396,42 @@ function CreateListingModal({ isOpen, onClose, onCreated }) {
               onChange={(e) => setTitle(e.target.value)}
               placeholder="e.g. Essential Calculus 8th Edition, Scientific Calculator fx-991"
             />
+          </div>
+
+          <div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.35rem' }}>
+              <label className="form-label" style={{ marginBottom: 0, display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                <i className="fa-solid fa-location-dot" style={{ color: 'var(--brandblue)' }} />
+                <span>Campus / University Location</span>
+              </label>
+              <span style={{ fontSize: '0.74rem', color: 'var(--brandblue)', fontWeight: '600' }}>
+                Required
+              </span>
+            </div>
+            <select 
+              className="form-input"
+              value={campusId}
+              onChange={(e) => {
+                setCampusId(e.target.value);
+                if (e.target.value) localStorage.setItem('campusstash_user_campus', e.target.value);
+              }}
+              required
+              style={{
+                cursor: 'pointer',
+                backgroundColor: 'var(--surface)',
+                border: !campusId ? '1.5px solid var(--brandblue)' : undefined
+              }}
+            >
+              <option value="">-- Select Your Campus (e.g. UI, LCU, UNILAG...) --</option>
+              {campuses.map(c => (
+                <option key={c.id} value={c.id}>
+                  {c.acronym} - {c.name} ({c.state})
+                </option>
+              ))}
+            </select>
+            <span style={{ fontSize: '0.74rem', color: 'var(--text-muted)', marginTop: '0.25rem', display: 'block' }}>
+              Students from this university will see your listing in their campus stash.
+            </span>
           </div>
 
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
@@ -690,22 +743,7 @@ function CreateListingModal({ isOpen, onClose, onCreated }) {
             </div>
           </div>
 
-          {/* Campus selection field */}
-          <div>
-            <label className="form-label">Campus Location</label>
-            <select 
-              className="form-input"
-              value={campusId}
-              onChange={(e) => setCampusId(e.target.value)}
-              style={{ cursor: 'pointer', backgroundColor: 'var(--surface)' }}
-            >
-              {campuses.map(c => (
-                <option key={c.id} value={c.id}>
-                  {c.acronym} - {c.name}
-                </option>
-              ))}
-            </select>
-          </div>
+
 
           <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.75rem', marginTop: '0.5rem' }}>
             <button type="button" className="btn-secondary" onClick={onClose} disabled={isSubmitting}>

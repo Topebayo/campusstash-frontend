@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { apiFetch, getImageUrl } from '../api';
+import { apiFetch, getImageUrl, getCampuses, DEFAULT_CAMPUSES } from '../api';
 
 const compressImage = (file, maxWidth = 800, maxHeight = 800, quality = 0.75) => {
   return new Promise((resolve) => {
@@ -50,6 +50,15 @@ function EditListingModal({ isOpen, onClose, listing, onUpdated }) {
   const [price, setPrice] = useState('');
   const [category, setCategory] = useState('Textbooks');
   const [status, setStatus] = useState('active');
+  const [campusId, setCampusId] = useState('');
+  const [campuses, setCampuses] = useState(() => {
+    try {
+      const cached = localStorage.getItem('campusstash_cached_campuses');
+      return cached ? JSON.parse(cached) : DEFAULT_CAMPUSES;
+    } catch (e) {
+      return DEFAULT_CAMPUSES;
+    }
+  });
 
   // Photo 1 state
   const [currentCoverUrl, setCurrentCoverUrl] = useState('');
@@ -74,6 +83,12 @@ function EditListingModal({ isOpen, onClose, listing, onUpdated }) {
       setPrice(rawKobo ? (rawKobo / 100).toString() : '0');
       setCategory(listing.category || 'Textbooks');
       setStatus(listing.status || 'active');
+      setCampusId(listing.campus_id || '');
+      getCampuses().then(data => {
+        if (Array.isArray(data) && data.length > 0) {
+          setCampuses(data);
+        }
+      }).catch(() => {});
 
       setCurrentCoverUrl(listing.image_url || '');
 
@@ -177,6 +192,7 @@ function EditListingModal({ isOpen, onClose, listing, onUpdated }) {
         price_kobo: priceKobo,
         category: category,
         status: status,
+        campus_id: campusId || null,
         image_url: updatedCoverUrl || null,
         images: allImagesList
       };
@@ -255,19 +271,33 @@ function EditListingModal({ isOpen, onClose, listing, onUpdated }) {
 
         {error && (
           <div style={{
-            color: '#b91c1c',
-            backgroundColor: '#fee2e2',
-            border: '1px solid #fecaca',
-            padding: '0.75rem 1rem',
-            borderRadius: '12px',
+            color: 'var(--text-main)',
+            backgroundColor: 'var(--surface-alt)',
+            border: '1px solid var(--border)',
+            padding: '0.8rem 1rem',
+            borderRadius: '14px',
             marginBottom: '1.25rem',
-            fontSize: '0.88rem',
+            fontSize: '0.86rem',
             display: 'flex',
             alignItems: 'center',
-            gap: '0.5rem'
+            gap: '0.65rem',
+            boxShadow: 'var(--shadow-sm)'
           }}>
-            <i className="fa-solid fa-circle-exclamation" />
-            {error}
+            <div style={{
+              width: '24px',
+              height: '24px',
+              borderRadius: '50%',
+              backgroundColor: 'var(--lightblue)',
+              color: 'var(--brandblue)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              fontSize: '0.78rem',
+              flexShrink: 0
+            }}>
+              <i className="fa-solid fa-circle-info" />
+            </div>
+            <span style={{ fontWeight: '500' }}>{error}</span>
           </div>
         )}
 
@@ -282,6 +312,30 @@ function EditListingModal({ isOpen, onClose, listing, onUpdated }) {
               onChange={(e) => setTitle(e.target.value)}
               placeholder="Item title"
             />
+          </div>
+
+          <div>
+            <label className="form-label" style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+              <i className="fa-solid fa-location-dot" style={{ color: 'var(--brandblue)' }} />
+              <span>Campus / University Location</span>
+            </label>
+            <select 
+              className="form-input"
+              value={campusId}
+              onChange={(e) => setCampusId(e.target.value)}
+              required
+              style={{ cursor: 'pointer', backgroundColor: 'var(--surface)' }}
+            >
+              <option value="">-- Select Campus Location --</option>
+              {campuses.map(c => (
+                <option key={c.id} value={c.id}>
+                  {c.acronym} - {c.name} ({c.state})
+                </option>
+              ))}
+            </select>
+            <span style={{ fontSize: '0.74rem', color: 'var(--text-muted)', marginTop: '0.25rem', display: 'block' }}>
+              Change this if your item was listed under the wrong campus.
+            </span>
           </div>
 
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>

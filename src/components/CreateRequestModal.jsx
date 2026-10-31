@@ -23,8 +23,11 @@ function CreateRequestModal({ isOpen, onClose, onCreated }) {
         if (Array.isArray(data)) {
           setCampuses(data);
           const active = getActiveCampusId();
+          const userSaved = localStorage.getItem('campusstash_user_campus');
           if (active) {
             setCampusId(active);
+          } else if (userSaved) {
+            setCampusId(userSaved);
           } else if (data.length > 0) {
             setCampusId(data[0].id);
           }
