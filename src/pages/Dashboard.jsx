@@ -6,6 +6,7 @@ import {
   getCampuses, 
   getActiveCampusId, 
   setActiveCampusId, 
+  DEFAULT_CAMPUSES,
   getItemRequests, 
   fulfillItemRequest, 
   deleteItemRequest 
@@ -58,7 +59,14 @@ function Dashboard() {
   const [activeTab, setActiveTab] = useState('items');
 
   // Campus scoping
-  const [campuses, setCampuses] = useState([]);
+  const [campuses, setCampuses] = useState(() => {
+    try {
+      const cached = localStorage.getItem('campusstash_cached_campuses');
+      return cached ? JSON.parse(cached) : DEFAULT_CAMPUSES;
+    } catch (e) {
+      return DEFAULT_CAMPUSES;
+    }
+  });
   const [selectedCampusId, setSelectedCampusId] = useState(() => getActiveCampusId());
 
   // Listings state
@@ -209,7 +217,11 @@ function Dashboard() {
         if (prev.length > 0) return prev;
         try {
           const cached = localStorage.getItem('cs_cached_listings');
-          return cached ? JSON.parse(cached) : [];
+          if (cached) {
+            const parsed = JSON.parse(cached);
+            if (Array.isArray(parsed) && parsed.length > 2) return parsed;
+          }
+          return [];
         } catch (e) {
           return [];
         }
@@ -744,7 +756,8 @@ function Dashboard() {
             {loading ? (
               <div style={{ textAlign: 'center', padding: '4rem 1rem', color: 'var(--text-muted)' }}>
                 <i className="fa-solid fa-circle-notch fa-spin" style={{ fontSize: '2.4rem', color: 'var(--brandblue)', marginBottom: '1rem' }} />
-                <p style={{ fontFamily: 'var(--font-display)', fontWeight: '600' }}>Discovering student listings...</p>
+                <p style={{ fontFamily: 'var(--font-display)', fontWeight: '600', fontSize: '1.05rem', color: 'var(--text-main)' }}>Discovering student listings...</p>
+                <p style={{ fontSize: '0.82rem', color: 'var(--text-muted)', marginTop: '0.35rem' }}>Connecting to cloud backend. If waking up, please allow a few seconds...</p>
               </div>
             ) : filteredListings.length === 0 ? (
               <div style={{

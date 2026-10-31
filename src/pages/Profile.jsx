@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { apiFetch, getImageUrl, getServerHost, DEFAULT_HOST_IP } from '../api';
+import { apiFetch, getImageUrl, getServerHost } from '../api';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 import EditListingModal from '../components/EditListingModal';
@@ -17,7 +17,7 @@ function Profile() {
   // Form State
   const [phone, setPhone] = useState('');
   const [burnerHandle, setBurnerHandle] = useState('');
-  const [serverIp, setServerIp] = useState(() => localStorage.getItem('server_ip') || DEFAULT_HOST_IP);
+  // serverIp removed - cloud backend is permanent
   const [isSaving, setIsSaving] = useState(false);
   const [message, setMessage] = useState('');
   const [listingActionId, setListingActionId] = useState(null);
@@ -77,13 +77,16 @@ function Profile() {
     setIsSaving(true);
     setMessage('');
     try {
-      if (serverIp.trim()) { localStorage.setItem('server_ip', serverIp.trim()); } else { localStorage.removeItem('server_ip'); }
-      setMessage('Profile settings up to date.');
-      setProfile(updated);
-      setPhone(updated.phone || '');
-      setBurnerHandle(updated.profile?.burner_handle || '');
-      if (serverIp.trim()) { localStorage.setItem('server_ip', serverIp.trim()); } else { localStorage.removeItem('server_ip'); }
+      const updated = await apiFetch('/users/me', {
+        method: 'PUT',
+        body: JSON.stringify({ phone: phone.trim() })
+      });
       setMessage('Profile settings updated successfully!');
+      if (updated) {
+        setProfile(updated);
+        setPhone(updated.phone || '');
+        setBurnerHandle(updated.profile?.burner_handle || '');
+      }
     } catch (err) {
       setMessage(err.message || 'Failed to update settings.');
     }

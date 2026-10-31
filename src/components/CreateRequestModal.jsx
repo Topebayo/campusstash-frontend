@@ -1,12 +1,19 @@
 import React, { useState, useEffect } from 'react';
-import { createItemRequest, getCampuses, getActiveCampusId } from '../api';
+import { createItemRequest, getCampuses, getActiveCampusId, DEFAULT_CAMPUSES } from '../api';
 
 function CreateRequestModal({ isOpen, onClose, onCreated }) {
   const [title, setTitle] = useState('');
   const [budget, setBudget] = useState('');
   const [description, setDescription] = useState('');
   const [campusId, setCampusId] = useState('');
-  const [campuses, setCampuses] = useState([]);
+  const [campuses, setCampuses] = useState(() => {
+    try {
+      const cached = localStorage.getItem('campusstash_cached_campuses');
+      return cached ? JSON.parse(cached) : DEFAULT_CAMPUSES;
+    } catch (e) {
+      return DEFAULT_CAMPUSES;
+    }
+  });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState('');
 

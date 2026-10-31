@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react';
 
 import { useNavigate, useLocation } from 'react-router-dom';
 
-import { apiFetch, getCampuses, getActiveCampusId, setActiveCampusId } from '../api';
+import { apiFetch, getCampuses, getActiveCampusId, setActiveCampusId, DEFAULT_CAMPUSES } from '../api';
 
 import { Capacitor } from '@capacitor/core';
 
@@ -141,7 +141,14 @@ function Navbar({ onPrimaryAction, primaryActionText }) {
   const [unreadCount, setUnreadCount] = useState(0);
 
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
-  const [campuses, setCampuses] = useState([]);
+  const [campuses, setCampuses] = useState(() => {
+    try {
+      const cached = localStorage.getItem('campusstash_cached_campuses');
+      return cached ? JSON.parse(cached) : DEFAULT_CAMPUSES;
+    } catch (e) {
+      return DEFAULT_CAMPUSES;
+    }
+  });
   const [selectedCampusId, setSelectedCampusId] = useState(() => getActiveCampusId());
 
   useEffect(() => {

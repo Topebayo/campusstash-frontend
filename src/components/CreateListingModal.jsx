@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { apiFetch, getCampuses, getActiveCampusId, CLOUD_HOST } from '../api';
+import { apiFetch, getCampuses, getActiveCampusId, CLOUD_HOST, DEFAULT_CAMPUSES } from '../api';
 
 const compressImage = (file, maxWidth = 800, maxHeight = 800, quality = 0.75) => {
   return new Promise((resolve) => {
@@ -50,7 +50,14 @@ function CreateListingModal({ isOpen, onClose, onCreated }) {
   const [price, setPrice] = useState('');
   const [category, setCategory] = useState('Textbooks');
   const [campusId, setCampusId] = useState('');
-  const [campuses, setCampuses] = useState([]);
+  const [campuses, setCampuses] = useState(() => {
+    try {
+      const cached = localStorage.getItem('campusstash_cached_campuses');
+      return cached ? JSON.parse(cached) : DEFAULT_CAMPUSES;
+    } catch (e) {
+      return DEFAULT_CAMPUSES;
+    }
+  });
   const [createdItem, setCreatedItem] = useState(null);
   const [copiedLink, setCopiedLink] = useState(false);
   const [image1, setImage1] = useState(null);
