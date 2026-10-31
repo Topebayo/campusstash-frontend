@@ -115,8 +115,8 @@ function SettingsModal({ isOpen, onClose, onLogout, userProfile, onUpdateUser })
       setPwMessage({ text: 'Please enter your current password.', type: 'error' });
       return;
     }
-    if (newPassword.length < 6) {
-      setPwMessage({ text: 'New password must be at least 6 characters.', type: 'error' });
+    if (newPassword.length < 8) {
+      setPwMessage({ text: 'New password must be at least 8 characters.', type: 'error' });
       return;
     }
     if (newPassword !== confirmPassword) {

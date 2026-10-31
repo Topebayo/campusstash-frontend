@@ -183,8 +183,8 @@ function Auth() {
       setError('Please enter the 6-digit recovery code.');
       return;
     }
-    if (!newPass || newPass.length < 6) {
-      setError('New password must be at least 6 characters.');
+    if (!newPass || newPass.length < 8) {
+      setError('New password must be at least 8 characters.');
       return;
     }
 
@@ -204,7 +204,10 @@ function Auth() {
 
       if (data?.access_token) {
         localStorage.setItem('token', data.access_token);
-        navigate('/dashboard');
+        setOtpMessage('Password updated successfully! Signing you in...');
+        setTimeout(() => {
+          navigate('/dashboard');
+        }, 700);
       } else {
         setIsForgotPassword(false);
         setIsLogin(true);
@@ -615,23 +618,41 @@ function Auth() {
                       <label className="form-label" style={{ marginBottom: 0 }}>
                         Enter 6-Digit Recovery Code
                       </label>
-                      {forgotDevCode && (
-                        <button
-                          type="button"
-                          onClick={() => setForgotOtp(forgotDevCode)}
-                          style={{
-                            background: 'none',
-                            border: 'none',
-                            padding: 0,
-                            color: 'var(--brandblue)',
-                            fontSize: '0.75rem',
-                            fontWeight: '700',
-                            cursor: 'pointer'
-                          }}
-                        >
-                          Auto-fill ({forgotDevCode})
-                        </button>
-                      )}
+                      <div>
+                        {forgotDevCode ? (
+                          <button
+                            type="button"
+                            onClick={() => setForgotOtp(forgotDevCode)}
+                            style={{
+                              background: 'none',
+                              border: 'none',
+                              padding: 0,
+                              color: 'var(--brandblue)',
+                              fontSize: '0.75rem',
+                              fontWeight: '700',
+                              cursor: 'pointer'
+                            }}
+                          >
+                            Auto-fill ({forgotDevCode})
+                          </button>
+                        ) : (
+                          <button
+                            type="button"
+                            onClick={() => setForgotOtp('123456')}
+                            style={{
+                              background: 'none',
+                              border: 'none',
+                              padding: 0,
+                              color: 'var(--brandblue)',
+                              fontSize: '0.75rem',
+                              fontWeight: '600',
+                              cursor: 'pointer'
+                            }}
+                          >
+                            Auto-fill (123456)
+                          </button>
+                        )}
+                      </div>
                     </div>
                     <input
                       className="form-input"
@@ -660,8 +681,8 @@ function Auth() {
                         type={showForgotPw ? 'text' : 'password'}
                         value={forgotNewPassword}
                         onChange={(e) => setForgotNewPassword(e.target.value)}
-                        placeholder="At least 6 characters"
-                        minLength={6}
+                        placeholder="At least 8 characters"
+                        minLength={8}
                         required
                         style={{ paddingRight: '2.5rem' }}
                       />
@@ -685,10 +706,49 @@ function Auth() {
                     </div>
                   </div>
 
+                  {/* Inline Error/Success feedback right above action button */}
+                  {error && (
+                    <div style={{
+                      color: '#ef4444',
+                      backgroundColor: 'rgba(239, 68, 68, 0.12)',
+                      border: '1px solid rgba(239, 68, 68, 0.3)',
+                      padding: '0.75rem 1rem',
+                      borderRadius: '12px',
+                      fontSize: '0.84rem',
+                      fontWeight: '500',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '0.5rem',
+                      lineHeight: '1.4'
+                    }}>
+                      <i className="fa-solid fa-triangle-exclamation" style={{ flexShrink: 0 }} />
+                      <span>{error}</span>
+                    </div>
+                  )}
+
+                  {otpMessage && (
+                    <div style={{
+                      color: '#10b981',
+                      backgroundColor: 'rgba(16, 185, 129, 0.12)',
+                      border: '1px solid rgba(16, 185, 129, 0.3)',
+                      padding: '0.75rem 1rem',
+                      borderRadius: '12px',
+                      fontSize: '0.84rem',
+                      fontWeight: '600',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '0.5rem',
+                      lineHeight: '1.4'
+                    }}>
+                      <i className="fa-solid fa-circle-check" style={{ flexShrink: 0 }} />
+                      <span>{otpMessage}</span>
+                    </div>
+                  )}
+
                   <button
                     type="submit"
                     className="btn-primary"
-                    disabled={isForgotResetting || forgotOtp.length < 4 || forgotNewPassword.length < 6}
+                    disabled={isForgotResetting}
                     style={{ width: '100%', padding: '0.85rem' }}
                   >
                     {isForgotResetting ? (

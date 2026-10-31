@@ -98,20 +98,19 @@ export const apiFetch = async (endpoint, options = {}) => {
     headers,
   });
 
-  if (response.status === 401 || response.status === 403) {
-    const errorData = await response.json().catch(() => ({}));
-    if (
-      response.status === 401 || 
-      errorData.detail === "Could not validate credentials" ||
-      errorData.detail === "Not authenticated"
-    ) {
-      localStorage.removeItem('token');
-    }
-  }
-
   if (!response.ok) {
     const errorData = await response.json().catch(() => ({}));
     const message = errorData.detail || `Request failed with status ${response.status}`;
+    // Clear stale token on auth failures
+    if (response.status === 401 || response.status === 403) {
+      if (
+        response.status === 401 ||
+        errorData.detail === "Could not validate credentials" ||
+        errorData.detail === "Not authenticated"
+      ) {
+        localStorage.removeItem('token');
+      }
+    }
     throw new Error(message);
   }
 
