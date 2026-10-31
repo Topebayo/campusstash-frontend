@@ -37,6 +37,13 @@ function Auth() {
   const [forgotCooldown, setForgotCooldown] = useState(0);
   const [forgotDevCode, setForgotDevCode] = useState('');
 
+  const isAirtelNumber = (num) => {
+    if (!num) return false;
+    const clean = String(num).replace(/\D/g, '');
+    const airtelPrefixes = ['0802', '0808', '0812', '0701', '0708', '0901', '0902', '0904', '0907', '0912', '234802', '234808', '234812', '234701', '234708', '234901', '234902', '234904', '234907', '234912'];
+    return airtelPrefixes.some(p => clean.startsWith(p));
+  };
+
   // Countdown timer for Registration OTP resend cooldown
   useEffect(() => {
     let timer = null;
