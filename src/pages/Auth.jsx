@@ -421,20 +421,34 @@ function Auth() {
 
             {error && (
               <div style={{
-                color: '#b91c1c',
-                backgroundColor: '#fee2e2',
-                border: '1px solid #fecaca',
-                padding: '0.75rem 1rem',
-                borderRadius: '12px',
+                color: 'var(--text-main)',
+                backgroundColor: 'var(--surface-alt)',
+                border: '1px solid var(--border)',
+                padding: '0.8rem 1rem',
+                borderRadius: '14px',
                 marginBottom: '1.25rem',
                 fontSize: '0.86rem',
                 display: 'flex',
                 alignItems: 'center',
-                gap: '0.5rem',
-                lineHeight: '1.4'
+                gap: '0.65rem',
+                lineHeight: '1.4',
+                boxShadow: 'var(--shadow-sm)'
               }}>
-                <i className="fa-solid fa-circle-exclamation" style={{ flexShrink: 0 }} />
-                <span>{error}</span>
+                <div style={{
+                  width: '24px',
+                  height: '24px',
+                  borderRadius: '50%',
+                  backgroundColor: 'var(--lightblue)',
+                  color: 'var(--brandblue)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  fontSize: '0.78rem',
+                  flexShrink: 0
+                }}>
+                  <i className="fa-solid fa-circle-info" />
+                </div>
+                <span style={{ fontWeight: '500' }}>{error}</span>
               </div>
             )}
 
@@ -749,20 +763,34 @@ function Auth() {
 
             {error && (
               <div style={{
-                color: '#b91c1c',
-                backgroundColor: '#fee2e2',
-                border: '1px solid #fecaca',
-                padding: '0.75rem 1rem',
-                borderRadius: '12px',
+                color: 'var(--text-main)',
+                backgroundColor: 'var(--surface-alt)',
+                border: '1px solid var(--border)',
+                padding: '0.8rem 1rem',
+                borderRadius: '14px',
                 marginBottom: '1.25rem',
                 fontSize: '0.86rem',
                 display: 'flex',
                 alignItems: 'center',
-                gap: '0.5rem',
-                lineHeight: '1.4'
+                gap: '0.65rem',
+                lineHeight: '1.4',
+                boxShadow: 'var(--shadow-sm)'
               }}>
-                <i className="fa-solid fa-circle-exclamation" style={{ flexShrink: 0 }} />
-                <span>{error}</span>
+                <div style={{
+                  width: '24px',
+                  height: '24px',
+                  borderRadius: '50%',
+                  backgroundColor: 'var(--lightblue)',
+                  color: 'var(--brandblue)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  fontSize: '0.78rem',
+                  flexShrink: 0
+                }}>
+                  <i className="fa-solid fa-circle-info" />
+                </div>
+                <span style={{ fontWeight: '500' }}>{error}</span>
               </div>
             )}
 
