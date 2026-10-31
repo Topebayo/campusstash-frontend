@@ -5,7 +5,7 @@ export const CLOUD_API_BASE = 'https://campusstash-backend.onrender.com/api/v1';
 export const CLOUD_WS_BASE = 'wss://campusstash-backend.onrender.com/api/v1/chat/ws';
 export const CLOUD_HOST = 'https://campusstash-backend.onrender.com';
 
-// Standard Nigerian Launch Universities (Ensures instant UI responsiveness without waiting for network)
+// Standard Nigerian Launch Universities
 export const DEFAULT_CAMPUSES = [
   { id: 'af705f54-8603-46c7-8282-dba21e92d614', name: 'Lead City University', acronym: 'LCU', state: 'Oyo' },
   { id: '8636a3e5-dd7f-41cb-9687-f9178e3d832a', name: 'University of Ibadan', acronym: 'UI', state: 'Oyo' },
@@ -21,7 +21,6 @@ if (typeof window !== 'undefined') {
     if (staleIp && (staleIp.startsWith('10.') || staleIp.startsWith('192.168.') || staleIp.includes(':8000') || staleIp === '10.84.19.223')) {
       localStorage.removeItem('server_ip');
     }
-    // Clean up stale 2-item legacy listing cache so live seed items load fresh
     const staleCache = localStorage.getItem('cs_cached_listings');
     if (staleCache) {
       try {
@@ -42,15 +41,19 @@ export const getApiBaseUrl = () => {
   if (import.meta.env.VITE_API_URL) {
     return import.meta.env.VITE_API_URL;
   }
-  // If running in local Vite dev server on desktop localhost / 127.0.0.1, use Vite proxy
+  // Native Android/iOS Capacitor app MUST ALWAYS use the cloud backend!
+  if (Capacitor.isNativePlatform()) {
+    return CLOUD_API_BASE;
+  }
+  // Only for desktop Vite dev server running on localhost:5173
   if (typeof window !== 'undefined') {
     const host = window.location.hostname;
-    if (host === 'localhost' || host === '127.0.0.1') {
+    const port = window.location.port;
+    if ((host === 'localhost' || host === '127.0.0.1') && port === '5173') {
       return '/api/v1';
     }
   }
-  // In native Android/Capacitor, production web (campusstash.onrender.com),
-  // and mobile phone browsers: ALWAYS target Cloud Backend on Render
+  // Default to live cloud backend for production web and all mobile
   return CLOUD_API_BASE;
 };
 
@@ -59,9 +62,13 @@ export const getWebSocketUrl = (conversationId, token = '') => {
   if (import.meta.env.VITE_WS_URL) {
     return `${import.meta.env.VITE_WS_URL}/${conversationId}${tokenQuery}`;
   }
+  if (Capacitor.isNativePlatform()) {
+    return `${CLOUD_WS_BASE}/${conversationId}${tokenQuery}`;
+  }
   if (typeof window !== 'undefined') {
     const host = window.location.hostname;
-    if (host === 'localhost' || host === '127.0.0.1') {
+    const port = window.location.port;
+    if ((host === 'localhost' || host === '127.0.0.1') && port === '5173') {
       const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
       return `${protocol}//${window.location.host}/api/v1/chat/ws/${conversationId}${tokenQuery}`;
     }
@@ -74,6 +81,9 @@ export const getImageUrl = (url) => {
   if (url.startsWith('http://') || url.startsWith('https://') || url.startsWith('data:')) {
     return url;
   }
+  if (Capacitor.isNativePlatform()) {
+    return `${CLOUD_HOST}${url.startsWith('/') ? '' : '/'}${url}`;
+  }
   if (import.meta.env.VITE_API_URL) {
     try {
       const origin = new URL(import.meta.env.VITE_API_URL).origin;
@@ -82,7 +92,8 @@ export const getImageUrl = (url) => {
   }
   if (typeof window !== 'undefined') {
     const host = window.location.hostname;
-    if (host === 'localhost' || host === '127.0.0.1') {
+    const port = window.location.port;
+    if ((host === 'localhost' || host === '127.0.0.1') && port === '5173') {
       return url;
     }
   }
@@ -135,9 +146,6 @@ export const apiFetch = async (endpoint, options = {}) => {
 };
 
 // ─── Render Keep-Alive System ───────────────────────────────────────────────
-// Render free instances spin down after 15 minutes of inactivity.
-// We ping every 13 minutes to keep the backend warm, and also fire an
-// immediate ping whenever the user returns to the tab or app.
 const KEEPALIVE_URL = 'https://campusstash-backend.onrender.com/health';
 const KEEPALIVE_INTERVAL_MS = 13 * 60 * 1000; // 13 minutes
 
@@ -148,13 +156,8 @@ function pingBackend() {
 }
 
 if (typeof window !== 'undefined') {
-  // 1. Immediate ping on load
   pingBackend();
-
-  // 2. Recurring ping every 13 minutes
   let keepAliveTimer = setInterval(pingBackend, KEEPALIVE_INTERVAL_MS);
-
-  // 3. Ping immediately when user returns to the tab (browser visibility API)
   document.addEventListener('visibilitychange', () => {
     if (document.visibilityState === 'visible') {
       pingBackend();
