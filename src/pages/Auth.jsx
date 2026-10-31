@@ -462,20 +462,34 @@ function Auth() {
 
             {otpMessage && (
               <div style={{
-                color: '#065f46',
-                backgroundColor: '#d1fae5',
-                border: '1px solid #a7f3d0',
-                padding: '0.75rem 1rem',
-                borderRadius: '12px',
+                color: 'var(--text-main)',
+                backgroundColor: 'var(--surface-alt)',
+                border: '1px solid var(--border)',
+                padding: '0.8rem 1rem',
+                borderRadius: '14px',
                 marginBottom: '1.25rem',
                 fontSize: '0.86rem',
                 display: 'flex',
                 alignItems: 'center',
-                gap: '0.5rem',
-                lineHeight: '1.4'
+                gap: '0.65rem',
+                lineHeight: '1.4',
+                boxShadow: 'var(--shadow-sm)'
               }}>
-                <i className="fa-solid fa-circle-check" style={{ flexShrink: 0 }} />
-                <span>{otpMessage}</span>
+                <div style={{
+                  width: '24px',
+                  height: '24px',
+                  borderRadius: '50%',
+                  backgroundColor: 'rgba(16, 185, 129, 0.15)',
+                  color: '#10b981',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  fontSize: '0.78rem',
+                  flexShrink: 0
+                }}>
+                  <i className="fa-solid fa-check" />
+                </div>
+                <span style={{ fontWeight: '500' }}>{otpMessage}</span>
               </div>
             )}
 
@@ -484,10 +498,10 @@ function Auth() {
               <div>
                 <label className="form-label">Registered Phone Number</label>
                 
-                {/* Channel toggle for forgot password: SMS, WhatsApp, Voice Call */}
+                {/* Channel toggle for forgot password: SMS and WhatsApp */}
                 <div style={{
                   display: 'flex',
-                  gap: '0.35rem',
+                  gap: '0.5rem',
                   marginBottom: '0.65rem',
                   backgroundColor: 'var(--bg-color)',
                   padding: '0.25rem',
@@ -499,81 +513,50 @@ function Auth() {
                     onClick={() => setForgotChannel('sms')}
                     style={{
                       flex: 1,
-                      padding: '0.45rem 0.4rem',
+                      padding: '0.45rem 0.6rem',
                       borderRadius: '9px',
                       border: 'none',
                       backgroundColor: forgotChannel === 'sms' ? 'var(--surface)' : 'transparent',
                       color: forgotChannel === 'sms' ? 'var(--brandblue)' : 'var(--text-muted)',
                       fontWeight: forgotChannel === 'sms' ? '700' : '500',
-                      fontSize: '0.75rem',
+                      fontSize: '0.78rem',
                       cursor: 'pointer',
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',
-                      gap: '0.25rem',
+                      gap: '0.35rem',
                       boxShadow: forgotChannel === 'sms' ? 'var(--shadow-sm)' : 'none',
                       transition: 'all 0.15s ease'
                     }}
                   >
                     <i className="fa-solid fa-comment-sms" />
-                    <span>SMS</span>
+                    <span>SMS Code</span>
                   </button>
                   <button
                     type="button"
                     onClick={() => setForgotChannel('whatsapp')}
                     style={{
                       flex: 1,
-                      padding: '0.45rem 0.4rem',
+                      padding: '0.45rem 0.6rem',
                       borderRadius: '9px',
                       border: 'none',
                       backgroundColor: forgotChannel === 'whatsapp' ? '#25D366' : 'transparent',
                       color: forgotChannel === 'whatsapp' ? '#ffffff' : 'var(--text-muted)',
                       fontWeight: forgotChannel === 'whatsapp' ? '700' : '500',
-                      fontSize: '0.75rem',
+                      fontSize: '0.78rem',
                       cursor: 'pointer',
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',
-                      gap: '0.25rem',
+                      gap: '0.35rem',
                       boxShadow: forgotChannel === 'whatsapp' ? '0 2px 8px rgba(37,211,102,0.3)' : 'none',
                       transition: 'all 0.15s ease'
                     }}
                   >
-                    <i className="fa-brands fa-whatsapp" style={{ fontSize: '0.85rem' }} />
-                    <span>WhatsApp</span>
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setForgotChannel('voice')}
-                    style={{
-                      flex: 1.1,
-                      padding: '0.45rem 0.4rem',
-                      borderRadius: '9px',
-                      border: 'none',
-                      backgroundColor: forgotChannel === 'voice' ? 'var(--brandblue)' : 'transparent',
-                      color: forgotChannel === 'voice' ? '#ffffff' : 'var(--text-muted)',
-                      fontWeight: forgotChannel === 'voice' ? '700' : '500',
-                      fontSize: '0.75rem',
-                      cursor: 'pointer',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      gap: '0.25rem',
-                      boxShadow: forgotChannel === 'voice' ? 'var(--shadow-sm)' : 'none',
-                      transition: 'all 0.15s ease'
-                    }}
-                    title="Automated voice call directly reading the code. Works 100% on Airtel and DND lines."
-                  >
-                    <i className="fa-solid fa-phone-volume" />
-                    <span>Voice Call</span>
+                    <i className="fa-brands fa-whatsapp" style={{ fontSize: '0.95rem' }} />
+                    <span>WhatsApp OTP</span>
                   </button>
                 </div>
-                {isAirtelNumber(forgotPhone) && (
-                  <div style={{ fontSize: '0.73rem', color: 'var(--brandblue)', marginBottom: '0.5rem', display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
-                    <i className="fa-solid fa-circle-info" />
-                    <span>Airtel SIM detected. If SMS is delayed, select <strong>Voice Call</strong> for instant delivery.</span>
-                  </div>
-                )}
 
                 <div style={{ display: 'flex', gap: '0.5rem' }}>
                   <input
@@ -666,31 +649,7 @@ function Auth() {
                         fontSize: '1.25rem'
                       }}
                     />
-                    <div style={{ marginTop: '0.65rem', textAlign: 'center' }}>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setForgotChannel('voice');
-                          handleForgotSendOtp('voice');
-                        }}
-                        disabled={isForgotSending || forgotCooldown > 0}
-                        style={{
-                          background: 'none',
-                          border: 'none',
-                          padding: 0,
-                          color: 'var(--brandblue)',
-                          fontSize: '0.76rem',
-                          fontWeight: '600',
-                          cursor: (isForgotSending || forgotCooldown > 0) ? 'not-allowed' : 'pointer',
-                          display: 'inline-flex',
-                          alignItems: 'center',
-                          gap: '0.35rem'
-                        }}
-                      >
-                        <i className="fa-solid fa-phone-volume" />
-                        <span>Didn't receive SMS on Airtel? <u>Call me with code</u></span>
-                      </button>
-                    </div>
+
                   </div>
 
                   <div>
@@ -860,20 +819,34 @@ function Auth() {
 
             {otpMessage && (
               <div style={{
-                color: '#065f46',
-                backgroundColor: '#d1fae5',
-                border: '1px solid #a7f3d0',
-                padding: '0.75rem 1rem',
-                borderRadius: '12px',
+                color: 'var(--text-main)',
+                backgroundColor: 'var(--surface-alt)',
+                border: '1px solid var(--border)',
+                padding: '0.8rem 1rem',
+                borderRadius: '14px',
                 marginBottom: '1.25rem',
                 fontSize: '0.86rem',
                 display: 'flex',
                 alignItems: 'center',
-                gap: '0.5rem',
-                lineHeight: '1.4'
+                gap: '0.65rem',
+                lineHeight: '1.4',
+                boxShadow: 'var(--shadow-sm)'
               }}>
-                <i className="fa-solid fa-circle-check" style={{ flexShrink: 0 }} />
-                <span>{otpMessage}</span>
+                <div style={{
+                  width: '24px',
+                  height: '24px',
+                  borderRadius: '50%',
+                  backgroundColor: 'rgba(16, 185, 129, 0.15)',
+                  color: '#10b981',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  fontSize: '0.78rem',
+                  flexShrink: 0
+                }}>
+                  <i className="fa-solid fa-check" />
+                </div>
+                <span style={{ fontWeight: '500' }}>{otpMessage}</span>
               </div>
             )}
 
@@ -942,97 +915,64 @@ function Auth() {
 
                     {/* Delivery Channel Selector */}
                     {!isPhoneVerified && (
-                      <>
-                        <div style={{
-                          display: 'flex',
-                          gap: '0.35rem',
-                          marginBottom: '0.65rem',
-                          backgroundColor: 'var(--bg-color)',
-                          padding: '0.25rem',
-                          borderRadius: '12px',
-                          border: '1px solid var(--border)'
-                        }}>
-                          <button
-                            type="button"
-                            onClick={() => setOtpChannel('sms')}
-                            style={{
-                              flex: 1,
-                              padding: '0.45rem 0.4rem',
-                              borderRadius: '9px',
-                              border: 'none',
-                              backgroundColor: otpChannel === 'sms' ? 'var(--surface)' : 'transparent',
-                              color: otpChannel === 'sms' ? 'var(--brandblue)' : 'var(--text-muted)',
-                              fontWeight: otpChannel === 'sms' ? '700' : '500',
-                              fontSize: '0.75rem',
-                              cursor: 'pointer',
-                              display: 'flex',
-                              alignItems: 'center',
-                              justifyContent: 'center',
-                              gap: '0.25rem',
-                              boxShadow: otpChannel === 'sms' ? 'var(--shadow-sm)' : 'none',
-                              transition: 'all 0.15s ease'
-                            }}
-                          >
-                            <i className="fa-solid fa-comment-sms" />
-                            <span>SMS</span>
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => setOtpChannel('whatsapp')}
-                            style={{
-                              flex: 1,
-                              padding: '0.45rem 0.4rem',
-                              borderRadius: '9px',
-                              border: 'none',
-                              backgroundColor: otpChannel === 'whatsapp' ? '#25D366' : 'transparent',
-                              color: otpChannel === 'whatsapp' ? '#ffffff' : 'var(--text-muted)',
-                              fontWeight: otpChannel === 'whatsapp' ? '700' : '500',
-                              fontSize: '0.75rem',
-                              cursor: 'pointer',
-                              display: 'flex',
-                              alignItems: 'center',
-                              justifyContent: 'center',
-                              gap: '0.25rem',
-                              boxShadow: otpChannel === 'whatsapp' ? '0 2px 8px rgba(37,211,102,0.3)' : 'none',
-                              transition: 'all 0.15s ease'
-                            }}
-                          >
-                            <i className="fa-brands fa-whatsapp" style={{ fontSize: '0.85rem' }} />
-                            <span>WhatsApp</span>
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => setOtpChannel('voice')}
-                            style={{
-                              flex: 1.1,
-                              padding: '0.45rem 0.4rem',
-                              borderRadius: '9px',
-                              border: 'none',
-                              backgroundColor: otpChannel === 'voice' ? 'var(--brandblue)' : 'transparent',
-                              color: otpChannel === 'voice' ? '#ffffff' : 'var(--text-muted)',
-                              fontWeight: otpChannel === 'voice' ? '700' : '500',
-                              fontSize: '0.75rem',
-                              cursor: 'pointer',
-                              display: 'flex',
-                              alignItems: 'center',
-                              justifyContent: 'center',
-                              gap: '0.25rem',
-                              boxShadow: otpChannel === 'voice' ? 'var(--shadow-sm)' : 'none',
-                              transition: 'all 0.15s ease'
-                            }}
-                            title="Automated voice call directly reading the code. Works 100% on Airtel and DND lines."
-                          >
-                            <i className="fa-solid fa-phone-volume" />
-                            <span>Voice Call</span>
-                          </button>
-                        </div>
-                        {isAirtelNumber(phone) && (
-                          <div style={{ fontSize: '0.73rem', color: 'var(--brandblue)', marginBottom: '0.5rem', display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
-                            <i className="fa-solid fa-circle-info" />
-                            <span>Airtel SIM detected. If SMS is delayed, select <strong>Voice Call</strong> for instant delivery.</span>
-                          </div>
-                        )}
-                      </>
+                      <div style={{
+                        display: 'flex',
+                        gap: '0.5rem',
+                        marginBottom: '0.65rem',
+                        backgroundColor: 'var(--bg-color)',
+                        padding: '0.25rem',
+                        borderRadius: '12px',
+                        border: '1px solid var(--border)'
+                      }}>
+                        <button
+                          type="button"
+                          onClick={() => setOtpChannel('sms')}
+                          style={{
+                            flex: 1,
+                            padding: '0.45rem 0.6rem',
+                            borderRadius: '9px',
+                            border: 'none',
+                            backgroundColor: otpChannel === 'sms' ? 'var(--surface)' : 'transparent',
+                            color: otpChannel === 'sms' ? 'var(--brandblue)' : 'var(--text-muted)',
+                            fontWeight: otpChannel === 'sms' ? '700' : '500',
+                            fontSize: '0.78rem',
+                            cursor: 'pointer',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            gap: '0.35rem',
+                            boxShadow: otpChannel === 'sms' ? 'var(--shadow-sm)' : 'none',
+                            transition: 'all 0.15s ease'
+                          }}
+                        >
+                          <i className="fa-solid fa-comment-sms" />
+                          <span>SMS Code</span>
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setOtpChannel('whatsapp')}
+                          style={{
+                            flex: 1,
+                            padding: '0.45rem 0.6rem',
+                            borderRadius: '9px',
+                            border: 'none',
+                            backgroundColor: otpChannel === 'whatsapp' ? '#25D366' : 'transparent',
+                            color: otpChannel === 'whatsapp' ? '#ffffff' : 'var(--text-muted)',
+                            fontWeight: otpChannel === 'whatsapp' ? '700' : '500',
+                            fontSize: '0.78rem',
+                            cursor: 'pointer',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            gap: '0.35rem',
+                            boxShadow: otpChannel === 'whatsapp' ? '0 2px 8px rgba(37,211,102,0.3)' : 'none',
+                            transition: 'all 0.15s ease'
+                          }}
+                        >
+                          <i className="fa-brands fa-whatsapp" style={{ fontSize: '0.95rem' }} />
+                          <span>WhatsApp OTP</span>
+                        </button>
+                      </div>
                     )}
 
                     <div style={{ display: 'flex', gap: '0.5rem' }}>
