@@ -41,19 +41,7 @@ export const getApiBaseUrl = () => {
   if (import.meta.env.VITE_API_URL) {
     return import.meta.env.VITE_API_URL;
   }
-  // Native Android/iOS Capacitor app MUST ALWAYS use the cloud backend!
-  if (Capacitor.isNativePlatform()) {
-    return CLOUD_API_BASE;
-  }
-  // Only for desktop Vite dev server running on localhost:5173
-  if (typeof window !== 'undefined') {
-    const host = window.location.hostname;
-    const port = window.location.port;
-    if ((host === 'localhost' || host === '127.0.0.1') && port === '5173') {
-      return '/api/v1';
-    }
-  }
-  // Default to live cloud backend for production web and all mobile
+  // Always use the live cloud backend for Android native, production web, and local development
   return CLOUD_API_BASE;
 };
 
@@ -61,17 +49,6 @@ export const getWebSocketUrl = (conversationId, token = '') => {
   const tokenQuery = token ? `?token=${token}` : '';
   if (import.meta.env.VITE_WS_URL) {
     return `${import.meta.env.VITE_WS_URL}/${conversationId}${tokenQuery}`;
-  }
-  if (Capacitor.isNativePlatform()) {
-    return `${CLOUD_WS_BASE}/${conversationId}${tokenQuery}`;
-  }
-  if (typeof window !== 'undefined') {
-    const host = window.location.hostname;
-    const port = window.location.port;
-    if ((host === 'localhost' || host === '127.0.0.1') && port === '5173') {
-      const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-      return `${protocol}//${window.location.host}/api/v1/chat/ws/${conversationId}${tokenQuery}`;
-    }
   }
   return `${CLOUD_WS_BASE}/${conversationId}${tokenQuery}`;
 };
