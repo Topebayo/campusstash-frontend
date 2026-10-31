@@ -38,6 +38,11 @@ function SettingsModal({ isOpen, onClose, onLogout, userProfile, onUpdateUser })
 
   const [cacheCleared, setCacheCleared] = useState(false);
 
+  // Account deletion state
+  const [isConfirmDeleteOpen, setIsConfirmDeleteOpen] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [deleteError, setDeleteError] = useState('');
+
   useEffect(() => {
     if (isOpen) {
       setPwMessage({ text: '', type: '' });
@@ -169,6 +174,27 @@ function SettingsModal({ isOpen, onClose, onLogout, userProfile, onUpdateUser })
     localStorage.removeItem('cached_inbox');
     setCacheCleared(true);
     setTimeout(() => setCacheCleared(false), 3000);
+  };
+
+  const handleDeleteAccount = async () => {
+    setIsDeleting(true);
+    setDeleteError('');
+    try {
+      await apiFetch('/users/me', {
+        method: 'DELETE'
+      });
+      localStorage.removeItem('token');
+      localStorage.removeItem('user');
+      localStorage.removeItem('cached_listings');
+      localStorage.removeItem('cached_inbox');
+      setIsConfirmDeleteOpen(false);
+      onClose();
+      window.location.href = '/auth';
+    } catch (err) {
+      setDeleteError(err.message || 'Failed to delete account. Please try again.');
+    } finally {
+      setIsDeleting(false);
+    }
   };
 
   return (
@@ -445,6 +471,45 @@ function SettingsModal({ isOpen, onClose, onLogout, userProfile, onUpdateUser })
                   )}
                 </button>
               </form>
+
+              {/* Danger Zone: Account Deletion */}
+              <div style={{
+                marginTop: '1.25rem',
+                padding: '1.1rem',
+                borderRadius: '16px',
+                border: '1px solid #fecaca',
+                backgroundColor: 'rgba(239, 68, 68, 0.05)'
+              }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem', marginBottom: '0.35rem' }}>
+                  <i className="fa-solid fa-triangle-exclamation" style={{ color: '#dc2626', fontSize: '0.95rem' }} />
+                  <span style={{ fontFamily: 'var(--font-display)', fontWeight: '800', fontSize: '0.92rem', color: '#dc2626' }}>
+                    Danger Zone: Delete Account
+                  </span>
+                </div>
+                <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', lineHeight: '1.4', margin: '0 0 0.85rem 0' }}>
+                  Permanently delete your profile, listings, and messages. This action is irreversible and immediate.
+                </p>
+                <button
+                  type="button"
+                  onClick={() => setIsConfirmDeleteOpen(true)}
+                  style={{
+                    backgroundColor: '#fee2e2',
+                    color: '#dc2626',
+                    border: '1px solid #fca5a5',
+                    borderRadius: '10px',
+                    padding: '0.55rem 0.95rem',
+                    fontSize: '0.82rem',
+                    fontWeight: '700',
+                    cursor: 'pointer',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '0.35rem'
+                  }}
+                >
+                  <i className="fa-solid fa-trash-can" />
+                  <span>Delete My Account</span>
+                </button>
+              </div>
             </div>
           )}
 
@@ -785,6 +850,110 @@ function SettingsModal({ isOpen, onClose, onLogout, userProfile, onUpdateUser })
             </div>
           )}
         </div>
+
+        {/* Delete Account Confirmation Modal */}
+        {isConfirmDeleteOpen && (
+          <div style={{
+            position: 'fixed',
+            inset: 0,
+            backgroundColor: 'rgba(0,0,0,0.72)',
+            backdropFilter: 'blur(4px)',
+            WebkitBackdropFilter: 'blur(4px)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 10000,
+            padding: '1rem'
+          }}>
+            <div className="animate-fade-in" style={{
+              backgroundColor: 'var(--surface)',
+              borderRadius: '20px',
+              padding: '1.6rem',
+              maxWidth: '420px',
+              width: '100%',
+              border: '1px solid #fca5a5',
+              boxShadow: 'var(--shadow-xl)',
+              textAlign: 'center'
+            }}>
+              <div style={{
+                width: '52px',
+                height: '52px',
+                borderRadius: '50%',
+                backgroundColor: '#fee2e2',
+                color: '#dc2626',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                fontSize: '1.4rem',
+                margin: '0 auto 1rem auto'
+              }}>
+                <i className="fa-solid fa-triangle-exclamation" />
+              </div>
+              <h4 style={{ fontFamily: 'var(--font-display)', fontWeight: '800', fontSize: '1.2rem', color: '#dc2626', margin: '0 0 0.5rem 0' }}>
+                Delete Account Permanently?
+              </h4>
+              <p style={{ fontSize: '0.84rem', color: 'var(--text-muted)', lineHeight: '1.45', margin: '0 0 1.25rem 0' }}>
+                Are you sure you want to delete your CampusStash account? All your active listings, student requests, and chat history will be permanently wiped immediately. This action cannot be undone.
+              </p>
+              
+              {deleteError && (
+                <div style={{ color: '#dc2626', fontSize: '0.82rem', marginBottom: '0.85rem', fontWeight: '600' }}>
+                  {deleteError}
+                </div>
+              )}
+
+              <div style={{ display: 'flex', gap: '0.75rem', justifyContent: 'center' }}>
+                <button
+                  type="button"
+                  disabled={isDeleting}
+                  onClick={() => { setIsConfirmDeleteOpen(false); setDeleteError(''); }}
+                  style={{
+                    flex: 1,
+                    padding: '0.7rem 1rem',
+                    borderRadius: '12px',
+                    border: '1px solid var(--border)',
+                    backgroundColor: 'var(--surface-alt)',
+                    color: 'var(--text-main)',
+                    fontWeight: '700',
+                    fontSize: '0.86rem',
+                    cursor: 'pointer'
+                  }}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  disabled={isDeleting}
+                  onClick={handleDeleteAccount}
+                  style={{
+                    flex: 1,
+                    padding: '0.7rem 1rem',
+                    borderRadius: '12px',
+                    border: 'none',
+                    backgroundColor: '#dc2626',
+                    color: '#ffffff',
+                    fontWeight: '700',
+                    fontSize: '0.86rem',
+                    cursor: isDeleting ? 'not-allowed' : 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '0.35rem'
+                  }}
+                >
+                  {isDeleting ? (
+                    <>
+                      <i className="fa-solid fa-circle-notch fa-spin" />
+                      <span>Deleting...</span>
+                    </>
+                  ) : (
+                    <span>Yes, Delete</span>
+                  )}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Footer info & Logout button */}
         <div style={{

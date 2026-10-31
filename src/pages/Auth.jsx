@@ -4,6 +4,7 @@ import { apiFetch } from '../api';
 
 function Auth() {
   const [isLogin, setIsLogin] = useState(true);
+  const [isForgotPassword, setIsForgotPassword] = useState(false);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [phone, setPhone] = useState('');
@@ -12,7 +13,8 @@ function Auth() {
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
 
-  // OTP Verification State
+  // Registration OTP Verification State
+  const [otpChannel, setOtpChannel] = useState('sms'); // 'sms' | 'whatsapp'
   const [otpCode, setOtpCode] = useState('');
   const [isOtpSent, setIsOtpSent] = useState(false);
   const [isPhoneVerified, setIsPhoneVerified] = useState(false);
@@ -23,7 +25,19 @@ function Auth() {
   const [devCodeHint, setDevCodeHint] = useState('');
   const [resendCooldown, setResendCooldown] = useState(0);
 
-  // Countdown timer for OTP resend cooldown
+  // Forgot Password State
+  const [forgotPhone, setForgotPhone] = useState('');
+  const [forgotChannel, setForgotChannel] = useState('sms'); // 'sms' | 'whatsapp'
+  const [forgotOtp, setForgotOtp] = useState('');
+  const [forgotNewPassword, setForgotNewPassword] = useState('');
+  const [showForgotPw, setShowForgotPw] = useState(false);
+  const [isForgotOtpSent, setIsForgotOtpSent] = useState(false);
+  const [isForgotSending, setIsForgotSending] = useState(false);
+  const [isForgotResetting, setIsForgotResetting] = useState(false);
+  const [forgotCooldown, setForgotCooldown] = useState(0);
+  const [forgotDevCode, setForgotDevCode] = useState('');
+
+  // Countdown timer for Registration OTP resend cooldown
   useEffect(() => {
     let timer = null;
     if (resendCooldown > 0) {
@@ -36,7 +50,20 @@ function Auth() {
     };
   }, [resendCooldown]);
 
-  const handleSendOtp = async (targetPhone = phone) => {
+  // Countdown timer for Forgot Password OTP resend cooldown
+  useEffect(() => {
+    let timer = null;
+    if (forgotCooldown > 0) {
+      timer = setInterval(() => {
+        setForgotCooldown((prev) => prev - 1);
+      }, 1000);
+    }
+    return () => {
+      if (timer) clearInterval(timer);
+    };
+  }, [forgotCooldown]);
+
+  const handleSendOtp = async (targetPhone = phone, channel = otpChannel) => {
     const rawPhone = targetPhone.trim();
     if (!rawPhone) {
       setError('Please enter your phone number first.');
@@ -50,17 +77,18 @@ function Auth() {
     try {
       const res = await apiFetch('/auth/phone/send-otp', {
         method: 'POST',
-        body: JSON.stringify({ phone: rawPhone })
+        body: JSON.stringify({ phone: rawPhone, channel })
       });
       setIsOtpSent(true);
-      setOtpMessage(res.message || 'Verification code sent to your phone.');
+      const chName = channel === 'whatsapp' ? 'WhatsApp' : 'SMS';
+      setOtpMessage(res.message || `Verification code sent to your phone via ${chName}.`);
       if (res.dev_code) {
         setDevCodeHint(res.dev_code);
       }
       setResendCooldown(60);
       return true;
     } catch (err) {
-      setError(err.message || 'Failed to send verification SMS.');
+      setError(err.message || 'Failed to send verification code.');
       return false;
     } finally {
       setIsSendingOtp(false);
@@ -103,6 +131,84 @@ function Auth() {
     setResendCooldown(0);
   };
 
+  const handleForgotSendOtp = async () => {
+    const rawPhone = forgotPhone.trim();
+    if (!rawPhone) {
+      setError('Please enter your registered Nigerian phone number.');
+      return;
+    }
+    setError('');
+    setOtpMessage('');
+    setIsForgotSending(true);
+    setForgotDevCode('');
+
+    try {
+      const res = await apiFetch('/auth/forgot-password/send-otp', {
+        method: 'POST',
+        body: JSON.stringify({ phone: rawPhone, channel: forgotChannel })
+      });
+      setIsForgotOtpSent(true);
+      const chName = forgotChannel === 'whatsapp' ? 'WhatsApp' : 'SMS';
+      setOtpMessage(res.message || `Password reset code sent via ${chName}!`);
+      if (res.dev_code) {
+        setForgotDevCode(res.dev_code);
+      }
+      setForgotCooldown(60);
+    } catch (err) {
+      setError(err.message || 'Failed to send password reset code.');
+    } finally {
+      setIsForgotSending(false);
+    }
+  };
+
+  const handleForgotReset = async (e) => {
+    e.preventDefault();
+    const rawPhone = forgotPhone.trim();
+    const code = forgotOtp.trim();
+    const newPass = forgotNewPassword;
+
+    if (!rawPhone) {
+      setError('Phone number is required.');
+      return;
+    }
+    if (!code || code.length < 4) {
+      setError('Please enter the 6-digit recovery code.');
+      return;
+    }
+    if (!newPass || newPass.length < 6) {
+      setError('New password must be at least 6 characters.');
+      return;
+    }
+
+    setError('');
+    setOtpMessage('');
+    setIsForgotResetting(true);
+
+    try {
+      const data = await apiFetch('/auth/forgot-password/reset', {
+        method: 'POST',
+        body: JSON.stringify({
+          phone: rawPhone,
+          otp_code: code,
+          new_password: newPass
+        })
+      });
+
+      if (data?.access_token) {
+        localStorage.setItem('token', data.access_token);
+        navigate('/dashboard');
+      } else {
+        setIsForgotPassword(false);
+        setIsLogin(true);
+        setOtpMessage('Password updated successfully! Please sign in with your new password.');
+      }
+    } catch (err) {
+      setError(err.message || 'Failed to reset password. Please check your verification code.');
+    } finally {
+      setIsForgotResetting(false);
+    }
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
@@ -140,11 +246,12 @@ function Auth() {
           } else if (!isOtpSent) {
             // Automatically send OTP
             await handleSendOtp();
-            setError('We just sent a 6-digit confirmation code to your phone. Enter it below to activate your account.');
+            const chName = otpChannel === 'whatsapp' ? 'WhatsApp' : 'SMS';
+            setError(`We just sent a 6-digit confirmation code via ${chName}. Enter it below to activate your account.`);
             setIsLoading(false);
             return;
           } else {
-            setError('Please enter and verify the 6-digit SMS code sent to your phone.');
+            setError(`Please enter and verify the 6-digit code sent to your phone via ${otpChannel === 'whatsapp' ? 'WhatsApp' : 'SMS'}.`);
             setIsLoading(false);
             return;
           }
@@ -257,245 +364,225 @@ function Auth() {
         boxShadow: '0 20px 40px -10px rgba(0,0,0,0.06)',
         boxSizing: 'border-box'
       }}>
-        
-        {/* Tab Switcher */}
-        <div style={{
-          display: 'flex',
-          backgroundColor: 'var(--bg-color)',
-          borderRadius: '12px',
-          padding: '0.3rem',
-          marginBottom: '1.5rem',
-          border: '1px solid var(--border)'
-        }}>
-          <button
-            type="button"
-            onClick={() => { setIsLogin(true); setError(''); setOtpMessage(''); }}
-            style={{
-              flex: 1,
-              padding: '0.65rem',
-              borderRadius: '9px',
-              border: 'none',
-              backgroundColor: isLogin ? 'var(--surface)' : 'transparent',
-              color: isLogin ? 'var(--brandblue)' : 'var(--text-muted)',
-              fontFamily: 'var(--font-display)',
-              fontWeight: isLogin ? '700' : '500',
-              fontSize: '0.92rem',
-              cursor: 'pointer',
-              boxShadow: isLogin ? 'var(--shadow-sm)' : 'none',
-              transition: 'all 0.2s ease'
-            }}
-          >
-            Log In
-          </button>
-          <button
-            type="button"
-            onClick={() => { setIsLogin(false); setError(''); setOtpMessage(''); }}
-            style={{
-              flex: 1,
-              padding: '0.65rem',
-              borderRadius: '9px',
-              border: 'none',
-              backgroundColor: !isLogin ? 'var(--surface)' : 'transparent',
-              color: !isLogin ? 'var(--brandblue)' : 'var(--text-muted)',
-              fontFamily: 'var(--font-display)',
-              fontWeight: !isLogin ? '700' : '500',
-              fontSize: '0.92rem',
-              cursor: 'pointer',
-              boxShadow: !isLogin ? 'var(--shadow-sm)' : 'none',
-              transition: 'all 0.2s ease'
-            }}
-          >
-            Sign Up
-          </button>
-        </div>
 
-        <h2 style={{
-          fontFamily: 'var(--font-display)',
-          fontSize: '1.35rem',
-          fontWeight: '800',
-          letterSpacing: '-0.02em',
-          color: 'var(--text-main)',
-          marginBottom: '0.35rem',
-          textAlign: 'center'
-        }}>
-          {isLogin ? 'Welcome Back!' : 'Create Verified Student Account'}
-        </h2>
-
-        <p style={{
-          color: 'var(--text-muted)',
-          fontSize: '0.86rem',
-          marginBottom: '1.25rem',
-          textAlign: 'center'
-        }}>
-          {isLogin 
-            ? 'Sign in to contact sellers and manage your campus listings.' 
-            : 'Protect the campus marketplace. Verify your Nigerian phone number to prevent spam.'}
-        </p>
-
-        {error && (
-          <div style={{
-            color: '#b91c1c',
-            backgroundColor: '#fee2e2',
-            border: '1px solid #fecaca',
-            padding: '0.75rem 1rem',
-            borderRadius: '12px',
-            marginBottom: '1.25rem',
-            fontSize: '0.86rem',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '0.5rem',
-            lineHeight: '1.4'
-          }}>
-            <i className="fa-solid fa-circle-exclamation" style={{ flexShrink: 0 }} />
-            <span>{error}</span>
-          </div>
-        )}
-
-        {otpMessage && (
-          <div style={{
-            color: '#065f46',
-            backgroundColor: '#d1fae5',
-            border: '1px solid #a7f3d0',
-            padding: '0.75rem 1rem',
-            borderRadius: '12px',
-            marginBottom: '1.25rem',
-            fontSize: '0.86rem',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '0.5rem',
-            lineHeight: '1.4'
-          }}>
-            <i className="fa-solid fa-circle-check" style={{ flexShrink: 0 }} />
-            <span>{otpMessage}</span>
-          </div>
-        )}
-
-        <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1.1rem' }}>
+        {/* FORGOT PASSWORD VIEW */}
+        {isForgotPassword ? (
           <div>
-            <label className="form-label">Email Address</label>
-            <input 
-              className="form-input"
-              type="email" 
-              required
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder="e.g. student@university.edu.ng"
-            />
-          </div>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1rem' }}>
+              <button
+                type="button"
+                onClick={() => {
+                  setIsForgotPassword(false);
+                  setError('');
+                  setOtpMessage('');
+                }}
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  color: 'var(--brandblue)',
+                  fontWeight: '700',
+                  fontSize: '0.85rem',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.35rem',
+                  padding: 0
+                }}
+              >
+                <i className="fa-solid fa-arrow-left" />
+                <span>Back to Login</span>
+              </button>
 
-          <div>
-            <label className="form-label">Password</label>
-            <input 
-              className="form-input"
-              type="password" 
-              required
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              placeholder="••••••••"
-            />
-          </div>
+              <span style={{ fontSize: '0.78rem', color: 'var(--text-muted)', fontWeight: '600' }}>
+                Account Recovery
+              </span>
+            </div>
 
-          {!isLogin && (
-            <>
-              {/* Phone Verification Section */}
+            <h2 style={{
+              fontFamily: 'var(--font-display)',
+              fontSize: '1.35rem',
+              fontWeight: '800',
+              letterSpacing: '-0.02em',
+              color: 'var(--text-main)',
+              marginBottom: '0.35rem',
+              textAlign: 'center'
+            }}>
+              Forgot Password?
+            </h2>
+
+            <p style={{
+              color: 'var(--text-muted)',
+              fontSize: '0.86rem',
+              marginBottom: '1.25rem',
+              textAlign: 'center'
+            }}>
+              Enter your registered phone number to receive a 6-digit recovery code via SMS or WhatsApp.
+            </p>
+
+            {error && (
+              <div style={{
+                color: '#b91c1c',
+                backgroundColor: '#fee2e2',
+                border: '1px solid #fecaca',
+                padding: '0.75rem 1rem',
+                borderRadius: '12px',
+                marginBottom: '1.25rem',
+                fontSize: '0.86rem',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.5rem',
+                lineHeight: '1.4'
+              }}>
+                <i className="fa-solid fa-circle-exclamation" style={{ flexShrink: 0 }} />
+                <span>{error}</span>
+              </div>
+            )}
+
+            {otpMessage && (
+              <div style={{
+                color: '#065f46',
+                backgroundColor: '#d1fae5',
+                border: '1px solid #a7f3d0',
+                padding: '0.75rem 1rem',
+                borderRadius: '12px',
+                marginBottom: '1.25rem',
+                fontSize: '0.86rem',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.5rem',
+                lineHeight: '1.4'
+              }}>
+                <i className="fa-solid fa-circle-check" style={{ flexShrink: 0 }} />
+                <span>{otpMessage}</span>
+              </div>
+            )}
+
+            {/* Step 1: Request Recovery OTP */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
               <div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.4rem' }}>
-                  <label className="form-label" style={{ marginBottom: 0 }}>Phone Number (SMS Verified)</label>
-                  {isPhoneVerified && (
-                    <span style={{ fontSize: '0.75rem', color: '#10b981', fontWeight: '700', display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
-                      <i className="fa-solid fa-circle-check" /> Verified
-                    </span>
-                  )}
+                <label className="form-label">Registered Phone Number</label>
+                
+                {/* Channel toggle for forgot password */}
+                <div style={{
+                  display: 'flex',
+                  gap: '0.5rem',
+                  marginBottom: '0.65rem',
+                  backgroundColor: 'var(--bg-color)',
+                  padding: '0.25rem',
+                  borderRadius: '12px',
+                  border: '1px solid var(--border)'
+                }}>
+                  <button
+                    type="button"
+                    onClick={() => setForgotChannel('sms')}
+                    style={{
+                      flex: 1,
+                      padding: '0.45rem 0.6rem',
+                      borderRadius: '9px',
+                      border: 'none',
+                      backgroundColor: forgotChannel === 'sms' ? 'var(--surface)' : 'transparent',
+                      color: forgotChannel === 'sms' ? 'var(--brandblue)' : 'var(--text-muted)',
+                      fontWeight: forgotChannel === 'sms' ? '700' : '500',
+                      fontSize: '0.78rem',
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: '0.35rem',
+                      boxShadow: forgotChannel === 'sms' ? 'var(--shadow-sm)' : 'none',
+                      transition: 'all 0.15s ease'
+                    }}
+                  >
+                    <i className="fa-solid fa-comment-sms" />
+                    <span>SMS Code</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setForgotChannel('whatsapp')}
+                    style={{
+                      flex: 1,
+                      padding: '0.45rem 0.6rem',
+                      borderRadius: '9px',
+                      border: 'none',
+                      backgroundColor: forgotChannel === 'whatsapp' ? '#25D366' : 'transparent',
+                      color: forgotChannel === 'whatsapp' ? '#ffffff' : 'var(--text-muted)',
+                      fontWeight: forgotChannel === 'whatsapp' ? '700' : '500',
+                      fontSize: '0.78rem',
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: '0.35rem',
+                      boxShadow: forgotChannel === 'whatsapp' ? '0 2px 8px rgba(37,211,102,0.3)' : 'none',
+                      transition: 'all 0.15s ease'
+                    }}
+                  >
+                    <i className="fa-brands fa-whatsapp" style={{ fontSize: '0.95rem' }} />
+                    <span>WhatsApp OTP</span>
+                  </button>
                 </div>
 
                 <div style={{ display: 'flex', gap: '0.5rem' }}>
-                  <input 
+                  <input
                     className="form-input"
-                    type="tel" 
+                    type="tel"
                     required
-                    disabled={isPhoneVerified}
-                    value={phone}
-                    onChange={(e) => setPhone(e.target.value)}
-                    placeholder="e.g. 08012345678 or +234..."
-                    style={{
-                      flex: 1,
-                      borderColor: isPhoneVerified ? '#10b981' : undefined,
-                      backgroundColor: isPhoneVerified ? 'var(--surface-alt)' : undefined
-                    }}
+                    value={forgotPhone}
+                    onChange={(e) => setForgotPhone(e.target.value)}
+                    placeholder="e.g. 08012345678"
+                    style={{ flex: 1 }}
                   />
-
-                  {isPhoneVerified ? (
-                    <button
-                      type="button"
-                      onClick={handleResetPhone}
-                      style={{
-                        padding: '0.55rem 0.85rem',
-                        fontSize: '0.8rem',
-                        fontFamily: 'var(--font-display)',
-                        fontWeight: '600',
-                        borderRadius: '12px',
-                        border: '1px solid var(--border)',
-                        backgroundColor: 'var(--surface)',
-                        color: 'var(--text-muted)',
-                        cursor: 'pointer',
-                        whiteSpace: 'nowrap'
-                      }}
-                      title="Change phone number"
-                    >
-                      Change
-                    </button>
-                  ) : (
-                    <button
-                      type="button"
-                      onClick={() => handleSendOtp()}
-                      disabled={isSendingOtp || resendCooldown > 0}
-                      style={{
-                        padding: '0.55rem 0.95rem',
-                        fontSize: '0.82rem',
-                        fontFamily: 'var(--font-display)',
-                        fontWeight: '700',
-                        borderRadius: '12px',
-                        border: 'none',
-                        backgroundColor: resendCooldown > 0 ? 'var(--surface-alt)' : 'var(--brandblue)',
-                        color: resendCooldown > 0 ? 'var(--text-muted)' : '#ffffff',
-                        cursor: (isSendingOtp || resendCooldown > 0) ? 'not-allowed' : 'pointer',
-                        whiteSpace: 'nowrap',
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '0.35rem'
-                      }}
-                    >
-                      {isSendingOtp ? (
-                        <>
-                          <i className="fa-solid fa-circle-notch fa-spin" />
-                          <span>Sending...</span>
-                        </>
-                      ) : resendCooldown > 0 ? (
-                        <span>Resend ({resendCooldown}s)</span>
-                      ) : (
-                        <span>{isOtpSent ? 'Resend' : 'Send Code'}</span>
-                      )}
-                    </button>
-                  )}
+                  <button
+                    type="button"
+                    onClick={handleForgotSendOtp}
+                    disabled={isForgotSending || forgotCooldown > 0}
+                    style={{
+                      padding: '0.55rem 0.95rem',
+                      fontSize: '0.82rem',
+                      fontFamily: 'var(--font-display)',
+                      fontWeight: '700',
+                      borderRadius: '12px',
+                      border: 'none',
+                      backgroundColor: forgotCooldown > 0 ? 'var(--surface-alt)' : (forgotChannel === 'whatsapp' ? '#25D366' : 'var(--brandblue)'),
+                      color: forgotCooldown > 0 ? 'var(--text-muted)' : '#ffffff',
+                      cursor: (isForgotSending || forgotCooldown > 0) ? 'not-allowed' : 'pointer',
+                      whiteSpace: 'nowrap',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '0.35rem'
+                    }}
+                  >
+                    {isForgotSending ? (
+                      <>
+                        <i className="fa-solid fa-circle-notch fa-spin" />
+                        <span>Sending...</span>
+                      </>
+                    ) : forgotCooldown > 0 ? (
+                      <span>Resend ({forgotCooldown}s)</span>
+                    ) : (
+                      <span>{isForgotOtpSent ? 'Resend' : 'Send Code'}</span>
+                    )}
+                  </button>
                 </div>
+              </div>
 
-                {/* OTP Code Entry Block */}
-                {!isPhoneVerified && isOtpSent && (
+              {/* Step 2: Code and New Password Entry */}
+              {isForgotOtpSent && (
+                <form onSubmit={handleForgotReset} style={{ display: 'flex', flexDirection: 'column', gap: '1rem', marginTop: '0.25rem' }}>
                   <div style={{
-                    marginTop: '0.75rem',
-                    padding: '0.9rem',
+                    padding: '1rem',
                     borderRadius: '16px',
                     backgroundColor: 'var(--surface-alt)',
                     border: '1px solid var(--border)'
                   }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
-                      <span style={{ fontSize: '0.78rem', fontWeight: '700', color: 'var(--text-main)' }}>
-                        Enter 6-Digit SMS Code
-                      </span>
-                      {devCodeHint && (
+                      <label className="form-label" style={{ marginBottom: 0 }}>
+                        Enter 6-Digit Recovery Code
+                      </label>
+                      {forgotDevCode && (
                         <button
                           type="button"
-                          onClick={() => setOtpCode(devCodeHint)}
+                          onClick={() => setForgotOtp(forgotDevCode)}
                           style={{
                             background: 'none',
                             border: 'none',
@@ -506,104 +593,521 @@ function Auth() {
                             cursor: 'pointer'
                           }}
                         >
-                          Auto-fill Code ({devCodeHint})
+                          Auto-fill ({forgotDevCode})
                         </button>
                       )}
                     </div>
+                    <input
+                      className="form-input"
+                      type="text"
+                      maxLength={6}
+                      value={forgotOtp}
+                      onChange={(e) => setForgotOtp(e.target.value.replace(/\D/g, ''))}
+                      placeholder="123456"
+                      required
+                      style={{
+                        textAlign: 'center',
+                        letterSpacing: '0.3rem',
+                        fontFamily: 'var(--font-display)',
+                        fontWeight: '800',
+                        fontSize: '1.25rem'
+                      }}
+                    />
+                  </div>
+
+                  <div>
+                    <label className="form-label">Create New Password</label>
+                    <div style={{ position: 'relative' }}>
+                      <input
+                        className="form-input"
+                        type={showForgotPw ? 'text' : 'password'}
+                        value={forgotNewPassword}
+                        onChange={(e) => setForgotNewPassword(e.target.value)}
+                        placeholder="At least 6 characters"
+                        minLength={6}
+                        required
+                        style={{ paddingRight: '2.5rem' }}
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowForgotPw(!showForgotPw)}
+                        style={{
+                          position: 'absolute',
+                          right: '0.85rem',
+                          top: '50%',
+                          transform: 'translateY(-50%)',
+                          background: 'none',
+                          border: 'none',
+                          color: 'var(--text-muted)',
+                          cursor: 'pointer',
+                          fontSize: '0.88rem'
+                        }}
+                      >
+                        <i className={showForgotPw ? "fa-solid fa-eye-slash" : "fa-solid fa-eye"} />
+                      </button>
+                    </div>
+                  </div>
+
+                  <button
+                    type="submit"
+                    className="btn-primary"
+                    disabled={isForgotResetting || forgotOtp.length < 4 || forgotNewPassword.length < 6}
+                    style={{ width: '100%', padding: '0.85rem' }}
+                  >
+                    {isForgotResetting ? (
+                      <>
+                        <i className="fa-solid fa-circle-notch fa-spin" />
+                        <span>Updating Password...</span>
+                      </>
+                    ) : (
+                      <>
+                        <i className="fa-solid fa-shield-halved" />
+                        <span>Reset Password & Sign In</span>
+                      </>
+                    )}
+                  </button>
+                </form>
+              )}
+            </div>
+          </div>
+        ) : (
+          /* STANDARD LOGIN & SIGN UP VIEW */
+          <>
+            {/* Tab Switcher */}
+            <div style={{
+              display: 'flex',
+              backgroundColor: 'var(--bg-color)',
+              borderRadius: '12px',
+              padding: '0.3rem',
+              marginBottom: '1.5rem',
+              border: '1px solid var(--border)'
+            }}>
+              <button
+                type="button"
+                onClick={() => { setIsLogin(true); setError(''); setOtpMessage(''); }}
+                style={{
+                  flex: 1,
+                  padding: '0.65rem',
+                  borderRadius: '9px',
+                  border: 'none',
+                  backgroundColor: isLogin ? 'var(--surface)' : 'transparent',
+                  color: isLogin ? 'var(--brandblue)' : 'var(--text-muted)',
+                  fontFamily: 'var(--font-display)',
+                  fontWeight: isLogin ? '700' : '500',
+                  fontSize: '0.92rem',
+                  cursor: 'pointer',
+                  boxShadow: isLogin ? 'var(--shadow-sm)' : 'none',
+                  transition: 'all 0.2s ease'
+                }}
+              >
+                Log In
+              </button>
+              <button
+                type="button"
+                onClick={() => { setIsLogin(false); setError(''); setOtpMessage(''); }}
+                style={{
+                  flex: 1,
+                  padding: '0.65rem',
+                  borderRadius: '9px',
+                  border: 'none',
+                  backgroundColor: !isLogin ? 'var(--surface)' : 'transparent',
+                  color: !isLogin ? 'var(--brandblue)' : 'var(--text-muted)',
+                  fontFamily: 'var(--font-display)',
+                  fontWeight: !isLogin ? '700' : '500',
+                  fontSize: '0.92rem',
+                  cursor: 'pointer',
+                  boxShadow: !isLogin ? 'var(--shadow-sm)' : 'none',
+                  transition: 'all 0.2s ease'
+                }}
+              >
+                Sign Up
+              </button>
+            </div>
+
+            <h2 style={{
+              fontFamily: 'var(--font-display)',
+              fontSize: '1.35rem',
+              fontWeight: '800',
+              letterSpacing: '-0.02em',
+              color: 'var(--text-main)',
+              marginBottom: '0.35rem',
+              textAlign: 'center'
+            }}>
+              {isLogin ? 'Welcome Back!' : 'Create Verified Student Account'}
+            </h2>
+
+            <p style={{
+              color: 'var(--text-muted)',
+              fontSize: '0.86rem',
+              marginBottom: '1.25rem',
+              textAlign: 'center'
+            }}>
+              {isLogin 
+                ? 'Sign in to contact sellers and manage your campus listings.' 
+                : 'Protect the campus marketplace. Verify your phone via SMS or WhatsApp.'}
+            </p>
+
+            {error && (
+              <div style={{
+                color: '#b91c1c',
+                backgroundColor: '#fee2e2',
+                border: '1px solid #fecaca',
+                padding: '0.75rem 1rem',
+                borderRadius: '12px',
+                marginBottom: '1.25rem',
+                fontSize: '0.86rem',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.5rem',
+                lineHeight: '1.4'
+              }}>
+                <i className="fa-solid fa-circle-exclamation" style={{ flexShrink: 0 }} />
+                <span>{error}</span>
+              </div>
+            )}
+
+            {otpMessage && (
+              <div style={{
+                color: '#065f46',
+                backgroundColor: '#d1fae5',
+                border: '1px solid #a7f3d0',
+                padding: '0.75rem 1rem',
+                borderRadius: '12px',
+                marginBottom: '1.25rem',
+                fontSize: '0.86rem',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.5rem',
+                lineHeight: '1.4'
+              }}>
+                <i className="fa-solid fa-circle-check" style={{ flexShrink: 0 }} />
+                <span>{otpMessage}</span>
+              </div>
+            )}
+
+            <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1.1rem' }}>
+              <div>
+                <label className="form-label">Email Address</label>
+                <input 
+                  className="form-input"
+                  type="email" 
+                  required
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="e.g. student@university.edu.ng"
+                />
+              </div>
+
+              <div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.35rem' }}>
+                  <label className="form-label" style={{ marginBottom: 0 }}>Password</label>
+                  {isLogin && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setIsForgotPassword(true);
+                        setError('');
+                        setOtpMessage('');
+                      }}
+                      style={{
+                        background: 'none',
+                        border: 'none',
+                        color: 'var(--brandblue)',
+                        fontSize: '0.8rem',
+                        fontWeight: '700',
+                        cursor: 'pointer',
+                        padding: 0
+                      }}
+                    >
+                      Forgot password?
+                    </button>
+                  )}
+                </div>
+                <input 
+                  className="form-input"
+                  type="password" 
+                  required
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  placeholder="••••••••"
+                />
+              </div>
+
+              {!isLogin && (
+                <>
+                  {/* Phone Verification Section */}
+                  <div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.4rem' }}>
+                      <label className="form-label" style={{ marginBottom: 0 }}>
+                        Phone Number ({otpChannel === 'whatsapp' ? 'WhatsApp' : 'SMS'} Verified)
+                      </label>
+                      {isPhoneVerified && (
+                        <span style={{ fontSize: '0.75rem', color: '#10b981', fontWeight: '700', display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
+                          <i className="fa-solid fa-circle-check" /> Verified
+                        </span>
+                      )}
+                    </div>
+
+                    {/* Delivery Channel Selector */}
+                    {!isPhoneVerified && (
+                      <div style={{
+                        display: 'flex',
+                        gap: '0.5rem',
+                        marginBottom: '0.65rem',
+                        backgroundColor: 'var(--bg-color)',
+                        padding: '0.25rem',
+                        borderRadius: '12px',
+                        border: '1px solid var(--border)'
+                      }}>
+                        <button
+                          type="button"
+                          onClick={() => setOtpChannel('sms')}
+                          style={{
+                            flex: 1,
+                            padding: '0.45rem 0.6rem',
+                            borderRadius: '9px',
+                            border: 'none',
+                            backgroundColor: otpChannel === 'sms' ? 'var(--surface)' : 'transparent',
+                            color: otpChannel === 'sms' ? 'var(--brandblue)' : 'var(--text-muted)',
+                            fontWeight: otpChannel === 'sms' ? '700' : '500',
+                            fontSize: '0.78rem',
+                            cursor: 'pointer',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            gap: '0.35rem',
+                            boxShadow: otpChannel === 'sms' ? 'var(--shadow-sm)' : 'none',
+                            transition: 'all 0.15s ease'
+                          }}
+                        >
+                          <i className="fa-solid fa-comment-sms" />
+                          <span>SMS Code</span>
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setOtpChannel('whatsapp')}
+                          style={{
+                            flex: 1,
+                            padding: '0.45rem 0.6rem',
+                            borderRadius: '9px',
+                            border: 'none',
+                            backgroundColor: otpChannel === 'whatsapp' ? '#25D366' : 'transparent',
+                            color: otpChannel === 'whatsapp' ? '#ffffff' : 'var(--text-muted)',
+                            fontWeight: otpChannel === 'whatsapp' ? '700' : '500',
+                            fontSize: '0.78rem',
+                            cursor: 'pointer',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            gap: '0.35rem',
+                            boxShadow: otpChannel === 'whatsapp' ? '0 2px 8px rgba(37,211,102,0.3)' : 'none',
+                            transition: 'all 0.15s ease'
+                          }}
+                        >
+                          <i className="fa-brands fa-whatsapp" style={{ fontSize: '0.95rem' }} />
+                          <span>WhatsApp OTP</span>
+                        </button>
+                      </div>
+                    )}
 
                     <div style={{ display: 'flex', gap: '0.5rem' }}>
                       <input 
                         className="form-input"
-                        type="text" 
-                        maxLength={6}
-                        value={otpCode}
-                        onChange={(e) => setOtpCode(e.target.value.replace(/\D/g, ''))}
-                        placeholder="123456"
+                        type="tel" 
+                        required
+                        disabled={isPhoneVerified}
+                        value={phone}
+                        onChange={(e) => setPhone(e.target.value)}
+                        placeholder="e.g. 08012345678 or +234..."
                         style={{
                           flex: 1,
-                          textAlign: 'center',
-                          letterSpacing: '0.3rem',
-                          fontFamily: 'var(--font-display)',
-                          fontWeight: '800',
-                          fontSize: '1.2rem',
-                          padding: '0.45rem'
+                          borderColor: isPhoneVerified ? '#10b981' : undefined,
+                          backgroundColor: isPhoneVerified ? 'var(--surface-alt)' : undefined
                         }}
                       />
 
-                      <button
-                        type="button"
-                        onClick={handleVerifyOtp}
-                        disabled={isVerifyingOtp || otpCode.length < 4}
-                        style={{
-                          padding: '0.55rem 1rem',
-                          borderRadius: '12px',
-                          border: 'none',
-                          backgroundColor: '#10b981',
-                          color: '#ffffff',
-                          fontFamily: 'var(--font-display)',
-                          fontWeight: '700',
-                          fontSize: '0.84rem',
-                          cursor: (isVerifyingOtp || otpCode.length < 4) ? 'not-allowed' : 'pointer',
-                          opacity: otpCode.length < 4 ? 0.6 : 1,
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: '0.35rem'
-                        }}
-                      >
-                        {isVerifyingOtp ? (
-                          <i className="fa-solid fa-circle-notch fa-spin" />
-                        ) : (
-                          <i className="fa-solid fa-check" />
-                        )}
-                        <span>Confirm</span>
-                      </button>
+                      {isPhoneVerified ? (
+                        <button
+                          type="button"
+                          onClick={handleResetPhone}
+                          style={{
+                            padding: '0.55rem 0.85rem',
+                            fontSize: '0.8rem',
+                            fontFamily: 'var(--font-display)',
+                            fontWeight: '600',
+                            borderRadius: '12px',
+                            border: '1px solid var(--border)',
+                            backgroundColor: 'var(--surface)',
+                            color: 'var(--text-muted)',
+                            cursor: 'pointer',
+                            whiteSpace: 'nowrap'
+                          }}
+                          title="Change phone number"
+                        >
+                          Change
+                        </button>
+                      ) : (
+                        <button
+                          type="button"
+                          onClick={() => handleSendOtp(phone, otpChannel)}
+                          disabled={isSendingOtp || resendCooldown > 0}
+                          style={{
+                            padding: '0.55rem 0.95rem',
+                            fontSize: '0.82rem',
+                            fontFamily: 'var(--font-display)',
+                            fontWeight: '700',
+                            borderRadius: '12px',
+                            border: 'none',
+                            backgroundColor: resendCooldown > 0 ? 'var(--surface-alt)' : (otpChannel === 'whatsapp' ? '#25D366' : 'var(--brandblue)'),
+                            color: resendCooldown > 0 ? 'var(--text-muted)' : '#ffffff',
+                            cursor: (isSendingOtp || resendCooldown > 0) ? 'not-allowed' : 'pointer',
+                            whiteSpace: 'nowrap',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '0.35rem'
+                          }}
+                        >
+                          {isSendingOtp ? (
+                            <>
+                              <i className="fa-solid fa-circle-notch fa-spin" />
+                              <span>Sending...</span>
+                            </>
+                          ) : resendCooldown > 0 ? (
+                            <span>Resend ({resendCooldown}s)</span>
+                          ) : (
+                            <span>{isOtpSent ? 'Resend' : 'Send Code'}</span>
+                          )}
+                        </button>
+                      )}
+                    </div>
+
+                    {/* OTP Code Entry Block */}
+                    {!isPhoneVerified && isOtpSent && (
+                      <div style={{
+                        marginTop: '0.75rem',
+                        padding: '0.9rem',
+                        borderRadius: '16px',
+                        backgroundColor: 'var(--surface-alt)',
+                        border: '1px solid var(--border)'
+                      }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
+                          <span style={{ fontSize: '0.78rem', fontWeight: '700', color: 'var(--text-main)' }}>
+                            Enter 6-Digit {otpChannel === 'whatsapp' ? 'WhatsApp' : 'SMS'} Code
+                          </span>
+                          {devCodeHint && (
+                            <button
+                              type="button"
+                              onClick={() => setOtpCode(devCodeHint)}
+                              style={{
+                                background: 'none',
+                                border: 'none',
+                                padding: 0,
+                                color: 'var(--brandblue)',
+                                fontSize: '0.75rem',
+                                fontWeight: '700',
+                                cursor: 'pointer'
+                              }}
+                            >
+                              Auto-fill Code ({devCodeHint})
+                            </button>
+                          )}
+                        </div>
+
+                        <div style={{ display: 'flex', gap: '0.5rem' }}>
+                          <input 
+                            className="form-input"
+                            type="text" 
+                            maxLength={6}
+                            value={otpCode}
+                            onChange={(e) => setOtpCode(e.target.value.replace(/\D/g, ''))}
+                            placeholder="123456"
+                            style={{
+                              flex: 1,
+                              textAlign: 'center',
+                              letterSpacing: '0.3rem',
+                              fontFamily: 'var(--font-display)',
+                              fontWeight: '800',
+                              fontSize: '1.2rem',
+                              padding: '0.45rem'
+                            }}
+                          />
+
+                          <button
+                            type="button"
+                            onClick={handleVerifyOtp}
+                            disabled={isVerifyingOtp || otpCode.length < 4}
+                            style={{
+                              padding: '0.55rem 1rem',
+                              borderRadius: '12px',
+                              border: 'none',
+                              backgroundColor: '#10b981',
+                              color: '#ffffff',
+                              fontFamily: 'var(--font-display)',
+                              fontWeight: '700',
+                              fontSize: '0.84rem',
+                              cursor: (isVerifyingOtp || otpCode.length < 4) ? 'not-allowed' : 'pointer',
+                              opacity: otpCode.length < 4 ? 0.6 : 1,
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: '0.35rem'
+                            }}
+                          >
+                            {isVerifyingOtp ? (
+                              <i className="fa-solid fa-circle-notch fa-spin" />
+                            ) : (
+                              <i className="fa-solid fa-check" />
+                            )}
+                            <span>Confirm</span>
+                          </button>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
+                  <div>
+                    <label className="form-label">Burner Handle (Public Alias)</label>
+                    <div style={{ position: 'relative' }}>
+                      <span style={{
+                        position: 'absolute',
+                        left: '1rem',
+                        top: '50%',
+                        transform: 'translateY(-50%)',
+                        color: 'var(--text-light)',
+                        fontWeight: '600'
+                      }}>
+                        @
+                      </span>
+                      <input 
+                        className="form-input"
+                        type="text" 
+                        value={burnerHandle}
+                        onChange={(e) => setBurnerHandle(e.target.value)}
+                        placeholder="e.g. campus_vendor"
+                        style={{ paddingLeft: '2.25rem' }}
+                      />
                     </div>
                   </div>
+                </>
+              )}
+
+              <button 
+                type="submit" 
+                className="btn-primary" 
+                disabled={isLoading || (!isLogin && isSendingOtp)}
+                style={{ width: '100%', marginTop: '0.5rem', padding: '0.85rem' }}
+              >
+                {isLoading ? (
+                  <>
+                    <i className="fa-solid fa-circle-notch fa-spin" />
+                    Processing...
+                  </>
+                ) : (
+                  isLogin ? 'Log In to CampusStash' : 'Complete Verification & Sign Up'
                 )}
-              </div>
-
-              <div>
-                <label className="form-label">Burner Handle (Public Alias)</label>
-                <div style={{ position: 'relative' }}>
-                  <span style={{
-                    position: 'absolute',
-                    left: '1rem',
-                    top: '50%',
-                    transform: 'translateY(-50%)',
-                    color: 'var(--text-light)',
-                    fontWeight: '600'
-                  }}>
-                    @
-                  </span>
-                  <input 
-                    className="form-input"
-                    type="text" 
-                    value={burnerHandle}
-                    onChange={(e) => setBurnerHandle(e.target.value)}
-                    placeholder="e.g. campus_vendor"
-                    style={{ paddingLeft: '2.25rem' }}
-                  />
-                </div>
-              </div>
-            </>
-          )}
-
-          <button 
-            type="submit" 
-            className="btn-primary" 
-            disabled={isLoading || (!isLogin && isSendingOtp)}
-            style={{ width: '100%', marginTop: '0.5rem', padding: '0.85rem' }}
-          >
-            {isLoading ? (
-              <>
-                <i className="fa-solid fa-circle-notch fa-spin" />
-                Processing...
-              </>
-            ) : (
-              isLogin ? 'Log In to CampusStash' : 'Complete Verification & Sign Up'
-            )}
-          </button>
-        </form>
+              </button>
+            </form>
+          </>
+        )}
 
         {/* Skip & Browse Guest Button */}
         <div style={{ marginTop: '1.5rem', textAlign: 'center', paddingTop: '1.1rem', borderTop: '1px solid var(--border)' }}>
