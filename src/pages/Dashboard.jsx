@@ -804,7 +804,7 @@ function Dashboard() {
                   const rawPrice = listing.price_kobo ? (listing.price_kobo / 100) : (listing.price || 0);
                   const priceFormatted = rawPrice.toLocaleString(undefined, { maximumFractionDigits: (rawPrice % 1 === 0 ? 0 : 2) });
                   const isMine = currentUserId && listing.seller_id === currentUserId;
-                  const isBookmarked = savedItemIds.includes(listing.id);
+                  const isBookmarked = Array.isArray(savedItemIds) && savedItemIds.includes(listing.id);
                   const campusBadge = listing.campus_acronym || 'Campus';
 
                   return (
