@@ -142,7 +142,7 @@ function Navbar({ onPrimaryAction, primaryActionText }) {
           className={`aesthetic-dock-btn ${isHome ? 'active' : ''}`}
           title="Marketplace Home"
         >
-          <i className={isHome ? "fa-solid fa-house" : "fa-regular fa-house"} />
+          <i className="fa-solid fa-house" />
           {isHome && <span className="aesthetic-dock-dot" />}
         </button>
 
