@@ -2,7 +2,6 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { apiFetch } from '../api';
 import Navbar from '../components/Navbar';
-import Footer from '../components/Footer';
 import ChatModal from '../components/ChatModal';
 
 function Messages() {
@@ -47,34 +46,50 @@ function Messages() {
     <div style={{ backgroundColor: 'var(--bg-color)', minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
       <Navbar />
 
-      <div className="container animate-fade-in" style={{ maxWidth: '960px', margin: '0 auto', padding: '0 1rem 2.5rem 1rem', width: '100%', boxSizing: 'border-box', overflowX: 'hidden', flex: 1 }}>
-        
-        {/* Header Banner */}
+      <main 
+        className="animate-fade-in" 
+        style={{ 
+          maxWidth: '520px', 
+          margin: '0 auto', 
+          padding: '0.5rem 1.15rem 7rem 1.15rem', 
+          width: '100%', 
+          boxSizing: 'border-box', 
+          flex: 1 
+        }}
+      >
+        {/* ============================================================== */}
+        {/* TOP BAR: EDITORIAL TITLE                                        */}
+        {/* ============================================================== */}
         <div style={{
-          backgroundColor: 'var(--surface)',
-          borderRadius: '20px',
-          padding: '1.5rem 1.25rem',
-          border: '1px solid var(--border)',
-          boxShadow: 'var(--shadow-sm)',
-          marginBottom: '1.5rem',
-          width: '100%',
-          boxSizing: 'border-box'
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          marginBottom: '1.25rem',
+          padding: '0 0.25rem'
         }}>
-          <span className="badge-pill" style={{ marginBottom: '0.5rem' }}>
-            <i className="fa-solid fa-comments" /> Masked Inbox
-          </span>
           <h1 style={{
-            fontFamily: 'var(--font-display)',
-            fontSize: 'clamp(1.5rem, 5vw, 2.1rem)',
-            fontWeight: '800',
-            letterSpacing: '-0.03em',
+            fontFamily: 'var(--font-serif)',
+            fontSize: '1.85rem',
+            fontWeight: '600',
             color: 'var(--text-main)',
-            marginBottom: '0.5rem',
-            wordBreak: 'break-word'
+            margin: 0
           }}>
-            Campus <span className="text-brandgreen">Conversations</span>
+            Messages
           </h1>
 
+          <button
+            onClick={fetchInbox}
+            style={{
+              background: 'none',
+              border: 'none',
+              color: 'var(--terracotta)',
+              fontSize: '0.88rem',
+              fontWeight: '600',
+              cursor: 'pointer'
+            }}
+          >
+            Refresh
+          </button>
         </div>
 
         {/* Inbox Content */}
@@ -82,71 +97,80 @@ function Messages() {
           <div style={{
             padding: '4rem 2rem',
             textAlign: 'center',
-            backgroundColor: 'var(--surface)',
-            borderRadius: '20px',
+            backgroundColor: '#FFFFFF',
+            borderRadius: '24px',
             border: '1px solid var(--border)'
           }}>
-            <i className="fa-solid fa-circle-notch fa-spin" style={{ fontSize: '2rem', color: 'var(--brandgreen)', marginBottom: '1rem' }} />
-            <p style={{ fontFamily: 'var(--font-display)', fontWeight: '600', color: 'var(--text-main)' }}>
+            <i className="fa-solid fa-circle-notch fa-spin" style={{ fontSize: '2rem', color: 'var(--terracotta)', marginBottom: '0.75rem' }} />
+            <p style={{ fontWeight: '600', color: 'var(--text-main)', fontSize: '0.92rem' }}>
               Loading your campus chats...
             </p>
           </div>
         ) : error ? (
           <div style={{
-            padding: '2rem',
-            backgroundColor: '#fee2e2',
-            border: '1px solid #fecaca',
+            padding: '1.5rem',
+            backgroundColor: '#FEE2E2',
+            border: '1px solid #FECACA',
             borderRadius: '20px',
             display: 'flex',
             flexDirection: 'column',
-            gap: '1rem'
+            gap: '0.75rem'
           }}>
-            <div style={{ color: '#b91c1c', fontWeight: '600' }}>{error}</div>
-            <button className="btn-primary" onClick={fetchInbox} style={{ alignSelf: 'flex-start' }}>
+            <div style={{ color: '#B91C1C', fontWeight: '600', fontSize: '0.88rem' }}>{error}</div>
+            <button 
+              className="btn-primary" 
+              onClick={fetchInbox} 
+              style={{ alignSelf: 'flex-start', borderRadius: '9999px', padding: '0.45rem 1rem' }}
+            >
               Retry
             </button>
           </div>
         ) : threads.length === 0 ? (
           <div style={{
-            padding: '4rem 2rem',
-            border: '2px dashed var(--border)',
+            padding: '3.5rem 1.5rem',
             borderRadius: '24px',
             textAlign: 'center',
             color: 'var(--text-muted)',
-            backgroundColor: 'var(--surface)'
+            backgroundColor: '#FFFFFF',
+            border: '1px solid var(--border)',
+            boxShadow: 'var(--shadow-card)'
           }}>
             <div style={{
-              width: '64px',
-              height: '64px',
+              width: '56px',
+              height: '56px',
               borderRadius: '50%',
-              backgroundColor: 'var(--lightgreen)',
-              color: 'var(--brandgreen)',
+              backgroundColor: 'var(--surface-alt)',
+              color: 'var(--terracotta)',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              fontSize: '1.5rem',
-              margin: '0 auto 1.25rem auto'
+              fontSize: '1.4rem',
+              margin: '0 auto 1rem auto'
             }}>
               <i className="fa-regular fa-paper-plane" />
             </div>
-            <h3 style={{ fontFamily: 'var(--font-display)', fontSize: '1.3rem', fontWeight: '700', color: 'var(--text-main)', marginBottom: '0.5rem' }}>
+            <h3 style={{ fontSize: '1.15rem', fontWeight: '700', color: 'var(--text-main)', marginBottom: '0.35rem' }}>
               Your Inbox is Clear
             </h3>
-            <p style={{ maxWidth: '420px', margin: '0 auto 1.5rem auto', fontSize: '0.95rem' }}>
-              When you message a student or someone contacts you about a listing, the conversation will appear here.
+            <p style={{ maxWidth: '340px', margin: '0 auto 1.25rem auto', fontSize: '0.86rem', lineHeight: '1.45' }}>
+              When you message a student or someone asks about your item, the conversation will appear here.
             </p>
-            <button className="btn-primary" onClick={() => navigate('/dashboard')}>
+            <button 
+              className="btn-primary" 
+              onClick={() => navigate('/dashboard')}
+              style={{ borderRadius: '9999px', padding: '0.65rem 1.4rem' }}
+            >
               Explore Marketplace
             </button>
           </div>
         ) : (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
             {threads.map(thread => {
               const convId = thread.id || thread.conversation_id;
               const title = thread.listing_title || thread.title || 'Campus Gear Chat';
               const peerName = thread.other_user?.burner_handle 
                 ? `@${thread.other_user.burner_handle}`
-                : (thread.other_user?.email || thread.other_user_email || 'Campus Peer');
+                : (thread.other_user?.email ? thread.other_user.email.split('@')[0] : 'Campus Peer');
               const unread = thread.unread_count || 0;
               const timeStr = thread.last_message_time || thread.updated_at || thread.created_at;
 
@@ -157,123 +181,107 @@ function Messages() {
                     conversation_id: convId,
                     id: thread.listing_id || convId, 
                     title: title, 
-                    seller_id: thread.other_user?.id || thread.other_user_id 
+                    seller_id: thread.other_user?.id || thread.other_user_id,
+                    seller_handle: peerName
                   })} 
                   style={{ 
                     display: 'flex', 
                     alignItems: 'center',
-                    gap: '1.25rem',
-                    padding: '1.5rem', 
-                    backgroundColor: 'var(--surface)', 
+                    gap: '1rem',
+                    padding: '1.1rem', 
+                    backgroundColor: '#FFFFFF', 
                     border: '1px solid var(--border)', 
-                    borderRadius: '18px', 
+                    borderRadius: '20px', 
                     cursor: 'pointer',
-                    boxShadow: 'var(--shadow-sm)',
-                    transition: 'all 0.25s cubic-bezier(0.16, 1, 0.3, 1)',
+                    boxShadow: 'var(--shadow-card)',
+                    transition: 'all 0.2s ease',
                     position: 'relative'
                   }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.borderColor = 'var(--brandgreen)';
-                    e.currentTarget.style.transform = 'translateY(-2px)';
-                    e.currentTarget.style.boxShadow = '0 10px 25px -4px rgba(16,185,129,0.12)';
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.borderColor = 'var(--border)';
-                    e.currentTarget.style.transform = 'translateY(0)';
-                    e.currentTarget.style.boxShadow = 'var(--shadow-sm)';
-                  }}
                 >
-                  {/* Avatar Icon */}
+                  {/* Peer Avatar */}
                   <div style={{
-                    width: '52px',
-                    height: '52px',
-                    borderRadius: '16px',
-                    backgroundColor: 'var(--lightgreen)',
-                    color: 'var(--brandgreen)',
+                    width: '46px',
+                    height: '46px',
+                    borderRadius: '50%',
+                    backgroundColor: 'var(--surface-alt)',
+                    color: 'var(--terracotta)',
+                    border: '2px solid #FFFFFF',
+                    boxShadow: '0 2px 6px rgba(0,0,0,0.06)',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
-                    fontSize: '1.35rem',
+                    fontSize: '1.1rem',
+                    fontWeight: '700',
                     flexShrink: 0
                   }}>
-                    <i className="fa-solid fa-user-secret" />
+                    {peerName.replace('@', '').charAt(0).toUpperCase()}
                   </div>
 
                   <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.25rem' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.2rem' }}>
                       <h3 style={{
-                        fontFamily: 'var(--font-display)',
                         fontWeight: '700',
-                        fontSize: '1.15rem',
+                        fontSize: '0.96rem',
                         color: 'var(--text-main)',
                         margin: 0,
                         whiteSpace: 'nowrap',
                         overflow: 'hidden',
                         textOverflow: 'ellipsis'
                       }}>
-                        {title}
+                        {peerName}
                       </h3>
                       {timeStr && (
-                        <span style={{ fontSize: '0.78rem', color: 'var(--text-light)', flexShrink: 0, marginLeft: '1rem' }}>
-                          {new Date(timeStr).toLocaleDateString(undefined, { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                        <span style={{ fontSize: '0.74rem', color: 'var(--text-light)', flexShrink: 0, marginLeft: '0.5rem' }}>
+                          {new Date(timeStr).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
                         </span>
                       )}
                     </div>
 
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.35rem' }}>
-                      <span style={{
-                        fontSize: '0.75rem',
-                        fontFamily: 'var(--font-display)',
-                        fontWeight: '700',
-                        color: 'var(--darkgreen)',
-                        backgroundColor: 'var(--lightgreen)',
-                        padding: '0.15rem 0.55rem',
-                        borderRadius: '6px'
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <p style={{
+                        fontSize: '0.82rem',
+                        color: 'var(--text-muted)',
+                        margin: 0,
+                        whiteSpace: 'nowrap',
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis'
                       }}>
-                        Peer: {peerName}
-                      </span>
+                        Regarding: {title}
+                      </p>
+
                       {unread > 0 && (
                         <span style={{
-                          fontSize: '0.72rem',
+                          fontSize: '0.7rem',
                           fontWeight: '800',
-                          color: '#ffffff',
-                          backgroundColor: 'var(--brandgreen)',
-                          padding: '0.1rem 0.5rem',
-                          borderRadius: '9999px'
+                          color: '#FFFFFF',
+                          backgroundColor: 'var(--terracotta)',
+                          padding: '2px 7px',
+                          borderRadius: '9999px',
+                          marginLeft: '0.5rem'
                         }}>
-                          {unread} new
+                          {unread}
                         </span>
                       )}
                     </div>
-
-                    <p style={{
-                      color: 'var(--text-muted)',
-                      fontSize: '0.9rem',
-                      whiteSpace: 'nowrap',
-                      overflow: 'hidden',
-                      textOverflow: 'ellipsis',
-                      margin: 0
-                    }}>
-                      {thread.last_message || 'Start conversation...'}
-                    </p>
                   </div>
-
-                  <i className="fa-solid fa-chevron-right" style={{ color: 'var(--text-light)', fontSize: '0.9rem' }} />
                 </div>
               );
             })}
           </div>
         )}
-      </div>
+      </main>
 
+      {/* Direct Chat Modal */}
       {activeChatListing && (
         <ChatModal 
-          isOpen={!!activeChatListing}
-          onClose={() => { setActiveChatListing(null); fetchInbox(); }}
-          listing={activeChatListing}
+          isOpen={true} 
+          listing={activeChatListing} 
+          onClose={() => {
+            setActiveChatListing(null);
+            fetchInbox();
+          }} 
         />
       )}
-      <Footer />
     </div>
   );
 }

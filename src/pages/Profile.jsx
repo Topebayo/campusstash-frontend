@@ -1,31 +1,32 @@
 import React, { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { apiFetch, getImageUrl, getServerHost } from '../api';
+import { useNavigate, useLocation } from 'react-router-dom';
+import { apiFetch, getImageUrl } from '../api';
 import Navbar from '../components/Navbar';
-import Footer from '../components/Footer';
 import EditListingModal from '../components/EditListingModal';
 import CreateListingModal from '../components/CreateListingModal';
 import SettingsModal from '../components/SettingsModal';
+import ItemDetailModal from '../components/ItemDetailModal';
 
 function Profile() {
   const navigate = useNavigate();
+  const location = useLocation();
+
   const [profile, setProfile] = useState(null);
   const [myListings, setMyListings] = useState([]);
+  const [savedListings, setSavedListings] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [loadError, setLoadError] = useState('');
-  
-  // Form State
-  const [phone, setPhone] = useState('');
-  const [burnerHandle, setBurnerHandle] = useState('');
-  // serverIp removed - cloud backend is permanent
-  const [isSaving, setIsSaving] = useState(false);
-  const [message, setMessage] = useState('');
-  const [listingActionId, setListingActionId] = useState(null);
 
-  // Edit Modal State
+  // Active tab: 'listings' (My Active Listings) vs 'saved' (My Saved)
+  const [activeTab, setActiveTab] = useState(() => {
+    const params = new URLSearchParams(window.location.search);
+    return params.get('tab') === 'saved' ? 'saved' : 'listings';
+  });
+
+  // Modals
   const [editingListing, setEditingListing] = useState(null);
+  const [selectedDetailListing, setSelectedDetailListing] = useState(null);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
-  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isCreateOpen, setIsCreateOpen] = useState(false);
 
   const fetchProfile = async () => {
@@ -34,8 +35,6 @@ function Profile() {
     try {
       const data = await apiFetch('/users/me');
       setProfile(data);
-      setPhone(data.phone || '');
-      setBurnerHandle(data.profile?.burner_handle || '');
     } catch (err) {
       console.error("Failed to load profile:", err);
       setLoadError(err.message || 'Failed to load profile data.');
@@ -50,9 +49,25 @@ function Profile() {
   const fetchMyListings = async () => {
     try {
       const data = await apiFetch('/listings/me');
-      setMyListings(data);
+      setMyListings(Array.isArray(data) ? data : []);
     } catch (err) {
       console.error("Failed to load my listings:", err);
+    }
+  };
+
+  const fetchSavedListings = async () => {
+    try {
+      const savedIds = JSON.parse(localStorage.getItem('saved_listings') || '[]');
+      if (savedIds.length === 0) {
+        setSavedListings([]);
+        return;
+      }
+      const data = await apiFetch('/listings/');
+      const allItems = Array.isArray(data) ? data : (data?.items || []);
+      const matched = allItems.filter(item => savedIds.includes(item.id));
+      setSavedListings(matched);
+    } catch (err) {
+      console.warn("Failed to fetch saved listings:", err);
     }
   };
 
@@ -64,37 +79,17 @@ function Profile() {
     }
     fetchProfile();
     fetchMyListings();
+    fetchSavedListings();
   }, [navigate]);
 
-
-
-  const handleSave = async (e) => {
-    e.preventDefault();
-    if (!phone.trim()) {
-      setMessage('Phone number is required.');
-      return;
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    if (params.get('tab') === 'saved') {
+      setActiveTab('saved');
     }
-    setIsSaving(true);
-    setMessage('');
-    try {
-      const updated = await apiFetch('/users/me', {
-        method: 'PUT',
-        body: JSON.stringify({ phone: phone.trim() })
-      });
-      setMessage('Profile settings updated successfully!');
-      if (updated) {
-        setProfile(updated);
-        setPhone(updated.phone || '');
-        setBurnerHandle(updated.profile?.burner_handle || '');
-      }
-    } catch (err) {
-      setMessage(err.message || 'Failed to update settings.');
-    }
-    setIsSaving(false);
-  };
+  }, [location.search]);
 
   const handleToggleStatus = async (listingId, currentStatus) => {
-    setListingActionId(listingId);
     const newStatus = currentStatus === 'sold' ? 'active' : 'sold';
     try {
       const updated = await apiFetch(`/listings/${listingId}/status`, {
@@ -104,16 +99,13 @@ function Profile() {
       setMyListings(prev => prev.map(item => item.id === listingId ? { ...item, status: updated.status, is_active: updated.is_active } : item));
     } catch (err) {
       alert(err.message || 'Failed to update listing status.');
-    } finally {
-      setListingActionId(null);
     }
   };
 
   const handleDeleteListing = async (listingId) => {
-    if (!window.confirm('Are you sure you want to permanently delete this listing?')) {
+    if (!window.confirm('Are you sure you want to delete this listing?')) {
       return;
     }
-    setListingActionId(listingId);
     try {
       await apiFetch(`/listings/${listingId}`, {
         method: 'DELETE'
@@ -121,413 +113,362 @@ function Profile() {
       setMyListings(prev => prev.filter(item => item.id !== listingId));
     } catch (err) {
       alert(err.message || 'Failed to delete listing.');
-    } finally {
-      setListingActionId(null);
     }
   };
 
-  const handleOpenEdit = (listing) => {
-    setEditingListing(listing);
-    setIsEditModalOpen(true);
-  };
+  const displayName = profile?.profile?.burner_handle 
+    ? `@${profile.profile.burner_handle}`
+    : (profile?.full_name || profile?.email?.split('@')[0] || 'Tobiloba Akinbayo');
+
+  const campusMajor = `${profile?.campus_name || profile?.campus_acronym || 'Lead City University'} • ${profile?.major || 'Computer Science'}`;
+  const userBio = profile?.bio || 'Clearing out my stash before graduation! 🎓 DM me for bundles.';
+  
+  const soldCount = myListings.filter(l => l.status === 'sold').length;
+  const activeCount = myListings.filter(l => l.status !== 'sold').length;
 
   return (
     <div style={{ backgroundColor: 'var(--bg-color)', minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
-      <Navbar />
+      <Navbar 
+        onPrimaryAction={() => setIsCreateOpen(true)}
+        primaryActionText="Sell an Item"
+      />
 
-      <div style={{ maxWidth: '1280px', margin: '0 auto', padding: '0 1rem 2.5rem 1rem', width: '100%', boxSizing: 'border-box', overflowX: 'hidden', flex: 1 }} className="animate-fade-in">
-        
-        {/* Header Profile Card */}
+      <main 
+        className="animate-fade-in"
+        style={{ 
+          maxWidth: '520px', 
+          margin: '0 auto', 
+          width: '100%', 
+          padding: '0.5rem 1.15rem 7rem 1.15rem', 
+          boxSizing: 'border-box', 
+          flex: 1 
+        }}
+      >
+        {/* ============================================================== */}
+        {/* TOP BAR: EDITORIAL TITLE & GEAR ICON                            */}
+        {/* ============================================================== */}
         <div style={{
-          backgroundColor: 'var(--surface)',
-          borderRadius: '24px',
-          padding: '1.5rem 1.25rem',
-          border: '1px solid var(--border)',
-          boxShadow: 'var(--shadow-sm)',
-          marginBottom: '1.5rem',
           display: 'flex',
-          flexDirection: 'column',
-          gap: '1.25rem',
-          width: '100%',
-          boxSizing: 'border-box',
-          overflowX: 'hidden'
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          marginBottom: '1.25rem',
+          padding: '0 0.25rem'
         }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '1.25rem', flexWrap: 'wrap' }}>
-            <div style={{
-              width: '64px',
-              height: '64px',
-              borderRadius: '20px',
-              backgroundColor: 'var(--lightgreen)',
-              color: 'var(--brandgreen)',
+          <div style={{ width: '36px' }} /> {/* Spacer */}
+
+          <h1 style={{
+            fontFamily: 'var(--font-serif)',
+            fontSize: '1.65rem',
+            fontWeight: '600',
+            color: 'var(--text-main)',
+            margin: 0
+          }}>
+            Profile
+          </h1>
+
+          <button
+            onClick={() => setIsSettingsOpen(true)}
+            style={{
+              width: '36px',
+              height: '36px',
+              borderRadius: '50%',
+              backgroundColor: '#FFFFFF',
+              border: '1px solid var(--border)',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              fontSize: '1.85rem',
-              flexShrink: 0
+              cursor: 'pointer',
+              color: 'var(--text-main)',
+              fontSize: '0.95rem',
+              boxShadow: 'var(--shadow-sm)'
+            }}
+            title="Settings & Security"
+          >
+            <i className="fa-solid fa-gear" />
+          </button>
+        </div>
+
+        {/* ============================================================== */}
+        {/* USER PROFILE CARD (CENTERED AVATAR & STATS)                     */}
+        {/* ============================================================== */}
+        <div style={{
+          backgroundColor: '#FFFFFF',
+          borderRadius: '26px',
+          padding: '1.75rem 1.25rem',
+          border: '1px solid var(--border)',
+          boxShadow: 'var(--shadow-card)',
+          textAlign: 'center',
+          marginBottom: '1.5rem',
+          position: 'relative'
+        }}>
+          {/* Centered Circular Avatar */}
+          <div style={{
+            position: 'relative',
+            width: '92px',
+            height: '92px',
+            margin: '0 auto 1rem auto'
+          }}>
+            <div style={{
+              width: '100%',
+              height: '100%',
+              borderRadius: '50%',
+              backgroundColor: 'var(--surface-alt)',
+              border: '3px solid #FFFFFF',
+              boxShadow: '0 4px 16px rgba(120, 95, 75, 0.14)',
+              overflow: 'hidden',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              color: 'var(--terracotta)',
+              fontSize: '2rem',
+              fontWeight: '700'
             }}>
-              <i className="fa-solid fa-user-shield" />
+              {profile?.avatar_url ? (
+                <img 
+                  src={getImageUrl(profile.avatar_url)} 
+                  alt={displayName} 
+                  style={{ width: '100%', height: '100%', objectFit: 'cover' }} 
+                />
+              ) : (
+                displayName.replace('@', '').charAt(0).toUpperCase()
+              )}
             </div>
 
-            <div style={{ minWidth: 0, flex: 1, overflowWrap: 'anywhere' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem', marginBottom: '0.25rem', flexWrap: 'wrap' }}>
-                <h1 style={{
-                  fontFamily: 'var(--font-display)',
-                  fontSize: '1.65rem',
-                  fontWeight: '800',
-                  color: 'var(--text-main)',
-                  margin: 0
-                }}>
-                  @{burnerHandle || profile?.profile?.burner_handle || 'anonymous'}
-                </h1>
-                <span className="badge-pill">
-                  <i className="fa-solid fa-circle-check" /> Verified Phone
-                </span>
-              </div>
-              <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem', margin: 0 }}>
-                {profile?.email || 'Student Account'}
-              </p>
+            {/* Verified Badge Pill */}
+            <div style={{
+              position: 'absolute',
+              bottom: '0px',
+              right: '-10px',
+              backgroundColor: '#FFFFFF',
+              border: '1px solid var(--border)',
+              borderRadius: '9999px',
+              padding: '2px 8px',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '4px',
+              fontSize: '0.72rem',
+              fontWeight: '700',
+              color: '#2E7D32',
+              boxShadow: '0 2px 6px rgba(0,0,0,0.06)'
+            }}>
+              <i className="fa-solid fa-circle-check" /> Verified
             </div>
           </div>
 
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', width: '100%', boxSizing: 'border-box' }}>
-            <div style={{
-              flex: 1,
-              padding: '0.75rem 1rem',
-              backgroundColor: 'var(--bg-color)',
-              borderRadius: '16px',
-              border: '1px solid var(--border)',
-              textAlign: 'center'
-            }}>
-              <span style={{ fontSize: '0.72rem', fontWeight: '700', textTransform: 'uppercase', color: 'var(--text-light)', display: 'block' }}>
-                Active Listings
-              </span>
-              <span style={{ fontFamily: 'var(--font-display)', fontSize: '1.4rem', fontWeight: '800', color: 'var(--brandblue)' }}>
-                {myListings.filter(l => l.status !== 'sold').length}
-              </span>
-            </div>
+          {/* User Full Name / Handle */}
+          <h2 style={{
+            fontFamily: 'var(--font-sans)',
+            fontSize: '1.35rem',
+            fontWeight: '700',
+            color: 'var(--text-main)',
+            margin: '0 0 0.25rem 0'
+          }}>
+            {displayName}
+          </h2>
 
-            <div style={{
-              flex: 1,
-              padding: '0.75rem 1rem',
-              backgroundColor: 'var(--bg-color)',
-              borderRadius: '16px',
-              border: '1px solid var(--border)',
-              textAlign: 'center'
-            }}>
-              <span style={{ fontSize: '0.72rem', fontWeight: '700', textTransform: 'uppercase', color: 'var(--text-light)', display: 'block' }}>
-                Sold Listings
-              </span>
-              <span style={{ fontFamily: 'var(--font-display)', fontSize: '1.4rem', fontWeight: '800', color: 'var(--text-main)' }}>
-                {myListings.filter(l => l.status === 'sold').length}
-              </span>
-            </div>
+          {/* Subtitle: Campus • Major */}
+          <p style={{
+            fontSize: '0.85rem',
+            color: 'var(--text-muted)',
+            margin: '0 0 0.75rem 0'
+          }}>
+            {campusMajor}
+          </p>
+
+          {/* User Bio */}
+          <p style={{
+            fontSize: '0.88rem',
+            color: '#44403C',
+            lineHeight: 1.45,
+            maxWidth: '360px',
+            margin: '0 auto 1.1rem auto'
+          }}>
+            {userBio}
+          </p>
+
+          {/* Social Stats Row */}
+          <div style={{
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: '0.5rem',
+            backgroundColor: 'var(--surface-alt)',
+            borderRadius: '9999px',
+            padding: '0.35rem 1rem',
+            fontSize: '0.8rem',
+            fontWeight: '600',
+            color: 'var(--text-main)'
+          }}>
+            <span>★ 4.9 (12 reviews)</span>
+            <span style={{ opacity: 0.4 }}>•</span>
+            <span>{soldCount} Items Sold</span>
           </div>
         </div>
 
-        {/* Responsive Grid Layout */}
+        {/* ============================================================== */}
+        {/* SEGMENTED PILL SWITCHER: ACTIVE LISTINGS vs SAVED              */}
+        {/* ============================================================== */}
         <div style={{
-          display: 'grid',
-          gridTemplateColumns: 'minmax(0, 1fr)',
-          gap: '2rem'
-        }} className="profile-grid-container">
-          
-          {/* Column 1: Settings Form */}
-          <div style={{
-            backgroundColor: 'var(--surface)',
-            borderRadius: '24px',
-            padding: '1.75rem 1.5rem',
-            border: '1px solid var(--border)',
-            boxShadow: 'var(--shadow-sm)',
-            height: 'fit-content'
-          }}>
-            <h2 style={{
-              fontFamily: 'var(--font-display)',
-              fontSize: '1.25rem',
-              fontWeight: '800',
-              color: 'var(--text-main)',
-              marginBottom: '0.4rem'
-            }}>
-              Edit Anonymous Identity
-            </h2>
-            <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem', marginBottom: '1.25rem' }}>
-              Your handle is what other students see in the marketplace and chats.
-            </p>
+          display: 'flex',
+          backgroundColor: '#F4EFEB',
+          borderRadius: '9999px',
+          padding: '4px',
+          marginBottom: '1.25rem',
+          border: '1px solid var(--border)'
+        }}>
+          <button
+            onClick={() => setActiveTab('listings')}
+            style={{
+              flex: 1,
+              padding: '0.65rem 1rem',
+              borderRadius: '9999px',
+              border: 'none',
+              backgroundColor: activeTab === 'listings' ? 'var(--terracotta)' : 'transparent',
+              color: activeTab === 'listings' ? '#FFFFFF' : 'var(--text-muted)',
+              fontWeight: '700',
+              fontSize: '0.88rem',
+              fontFamily: 'var(--font-sans)',
+              cursor: 'pointer',
+              transition: 'all 0.2s ease',
+              boxShadow: activeTab === 'listings' ? '0 2px 8px rgba(200, 122, 91, 0.3)' : 'none'
+            }}
+          >
+            My Active Listings ({activeCount})
+          </button>
 
-            {message && (
-              <div style={{ 
-                color: message.includes('success') ? 'var(--darkgreen)' : '#b91c1c', 
-                backgroundColor: message.includes('success') ? 'var(--lightgreen)' : '#fee2e2',
-                border: '1px solid',
-                borderColor: message.includes('success') ? 'rgba(16,185,129,0.3)' : '#fecaca',
-                padding: '0.75rem 1rem',
-                borderRadius: '12px',
-                marginBottom: '1.25rem',
-                fontSize: '0.88rem',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '0.5rem'
-              }}>
-                <i className={message.includes('success') ? "fa-solid fa-circle-check" : "fa-solid fa-triangle-exclamation"} />
-                {message}
-              </div>
-            )}
+          <button
+            onClick={() => setActiveTab('saved')}
+            style={{
+              flex: 1,
+              padding: '0.65rem 1rem',
+              borderRadius: '9999px',
+              border: 'none',
+              backgroundColor: activeTab === 'saved' ? 'var(--terracotta)' : 'transparent',
+              color: activeTab === 'saved' ? '#FFFFFF' : 'var(--text-muted)',
+              fontWeight: '700',
+              fontSize: '0.88rem',
+              fontFamily: 'var(--font-sans)',
+              cursor: 'pointer',
+              transition: 'all 0.2s ease',
+              boxShadow: activeTab === 'saved' ? '0 2px 8px rgba(200, 122, 91, 0.3)' : 'none'
+            }}
+          >
+            My Saved ({savedListings.length})
+          </button>
+        </div>
 
-            <form onSubmit={handleSave} style={{ display: 'flex', flexDirection: 'column', gap: '1.1rem' }}>
-              <div>
-                <label className="form-label">Email Address (Read-only)</label>
-                <input 
-                  className="form-input"
-                  type="email" 
-                  disabled
-                  value={profile?.email || ''} 
-                  style={{ backgroundColor: 'var(--surface-alt)', color: 'var(--text-muted)', cursor: 'not-allowed', border: '1px solid var(--border)' }}
-                />
-              </div>
-
-              <div>
-                <label className="form-label">Burner Handle (Public Alias)</label>
-                <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
-                  <span style={{
-                    position: 'absolute',
-                    left: '1rem',
-                    top: '50%',
-                    transform: 'translateY(-50%)',
-                    color: 'var(--text-muted)',
-                    fontWeight: '700',
-                    lineHeight: 1,
-                    pointerEvents: 'none',
-                    userSelect: 'none'
-                  }}>
-                    @
-                  </span>
-                  <input 
-                    className="form-input"
-                    type="text" 
-                    disabled
-                    value={burnerHandle} 
-                    placeholder="e.g. shadow99"
-                    style={{ paddingLeft: '2.25rem', backgroundColor: 'var(--surface-alt)', color: 'var(--text-muted)', cursor: 'not-allowed', border: '1px solid var(--border)' }} 
-                  />
-                </div>
-                <span style={{ fontSize: '0.74rem', color: 'var(--brandblue)', marginTop: '0.35rem', display: 'flex', alignItems: 'center', gap: '0.35rem', fontWeight: '600' }}>
-                  <i className="fa-solid fa-lock" /> Username is permanently locked
-                </span>
-              </div>
-
-              <div>
-                <label className="form-label">Phone Number (SMS Verification)</label>
-                <input 
-                  className="form-input"
-                  type="tel" 
-                  disabled
-                  value={phone} 
-                  placeholder="e.g. +234 800 000 0000"
-                  style={{ backgroundColor: 'var(--surface-alt)', color: 'var(--text-muted)', cursor: 'not-allowed', border: '1px solid var(--border)' }}
-                />
-                <span style={{ fontSize: '0.74rem', color: 'var(--brandgreen)', marginTop: '0.3rem', display: 'flex', alignItems: 'center', gap: '0.3rem', fontWeight: '600' }}>
-                  <i className="fa-solid fa-shield-halved" /> Verified phone number (locked for security)
-                </span>
-              </div>
-
-              <button 
-                type="submit" 
-                className="btn-primary" 
-                disabled={isSaving}
-                style={{ width: '100%', marginTop: '0.5rem' }}
-              >
-                {isSaving ? 'Saving Changes...' : 'Save Changes'}
-              </button>
-
-              <button
-                type="button"
-                onClick={() => setIsSettingsOpen(true)}
-                className="btn-secondary"
-                style={{ width: '100%', marginTop: '0.65rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.45rem' }}
-              >
-                <i className="fa-solid fa-gear" style={{ color: 'var(--brandblue)' }} />
-                <span>Account & Security Settings</span>
-              </button>
-
-
-            </form>
-          </div>
-
-          {/* Column 2: Manage My Listings */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.5rem' }}>
-              <div>
-                <h2 style={{
-                  fontFamily: 'var(--font-display)',
-                  fontSize: '1.25rem',
-                  fontWeight: '800',
-                  color: 'var(--text-main)',
-                  margin: 0
-                }}>
-                  Manage My Listings
-                </h2>
-                <span style={{ fontSize: '0.82rem', color: 'var(--text-muted)' }}>
-                  Total: {myListings.length} {myListings.length === 1 ? 'item' : 'items'}
-                </span>
-              </div>
-              <button 
-                className="btn-primary"
-                onClick={() => setIsCreateOpen(true)}
-                style={{ padding: '0.5rem 1rem', fontSize: '0.84rem' }}
-              >
-                <i className="fa-solid fa-plus" /> Post Another Item
-              </button>
-            </div>
-
+        {/* ============================================================== */}
+        {/* TAB 1: MY ACTIVE LISTINGS (2-COLUMN GRID)                       */}
+        {/* ============================================================== */}
+        {activeTab === 'listings' && (
+          <div>
             {myListings.length === 0 ? (
               <div style={{
-                padding: '2.5rem 1.5rem',
-                border: '2px dashed var(--border)',
-                borderRadius: '20px',
-                color: 'var(--text-muted)',
-                backgroundColor: 'var(--surface)',
-                textAlign: 'center'
+                textAlign: 'center',
+                padding: '3rem 1.5rem',
+                backgroundColor: '#FFFFFF',
+                borderRadius: '24px',
+                border: '1px solid var(--border)'
               }}>
-                <i className="fa-solid fa-box-open" style={{ fontSize: '2rem', color: 'var(--brandgreen)', opacity: 0.6, marginBottom: '0.75rem', display: 'block' }} />
-                <h4 style={{ fontFamily: 'var(--font-display)', fontSize: '1.1rem', fontWeight: '700', color: 'var(--text-main)', marginBottom: '0.25rem' }}>
+                <i className="fa-solid fa-box-open" style={{ fontSize: '2rem', color: 'var(--terracotta)', opacity: 0.6, marginBottom: '0.75rem', display: 'block' }} />
+                <h3 style={{ fontSize: '1.15rem', fontWeight: '700', marginBottom: '0.3rem' }}>
                   No Listings Posted Yet
-                </h4>
-                <p style={{ fontSize: '0.85rem', marginBottom: '1.1rem' }}>
-                  Have an old textbook, calculator, or phone charger lying around?
+                </h3>
+                <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem', marginBottom: '1.25rem' }}>
+                  Declutter your dorm! Post textbooks, calculator, or gear in under a minute.
                 </p>
-                <button className="btn-primary" onClick={() => setIsCreateOpen(true)}>
-                  Post Your First Listing
+                <button 
+                  className="btn-primary"
+                  onClick={() => setIsCreateOpen(true)}
+                  style={{ borderRadius: '9999px', padding: '0.65rem 1.4rem' }}
+                >
+                  <i className="fa-solid fa-plus" /> Post Your First Item
                 </button>
               </div>
             ) : (
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))', gap: '1.25rem' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '0.85rem' }}>
                 {myListings.map(listing => {
                   const isSold = listing.status === 'sold';
-                  const priceFormatted = (listing.price_kobo ? (listing.price_kobo / 100) : (listing.price || 0)).toLocaleString();
+                  const rawPrice = listing.price_kobo ? (listing.price_kobo / 100) : (listing.price || 0);
+                  const priceFormatted = rawPrice.toLocaleString();
 
                   return (
                     <div 
-                      key={listing.id} 
-                      className="listing-card"
-                      style={{
-                        padding: '1.1rem',
-                        opacity: isSold ? 0.75 : 1,
-                        display: 'flex',
-                        flexDirection: 'column',
-                        justifyContent: 'space-between',
-                        backgroundColor: 'var(--surface)',
-                        borderRadius: '20px',
-                        border: '1px solid var(--border)'
-                      }}
+                      key={listing.id}
+                      className="aesthetic-card"
+                      style={{ opacity: isSold ? 0.75 : 1 }}
                     >
-                      <div>
-                        {/* Image Container */}
-                        <div style={{ position: 'relative', width: '100%', height: '160px', borderRadius: '14px', overflow: 'hidden', marginBottom: '0.85rem', backgroundColor: 'var(--surface-alt)' }}>
-                          {listing.image_url ? (
-                            <img 
-                              src={getImageUrl(listing.image_url)} 
-                              alt={listing.title} 
-                              style={{ width: '100%', height: '100%', objectFit: 'cover' }} 
-                              onError={(e) => {
-                                e.currentTarget.style.display = 'none';
-                                const fb = e.currentTarget.parentElement?.querySelector('.listing-placeholder');
-                                if (fb) fb.style.display = 'flex';
-                              }}
-                            />
-                          ) : null}
-                          <div className="listing-placeholder" style={{ width: '100%', height: '100%', borderRadius: 0, margin: 0, display: listing.image_url ? 'none' : 'flex' }}>
-                            <i className="fa-regular fa-image" style={{ fontSize: '1.5rem', opacity: 0.4 }} />
+                      {/* Image Box */}
+                      <div 
+                        className="aesthetic-card-image-box"
+                        onClick={() => setSelectedDetailListing(listing)}
+                      >
+                        {listing.image_url ? (
+                          <img 
+                            src={getImageUrl(listing.image_url)} 
+                            alt={listing.title} 
+                            style={{ width: '100%', height: '100%', objectFit: 'cover' }} 
+                          />
+                        ) : (
+                          <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-light)', fontSize: '1.75rem' }}>
+                            <i className="fa-regular fa-image" />
                           </div>
-                          
-                          {/* Status Badge */}
-                          <div style={{
-                            position: 'absolute',
-                            top: '0.6rem',
-                            left: '0.6rem',
-                            padding: '0.2rem 0.6rem',
-                            borderRadius: '9999px',
-                            fontSize: '0.7rem',
-                            fontFamily: 'var(--font-display)',
-                            fontWeight: '700',
-                            textTransform: 'uppercase',
-                            backgroundColor: isSold ? '#4b5563' : 'var(--brandgreen)',
-                            color: '#ffffff'
-                          }}>
-                            <i className={isSold ? 'fa-solid fa-circle-check' : 'fa-solid fa-bolt'} style={{ marginRight: '0.3rem' }} /> {isSold ? 'Sold' : 'Active'}
-                          </div>
+                        )}
+
+                        {/* Top-Left Pill */}
+                        <div className="aesthetic-card-seller-pill">
+                          <span style={{ color: isSold ? '#ef4444' : '#2E7D32' }}>
+                            {isSold ? 'Sold' : 'Active'}
+                          </span>
                         </div>
-
-                        <h3 style={{
-                          fontFamily: 'var(--font-display)',
-                          fontSize: '1.05rem',
-                          fontWeight: '700',
-                          lineHeight: '1.3',
-                          color: 'var(--text-main)',
-                          marginBottom: '0.25rem'
-                        }}>
-                          {listing.title}
-                        </h3>
-
-                        <p style={{
-                          fontFamily: 'var(--font-display)',
-                          fontSize: '1.15rem',
-                          fontWeight: '800',
-                          color: 'var(--brandgreen)',
-                          marginBottom: '0.75rem'
-                        }}>
-                          ₦{priceFormatted}
-                        </p>
                       </div>
 
-                      {/* Controls Footer */}
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.45rem', paddingTop: '0.75rem', borderTop: '1px solid var(--border)' }}>
-                        <div style={{ display: 'flex', gap: '0.45rem' }}>
+                      {/* Card Details */}
+                      <div className="aesthetic-card-details">
+                        <h4 
+                          className="aesthetic-card-title"
+                          onClick={() => setSelectedDetailListing(listing)}
+                        >
+                          {listing.title}
+                        </h4>
+                        <div className="aesthetic-card-price">
+                          ₦{priceFormatted}
+                        </div>
+
+                        {/* Action Buttons for Seller */}
+                        <div style={{ display: 'flex', gap: '0.4rem', marginTop: '0.5rem', borderTop: '1px solid var(--border)', paddingTop: '0.45rem' }}>
                           <button
+                            type="button"
+                            onClick={() => setEditingListing(listing)}
+                            style={{
+                              flex: 1,
+                              padding: '4px',
+                              borderRadius: '8px',
+                              border: '1px solid var(--border)',
+                              backgroundColor: 'var(--surface-alt)',
+                              color: 'var(--text-main)',
+                              fontSize: '0.72rem',
+                              fontWeight: '600',
+                              cursor: 'pointer'
+                            }}
+                          >
+                            <i className="fa-solid fa-pen" /> Edit
+                          </button>
+                          <button
+                            type="button"
                             onClick={() => handleToggleStatus(listing.id, listing.status)}
                             style={{
                               flex: 1,
-                              padding: '0.45rem 0.6rem',
-                              borderRadius: '10px',
-                              fontSize: '0.75rem',
-                              fontWeight: '600',
-                              border: '1px solid var(--border)',
-                              backgroundColor: isSold ? 'var(--lightgreen)' : '#f3f4f6',
-                              color: isSold ? 'var(--darkgreen)' : 'var(--text-muted)',
-                              cursor: 'pointer'
-                            }}
-                          >
-                            <i className={isSold ? 'fa-solid fa-rotate-right' : 'fa-solid fa-circle-check'} style={{ marginRight: '0.3rem' }} /> {isSold ? 'Relist' : 'Mark Sold'}
-                          </button>
-
-                          <button
-                            onClick={() => handleOpenEdit(listing)}
-                            style={{
-                              padding: '0.45rem 0.65rem',
-                              borderRadius: '10px',
-                              fontSize: '0.75rem',
-                              fontWeight: '600',
-                              border: '1px solid var(--border)',
-                              backgroundColor: 'var(--surface)',
-                              color: 'var(--text-main)',
-                              cursor: 'pointer'
-                            }}
-                          >
-                            Edit
-                          </button>
-
-                          <button
-                            onClick={() => handleDeleteListing(listing.id)}
-                            style={{
-                              padding: '0.45rem 0.65rem',
-                              borderRadius: '10px',
-                              fontSize: '0.75rem',
-                              fontWeight: '600',
+                              padding: '4px',
+                              borderRadius: '8px',
                               border: 'none',
-                              backgroundColor: '#fee2e2',
-                              color: '#b91c1c',
+                              backgroundColor: isSold ? '#2E7D32' : 'var(--terracotta)',
+                              color: '#FFFFFF',
+                              fontSize: '0.72rem',
+                              fontWeight: '600',
                               cursor: 'pointer'
                             }}
                           >
-                            Delete
+                            {isSold ? 'Activate' : 'Sold'}
                           </button>
                         </div>
                       </div>
@@ -537,29 +478,137 @@ function Profile() {
               </div>
             )}
           </div>
-        </div>
-      </div>
+        )}
 
-      <EditListingModal 
-        isOpen={isEditModalOpen}
-        onClose={() => setIsEditModalOpen(false)}
-        listing={editingListing}
-        onUpdated={() => {
-          fetchMyListings();
-        }}
-      />
+        {/* ============================================================== */}
+        {/* TAB 2: MY SAVED ITEMS (2-COLUMN GRID)                           */}
+        {/* ============================================================== */}
+        {activeTab === 'saved' && (
+          <div>
+            {savedListings.length === 0 ? (
+              <div style={{
+                textAlign: 'center',
+                padding: '3rem 1.5rem',
+                backgroundColor: '#FFFFFF',
+                borderRadius: '24px',
+                border: '1px solid var(--border)'
+              }}>
+                <i className="fa-regular fa-bookmark" style={{ fontSize: '2rem', color: 'var(--terracotta)', opacity: 0.6, marginBottom: '0.75rem', display: 'block' }} />
+                <h3 style={{ fontSize: '1.15rem', fontWeight: '700', marginBottom: '0.3rem' }}>
+                  No Saved Items Yet
+                </h3>
+                <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem', marginBottom: '1.25rem' }}>
+                  Tap the heart icon on any listing to save it here for quick access later.
+                </p>
+                <button 
+                  className="btn-primary"
+                  onClick={() => navigate('/dashboard')}
+                  style={{ borderRadius: '9999px', padding: '0.65rem 1.4rem' }}
+                >
+                  Explore Marketplace
+                </button>
+              </div>
+            ) : (
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '0.85rem' }}>
+                {savedListings.map(listing => {
+                  const rawPrice = listing.price_kobo ? (listing.price_kobo / 100) : (listing.price || 0);
+                  const priceFormatted = rawPrice.toLocaleString();
 
-      <SettingsModal
+                  return (
+                    <div 
+                      key={listing.id}
+                      className="aesthetic-card"
+                      onClick={() => setSelectedDetailListing(listing)}
+                    >
+                      <div className="aesthetic-card-image-box">
+                        {listing.image_url ? (
+                          <img 
+                            src={getImageUrl(listing.image_url)} 
+                            alt={listing.title} 
+                            style={{ width: '100%', height: '100%', objectFit: 'cover' }} 
+                          />
+                        ) : (
+                          <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-light)', fontSize: '1.75rem' }}>
+                            <i className="fa-regular fa-image" />
+                          </div>
+                        )}
+                        <div className="aesthetic-card-seller-pill">
+                          <span>{listing.campus_acronym || 'Campus'}</span>
+                        </div>
+                      </div>
+
+                      <div className="aesthetic-card-details">
+                        <h4 className="aesthetic-card-title">
+                          {listing.title}
+                        </h4>
+                        <div className="aesthetic-card-price">
+                          ₦{priceFormatted}
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        )}
+
+      </main>
+
+      {/* Item Detail Modal */}
+      {selectedDetailListing && (
+        <ItemDetailModal 
+          isOpen={true}
+          listing={selectedDetailListing}
+          onClose={() => setSelectedDetailListing(null)}
+          onMessageSeller={(item) => navigate('/dashboard')}
+          currentUserId={profile?.id}
+          onEditListing={(item) => {
+            setSelectedDetailListing(null);
+            setEditingListing(item);
+          }}
+          onToggleStatus={(id, st) => {
+            handleToggleStatus(id, st);
+            setSelectedDetailListing(null);
+          }}
+        />
+      )}
+
+      {/* Edit Listing Modal */}
+      {editingListing && (
+        <EditListingModal 
+          isOpen={true}
+          listing={editingListing}
+          onClose={() => setEditingListing(null)}
+          onSuccess={() => {
+            setEditingListing(null);
+            fetchMyListings();
+          }}
+        />
+      )}
+
+      {/* Create Listing Modal */}
+      {isCreateOpen && (
+        <CreateListingModal 
+          isOpen={isCreateOpen}
+          onClose={() => setIsCreateOpen(false)}
+          onSuccess={() => {
+            setIsCreateOpen(false);
+            fetchMyListings();
+          }}
+        />
+      )}
+
+      {/* Settings Modal */}
+      <SettingsModal 
         isOpen={isSettingsOpen}
         onClose={() => setIsSettingsOpen(false)}
-        userProfile={profile}
         onLogout={() => {
           localStorage.removeItem('token');
           localStorage.removeItem('user');
           navigate('/auth');
         }}
       />
-      <Footer />
     </div>
   );
 }

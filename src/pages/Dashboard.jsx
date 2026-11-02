@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback, useMemo } from 'react';
+import React, { useEffect, useState, useCallback, useMemo, useRef } from 'react';
 import { useNavigate, useLocation, useParams } from 'react-router-dom';
 import { 
   apiFetch, 
@@ -34,13 +34,33 @@ function decodeJwt(token) {
   }
 }
 
-const CATEGORIES = [
-  { name: 'All', icon: 'fa-solid fa-border-all' },
-  { name: 'Textbooks', icon: 'fa-solid fa-book-open' },
-  { name: 'Electronics', icon: 'fa-solid fa-laptop' },
-  { name: 'Dorm Essentials', icon: 'fa-solid fa-bed' },
-  { name: 'Fashion & Apparel', icon: 'fa-solid fa-shirt' },
-  { name: 'Other', icon: 'fa-solid fa-box-archive' }
+// Curated Aesthetic Trending Categories with visual cards
+const TRENDING_CATEGORIES = [
+  { 
+    name: 'Textbooks', 
+    label: 'Textbooks', 
+    image: 'https://images.unsplash.com/photo-1497633762265-9d179a990aa6?w=400&q=80' 
+  },
+  { 
+    name: 'Electronics', 
+    label: 'Tech & Gear', 
+    image: 'https://images.unsplash.com/photo-1519389950473-47ba0277781c?w=400&q=80' 
+  },
+  { 
+    name: 'Fashion & Apparel', 
+    label: 'Apparel', 
+    image: 'https://images.unsplash.com/photo-1503342217505-b0a15ec3261c?w=400&q=80' 
+  },
+  { 
+    name: 'Dorm Essentials', 
+    label: 'Dorm & Living', 
+    image: 'https://images.unsplash.com/photo-1555041469-a586c61ea9bc?w=400&q=80' 
+  },
+  { 
+    name: 'All', 
+    label: 'All Items', 
+    image: 'https://images.unsplash.com/photo-1524995997946-a1c2e315a42f?w=400&q=80' 
+  }
 ];
 
 const PRICE_RANGES = [
@@ -54,8 +74,9 @@ function Dashboard() {
   const navigate = useNavigate();
   const location = useLocation();
   const { id: routeItemId } = useParams();
+  const carouselRef = useRef(null);
 
-  // Active top-level tab: 'items' (Available Items) vs 'requests' (Student Requests / Wanted Board)
+  // Active view: 'items' (Marketplace) vs 'requests' (Daily Requests / Wanted Board)
   const [activeTab, setActiveTab] = useState('items');
 
   // Campus scoping
@@ -68,6 +89,17 @@ function Dashboard() {
     }
   });
   const [selectedCampusId, setSelectedCampusId] = useState(() => getActiveCampusId());
+  const [showCampusPicker, setShowCampusPicker] = useState(false);
+
+  // User profile preview for top bar avatar
+  const [currentUser, setCurrentUser] = useState(() => {
+    try {
+      const saved = localStorage.getItem('user');
+      return saved ? JSON.parse(saved) : null;
+    } catch (e) {
+      return null;
+    }
+  });
 
   // Listings state
   const [listings, setListings] = useState(() => {
@@ -114,13 +146,23 @@ function Dashboard() {
     }
   });
 
-  // Extract current user ID from JWT
+  // Extract current user ID from JWT & fetch /users/me if needed
   useEffect(() => {
     const token = localStorage.getItem('token');
     if (token) {
       const decoded = decodeJwt(token);
       if (decoded && decoded.sub) {
         setCurrentUserId(decoded.sub);
+      }
+      if (!currentUser) {
+        apiFetch('/users/me')
+          .then(data => {
+            if (data) {
+              setCurrentUser(data);
+              localStorage.setItem('user', JSON.stringify(data));
+            }
+          })
+          .catch(() => {});
       }
     }
   }, []);
@@ -142,6 +184,7 @@ function Dashboard() {
   const handleSelectCampus = (campusId) => {
     setSelectedCampusId(campusId);
     setActiveCampusId(campusId);
+    setShowCampusPicker(false);
   };
 
   const toggleBookmark = (e, listingId) => {
@@ -308,15 +351,17 @@ function Dashboard() {
   // Client-side instant filter fallback for responsiveness
   const filteredListings = useMemo(() => {
     return listings.filter(item => {
-      // Campus filter
       if (selectedCampusId && item.campus_id && item.campus_id !== selectedCampusId) {
         return false;
       }
-      // Category filter
-      if (selectedCategory !== 'All' && item.category?.toLowerCase() !== selectedCategory.toLowerCase()) {
-        return false;
+      if (selectedCategory !== 'All') {
+        const itemCat = (item.category || '').toLowerCase();
+        const selCat = selectedCategory.toLowerCase();
+        if (selCat === 'textbooks' && !itemCat.includes('textbook') && !itemCat.includes('book')) return false;
+        if (selCat === 'electronics' && !itemCat.includes('elect') && !itemCat.includes('tech') && !itemCat.includes('gear')) return false;
+        if (selCat === 'fashion & apparel' && !itemCat.includes('fashion') && !itemCat.includes('apparel') && !itemCat.includes('wear')) return false;
+        if (selCat === 'dorm essentials' && !itemCat.includes('dorm') && !itemCat.includes('living') && !itemCat.includes('home')) return false;
       }
-      // Search query filter
       if (searchQuery.trim()) {
         const q = searchQuery.toLowerCase().trim();
         const titleMatch = item.title?.toLowerCase().includes(q);
@@ -324,7 +369,6 @@ function Dashboard() {
         const catMatch = item.category?.toLowerCase().includes(q);
         if (!titleMatch && !descMatch && !catMatch) return false;
       }
-      // Price range filter
       const activeRange = PRICE_RANGES[priceRangeIndex];
       const itemPriceNaira = item.price_kobo ? (item.price_kobo / 100) : (item.price || 0);
       if (activeRange.min !== null && itemPriceNaira < activeRange.min) return false;
@@ -389,7 +433,6 @@ function Dashboard() {
       alert("This is your own request!");
       return;
     }
-    // Launch chat modal with the request details
     setChatListing({
       id: null,
       request_id: req.id,
@@ -401,27 +444,15 @@ function Dashboard() {
     });
   };
 
-  const handleFulfillRequest = async (requestId) => {
-    try {
-      await fulfillItemRequest(requestId);
-      fetchRequests();
-    } catch (err) {
-      alert(err.message || 'Failed to update request');
+  const handleScrollCarousel = (direction) => {
+    if (carouselRef.current) {
+      const scrollAmount = direction === 'left' ? -220 : 220;
+      carouselRef.current.scrollBy({ left: scrollAmount, behavior: 'smooth' });
     }
   };
 
-  const handleDeleteRequest = async (requestId) => {
-    if (!window.confirm('Delete this request from the wanted board?')) return;
-    try {
-      await deleteItemRequest(requestId);
-      fetchRequests();
-    } catch (err) {
-      alert(err.message || 'Failed to delete request');
-    }
-  };
-
-  const activeCampusName = campuses.find(c => c.id === selectedCampusId)?.name || 'All Nigerian Campuses';
-  const activeCampusAcronym = campuses.find(c => c.id === selectedCampusId)?.acronym || 'All';
+  const activeCampusName = campuses.find(c => c.id === selectedCampusId)?.name || 'Lead City University';
+  const activeCampusAcronym = campuses.find(c => c.id === selectedCampusId)?.acronym || 'LCU';
 
   return (
     <div style={{ backgroundColor: 'var(--bg-color)', minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
@@ -430,544 +461,392 @@ function Dashboard() {
         primaryActionText="Sell an Item"
       />
 
-      <div className="dashboard-main-container" style={{ maxWidth: '1280px', margin: '0 auto', width: '100%', boxSizing: 'border-box', flex: 1 }}>
-        
-        {/* Glassmorphic Hero & Search Header */}
-        <div 
-          className="dashboard-hero animate-fade-in"
-        >
-          {/* Ambient Glowing Aura */}
-          <div style={{
-            position: 'absolute',
-            top: '-60px',
-            right: '-60px',
-            width: '240px',
-            height: '240px',
-            borderRadius: '50%',
-            background: 'radial-gradient(circle, rgba(59, 130, 246, 0.22) 0%, rgba(255, 255, 255, 0) 70%)',
-            pointerEvents: 'none'
-          }} />
-
-          <div style={{ maxWidth: '820px', position: 'relative', zIndex: 1 }}>
-            
-            {/* Campus Scope Badge */}
-            <div className="dashboard-hero-badge" style={{
-              display: 'inline-flex',
+      <main 
+        className="animate-fade-in"
+        style={{ 
+          maxWidth: '1040px', 
+          margin: '0 auto', 
+          width: '100%', 
+          padding: '0.5rem 1.15rem 7rem 1.15rem', 
+          boxSizing: 'border-box', 
+          flex: 1 
+        }}
+      >
+        {/* ============================================================== */}
+        {/* AESTHETIC MINIMAL TOP BAR: AVATAR & CAMPUS SELECTOR PILL       */}
+        {/* ============================================================== */}
+        <div style={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          marginBottom: '1rem',
+          position: 'relative'
+        }}>
+          {/* User Circular Avatar */}
+          <div 
+            onClick={() => navigate('/profile')}
+            style={{
+              width: '42px',
+              height: '42px',
+              borderRadius: '50%',
+              backgroundColor: 'var(--surface-alt)',
+              border: '2px solid #FFFFFF',
+              boxShadow: '0 2px 8px rgba(120, 95, 75, 0.12)',
+              overflow: 'hidden',
+              cursor: 'pointer',
+              display: 'flex',
               alignItems: 'center',
-              gap: '0.45rem',
-              backgroundColor: 'var(--lightblue)',
-              border: '1px solid rgba(59, 130, 246, 0.3)',
-              borderRadius: '9999px',
-              padding: '0.35rem 0.85rem',
-              fontSize: '0.82rem',
-              fontWeight: '700',
-              fontFamily: 'var(--font-display)',
-              color: 'var(--brandblue)',
-              marginBottom: '0.85rem'
-            }}>
-              <i className="fa-solid fa-location-dot" />
-              <span>Campus: {activeCampusName} ({activeCampusAcronym})</span>
-            </div>
+              justifyContent: 'center',
+              color: 'var(--terracotta)',
+              flexShrink: 0
+            }}
+            title="View Profile"
+          >
+            {currentUser?.avatar_url ? (
+              <img 
+                src={getImageUrl(currentUser.avatar_url)} 
+                alt="User" 
+                style={{ width: '100%', height: '100%', objectFit: 'cover' }} 
+              />
+            ) : (
+              <span style={{ fontWeight: '700', fontSize: '1rem', fontFamily: 'var(--font-sans)' }}>
+                {currentUser?.email ? currentUser.email.charAt(0).toUpperCase() : <i className="fa-regular fa-user" />}
+              </span>
+            )}
+          </div>
 
-            <h1 className="dashboard-hero-title">
-              Campus <span className="text-brandblue">Marketplace</span> & Wanted Board
-            </h1>
+          {/* Campus Selector Pill */}
+          <div style={{ position: 'relative' }}>
+            <button
+              onClick={() => setShowCampusPicker(prev => !prev)}
+              className="campus-pill-btn"
+              title="Select Campus"
+            >
+              <span>🎓</span>
+              <span>{activeCampusAcronym ? `${activeCampusName} (${activeCampusAcronym})` : 'All Campuses'}</span>
+              <i className="fa-solid fa-chevron-down" style={{ fontSize: '0.72rem', opacity: 0.65 }} />
+            </button>
 
-            <p className="dashboard-hero-sub">
-              Buy, sell, and request items directly from trusted students on your campus. Zero platform fees, safe public meetups.
-            </p>
-
-            {/* Interactive Live Search Input */}
-            <div style={{ position: 'relative', width: '100%' }}>
-              <i 
-                className="fa-solid fa-magnifying-glass" 
+            {/* Campus Dropdown Popover */}
+            {showCampusPicker && (
+              <div 
                 style={{
                   position: 'absolute',
-                  left: '1.15rem',
-                  top: '50%',
-                  transform: 'translateY(-50%)',
-                  color: 'var(--brandblue)',
-                  fontSize: '1.1rem',
-                  pointerEvents: 'none'
-                }}
-              />
-              <input 
-                type="text"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Search textbooks, scientific calculators, laptops, dorm fans, chargers..."
-                style={{
-                  width: '100%',
-                  padding: '0.95rem 2.6rem 0.95rem 2.9rem',
-                  borderRadius: '16px',
+                  top: '100%',
+                  right: 0,
+                  marginTop: '0.5rem',
+                  backgroundColor: '#FFFFFF',
                   border: '1px solid var(--border)',
-                  backgroundColor: 'var(--surface)',
-                  color: 'var(--text-main)',
-                  fontSize: '0.98rem',
-                  fontFamily: 'var(--font-sans)',
-                  outline: 'none',
-                  transition: 'all 0.2s ease',
-                  boxShadow: 'var(--shadow-sm)'
-                }}
-              />
-              {searchQuery && (
-                <button 
-                  onClick={() => setSearchQuery('')}
-                  style={{
-                    position: 'absolute',
-                    right: '1rem',
-                    top: '50%',
-                    transform: 'translateY(-50%)',
-                    background: 'none',
-                    border: 'none',
-                    color: 'var(--text-muted)',
-                    cursor: 'pointer',
-                    fontSize: '1.1rem',
-                    padding: '0.2rem'
-                  }}
-                  title="Clear search"
-                >
-                  <i className="fa-solid fa-xmark" />
-                </button>
-              )}
-            </div>
-
-            {/* Quick Campus Filter Pills */}
-            <div style={{
-              display: 'flex',
-              gap: '0.45rem',
-              flexWrap: 'wrap',
-              marginTop: '1.1rem',
-              alignItems: 'center'
-            }}>
-              <span style={{ fontSize: '0.78rem', color: 'var(--text-muted)', fontWeight: '600', marginRight: '0.2rem' }}>
-                Quick Switch:
-              </span>
-              <button
-                onClick={() => handleSelectCampus('')}
-                style={{
-                  padding: '0.25rem 0.65rem',
-                  borderRadius: '9999px',
-                  border: '1px solid',
-                  borderColor: !selectedCampusId ? 'var(--brandblue)' : 'var(--border)',
-                  backgroundColor: !selectedCampusId ? 'var(--brandblue)' : 'var(--surface)',
-                  color: !selectedCampusId ? '#ffffff' : 'var(--text-main)',
-                  fontSize: '0.78rem',
-                  fontWeight: '700',
-                  fontFamily: 'var(--font-display)',
-                  cursor: 'pointer'
+                  borderRadius: '16px',
+                  boxShadow: 'var(--shadow-xl)',
+                  zIndex: 100,
+                  minWidth: '240px',
+                  padding: '0.5rem',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: '0.25rem'
                 }}
               >
-                All Campuses
-              </button>
-              {campuses.map(c => {
-                const isSelected = selectedCampusId === c.id;
-                return (
+                <button
+                  onClick={() => handleSelectCampus('')}
+                  style={{
+                    padding: '0.55rem 0.85rem',
+                    borderRadius: '10px',
+                    border: 'none',
+                    backgroundColor: !selectedCampusId ? 'var(--surface-alt)' : 'transparent',
+                    color: !selectedCampusId ? 'var(--terracotta)' : 'var(--text-main)',
+                    fontWeight: !selectedCampusId ? '700' : '500',
+                    textAlign: 'left',
+                    cursor: 'pointer',
+                    fontSize: '0.85rem'
+                  }}
+                >
+                  🌐 All Nigerian Campuses
+                </button>
+                {campuses.map(c => (
                   <button
                     key={c.id}
                     onClick={() => handleSelectCampus(c.id)}
                     style={{
-                      padding: '0.25rem 0.65rem',
-                      borderRadius: '9999px',
-                      border: '1px solid',
-                      borderColor: isSelected ? 'var(--brandblue)' : 'var(--border)',
-                      backgroundColor: isSelected ? 'var(--brandblue)' : 'var(--surface)',
-                      color: isSelected ? '#ffffff' : 'var(--text-main)',
-                      fontSize: '0.78rem',
-                      fontWeight: '700',
-                      fontFamily: 'var(--font-display)',
-                      cursor: 'pointer'
+                      padding: '0.55rem 0.85rem',
+                      borderRadius: '10px',
+                      border: 'none',
+                      backgroundColor: selectedCampusId === c.id ? 'var(--surface-alt)' : 'transparent',
+                      color: selectedCampusId === c.id ? 'var(--terracotta)' : 'var(--text-main)',
+                      fontWeight: selectedCampusId === c.id ? '700' : '500',
+                      textAlign: 'left',
+                      cursor: 'pointer',
+                      fontSize: '0.85rem'
                     }}
                   >
-                    {c.acronym}
+                    🎓 {c.name} ({c.acronym})
                   </button>
-                );
-              })}
-            </div>
-
-          </div>
-        </div>
-
-        {/* Top-Level Tabs: [Available Items] | [Student Requests] */}
-        <div className="dashboard-tabs-wrapper">
-          <div className="dashboard-segmented-tabs">
-            <button
-              onClick={() => setActiveTab('items')}
-              className={`dashboard-tab-pill ${activeTab === 'items' ? 'active' : ''}`}
-            >
-              <i className="fa-solid fa-store" />
-              <span className="tab-text-full">Available Items</span>
-              <span className="tab-text-short">Marketplace</span>
-              <span className="tab-count-badge">
-                {filteredListings.length}
-              </span>
-            </button>
-
-            <button
-              onClick={() => setActiveTab('requests')}
-              className={`dashboard-tab-pill ${activeTab === 'requests' ? 'active' : ''}`}
-            >
-              <i className="fa-solid fa-bullhorn" />
-              <span className="tab-text-full">Student Requests</span>
-              <span className="tab-text-short">Requests</span>
-              <span className="tab-count-badge">
-                {requests.length}
-              </span>
-            </button>
-          </div>
-
-          {/* Quick Action Button - inline on desktop, hidden on mobile in favor of bottom dock */}
-          <div className="dashboard-quick-action-desktop">
-            {activeTab === 'requests' ? (
-              <button
-                className="btn-primary"
-                onClick={handleOpenCreateRequest}
-                style={{
-                  padding: '0.55rem 1.15rem',
-                  fontSize: '0.88rem',
-                  borderRadius: '9999px',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '0.4rem',
-                  boxShadow: 'var(--shadow-blue)'
-                }}
-              >
-                <i className="fa-solid fa-plus" />
-                <span>Post Request</span>
-              </button>
-            ) : (
-              <button
-                className="btn-primary"
-                onClick={handleOpenCreateModal}
-                style={{
-                  padding: '0.55rem 1.15rem',
-                  fontSize: '0.88rem',
-                  borderRadius: '9999px',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '0.4rem',
-                  boxShadow: 'var(--shadow-blue)'
-                }}
-              >
-                <i className="fa-solid fa-plus" />
-                <span>Sell an Item</span>
-              </button>
+                ))}
+              </div>
             )}
           </div>
         </div>
 
         {/* ============================================================== */}
-        {/* TAB 1: AVAILABLE ITEMS                                          */}
+        {/* EDITORIAL SERIF HEADLINE                                        */}
+        {/* ============================================================== */}
+        <h1 className="aesthetic-headline">
+          Find what you need<br />today, {activeCampusAcronym || 'Campus'} 🎓
+        </h1>
+
+        {/* ============================================================== */}
+        {/* AESTHETIC ROUNDED PILL SEARCH BAR                              */}
+        {/* ============================================================== */}
+        <div className="aesthetic-search-container">
+          <i className="fa-solid fa-magnifying-glass aesthetic-search-icon" />
+          <input 
+            type="text"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            placeholder="Search textbooks, calculators, tech..."
+            className="aesthetic-search-input"
+          />
+          {searchQuery && (
+            <button 
+              onClick={() => setSearchQuery('')}
+              style={{
+                position: 'absolute',
+                right: '1rem',
+                top: '50%',
+                transform: 'translateY(-50%)',
+                background: 'none',
+                border: 'none',
+                color: 'var(--text-muted)',
+                cursor: 'pointer',
+                fontSize: '1rem',
+                padding: '0.2rem'
+              }}
+              title="Clear search"
+            >
+              <i className="fa-solid fa-xmark" />
+            </button>
+          )}
+        </div>
+
+        {/* ============================================================== */}
+        {/* "TRENDING ON CAMPUS" CAROUSEL                                  */}
+        {/* ============================================================== */}
+        <div style={{ marginBottom: '1.75rem' }}>
+          <div className="trending-header">
+            <h2 className="trending-header-title">Trending on Campus</h2>
+            <div className="trending-nav-arrows">
+              <button 
+                className="trending-arrow-btn"
+                onClick={() => handleScrollCarousel('left')}
+                title="Scroll Left"
+              >
+                <i className="fa-solid fa-chevron-left" />
+              </button>
+              <button 
+                className="trending-arrow-btn"
+                onClick={() => handleScrollCarousel('right')}
+                title="Scroll Right"
+              >
+                <i className="fa-solid fa-chevron-right" />
+              </button>
+            </div>
+          </div>
+
+          <div className="trending-scroll-row" ref={carouselRef}>
+            {TRENDING_CATEGORIES.map(cat => {
+              const isActive = selectedCategory === cat.name;
+              return (
+                <div 
+                  key={cat.name}
+                  onClick={() => setSelectedCategory(cat.name)}
+                  className={`trending-card ${isActive ? 'active' : ''}`}
+                >
+                  <img 
+                    src={cat.image} 
+                    alt={cat.label} 
+                    className="trending-card-img" 
+                  />
+                  <div className="trending-card-overlay">
+                    <span className="trending-card-title">{cat.label}</span>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* ============================================================== */}
+        {/* MARKETPLACE SECTION & SUBTLE FEED TOGGLE                       */}
+        {/* ============================================================== */}
+        <div className="marketplace-header-row">
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
+            <button
+              onClick={() => setActiveTab('items')}
+              style={{
+                background: 'none',
+                border: 'none',
+                padding: 0,
+                fontSize: '1.25rem',
+                fontWeight: '700',
+                color: activeTab === 'items' ? 'var(--text-main)' : 'var(--text-light)',
+                cursor: 'pointer',
+                fontFamily: 'var(--font-sans)',
+                letterSpacing: '-0.01em'
+              }}
+            >
+              Marketplace
+            </button>
+            <span style={{ color: 'var(--border)' }}>•</span>
+            <button
+              onClick={() => setActiveTab('requests')}
+              style={{
+                background: 'none',
+                border: 'none',
+                padding: 0,
+                fontSize: '1.1rem',
+                fontWeight: '600',
+                color: activeTab === 'requests' ? 'var(--terracotta)' : 'var(--text-light)',
+                cursor: 'pointer',
+                fontFamily: 'var(--font-sans)'
+              }}
+            >
+              Daily Requests ({requests.length})
+            </button>
+          </div>
+
+          {activeTab === 'items' && selectedCategory !== 'All' && (
+            <button 
+              className="marketplace-see-all"
+              onClick={() => setSelectedCategory('All')}
+            >
+              See all
+            </button>
+          )}
+        </div>
+
+        {/* ============================================================== */}
+        {/* VIEW 1: AESTHETIC MINIMAL MARKETPLACE GRID (2-COLUMN)          */}
         {/* ============================================================== */}
         {activeTab === 'items' && (
           <>
-            {/* Categories Bar */}
-            <div style={{
-              display: 'flex',
-              gap: '0.65rem',
-              overflowX: 'auto',
-              paddingBottom: '0.75rem',
-              marginBottom: '1.25rem',
-              scrollbarWidth: 'none'
-            }}>
-              {CATEGORIES.map(cat => {
-                const isSelected = selectedCategory === cat.name;
-                return (
-                  <button
-                    key={cat.name}
-                    onClick={() => setSelectedCategory(cat.name)}
-                    style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '0.5rem',
-                      padding: '0.6rem 1.1rem',
-                      borderRadius: '9999px',
-                      border: '1px solid',
-                      borderColor: isSelected ? 'var(--brandblue)' : 'var(--border)',
-                      backgroundColor: isSelected ? 'var(--lightblue)' : 'var(--surface)',
-                      color: isSelected ? 'var(--brandblue)' : 'var(--text-muted)',
-                      fontFamily: 'var(--font-display)',
-                      fontWeight: isSelected ? '700' : '500',
-                      fontSize: '0.88rem',
-                      cursor: 'pointer',
-                      whiteSpace: 'nowrap',
-                      transition: 'all 0.2s cubic-bezier(0.16, 1, 0.3, 1)',
-                      boxShadow: isSelected ? 'var(--shadow-blue)' : 'none'
-                    }}
-                  >
-                    <i className={cat.icon} />
-                    <span>{cat.name}</span>
-                  </button>
-                );
-              })}
-            </div>
-
-            {/* Secondary Filter & Sort Toolbar */}
-            <div className="filter-sort-card">
-              <div style={{ display: 'flex', gap: '0.4rem', flexWrap: 'wrap' }}>
-                {PRICE_RANGES.map((range, idx) => (
-                  <button
-                    key={idx}
-                    onClick={() => setPriceRangeIndex(idx)}
-                    style={{
-                      padding: '0.35rem 0.75rem',
-                      borderRadius: '20px',
-                      border: '1px solid',
-                      borderColor: priceRangeIndex === idx ? 'var(--brandblue)' : 'var(--border)',
-                      backgroundColor: priceRangeIndex === idx ? 'var(--lightblue)' : 'transparent',
-                      color: priceRangeIndex === idx ? 'var(--brandblue)' : 'var(--text-muted)',
-                      fontSize: '0.78rem',
-                      fontFamily: 'var(--font-display)',
-                      fontWeight: '600',
-                      cursor: 'pointer'
-                    }}
-                  >
-                    {range.label}
-                  </button>
-                ))}
-              </div>
-
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)', fontWeight: '600' }}>Sort:</span>
-                <select
-                  value={sortOption}
-                  onChange={(e) => setSortOption(e.target.value)}
-                  style={{
-                    padding: '0.35rem 0.75rem',
-                    borderRadius: '20px',
-                    border: '1px solid var(--border)',
-                    backgroundColor: 'var(--surface)',
-                    color: 'var(--text-main)',
-                    fontSize: '0.8rem',
-                    fontFamily: 'var(--font-display)',
-                    fontWeight: '600',
-                    outline: 'none',
-                    cursor: 'pointer'
-                  }}
-                >
-                  <option value="newest">Newest First</option>
-                  <option value="price_asc">Price: Low to High</option>
-                  <option value="price_desc">Price: High to Low</option>
-                </select>
-              </div>
-            </div>
-
-            {/* Listings Grid or Loading / Empty States */}
             {loading ? (
               <div style={{ textAlign: 'center', padding: '4rem 1rem', color: 'var(--text-muted)' }}>
-                <i className="fa-solid fa-circle-notch fa-spin" style={{ fontSize: '2.4rem', color: 'var(--brandblue)', marginBottom: '1rem' }} />
-                <p style={{ fontFamily: 'var(--font-display)', fontWeight: '600', fontSize: '1.05rem', color: 'var(--text-main)' }}>Discovering student listings...</p>
-                <p style={{ fontSize: '0.82rem', color: 'var(--text-muted)', marginTop: '0.35rem' }}>Connecting to cloud backend. If waking up, please allow a few seconds...</p>
+                <i className="fa-solid fa-circle-notch fa-spin" style={{ fontSize: '2rem', color: 'var(--terracotta)', marginBottom: '0.75rem' }} />
+                <p style={{ fontWeight: '600', fontSize: '0.95rem', color: 'var(--text-main)' }}>Loading campus listings...</p>
               </div>
             ) : filteredListings.length === 0 ? (
               <div style={{
                 textAlign: 'center',
-                padding: '4rem 2rem',
-                backgroundColor: 'var(--surface)',
+                padding: '3.5rem 1.5rem',
+                backgroundColor: '#FFFFFF',
                 borderRadius: '24px',
-                border: '1px dashed var(--border)',
-                marginTop: '1rem'
+                border: '1px solid var(--border)',
+                marginTop: '1rem',
+                boxShadow: 'var(--shadow-card)'
               }}>
                 <div style={{
-                  width: '64px',
-                  height: '64px',
+                  width: '56px',
+                  height: '56px',
                   borderRadius: '50%',
-                  backgroundColor: 'var(--lightblue)',
-                  color: 'var(--brandblue)',
+                  backgroundColor: 'var(--surface-alt)',
+                  color: 'var(--terracotta)',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  fontSize: '1.6rem',
-                  margin: '0 auto 1.25rem auto'
+                  fontSize: '1.4rem',
+                  margin: '0 auto 1rem auto'
                 }}>
                   <i className="fa-solid fa-store-slash" />
                 </div>
-                <h3 style={{ fontFamily: 'var(--font-display)', fontSize: '1.35rem', fontWeight: '800', marginBottom: '0.4rem', color: 'var(--text-main)' }}>
+                <h3 style={{ fontSize: '1.2rem', fontWeight: '700', marginBottom: '0.35rem', color: 'var(--text-main)' }}>
                   No Items Listed Here Yet
                 </h3>
-                <p style={{ color: 'var(--text-muted)', fontSize: '0.92rem', maxWidth: '420px', margin: '0 auto 1.5rem auto', lineHeight: '1.5' }}>
-                  Be the first student to list textbooks, electronics, or dorm gear on this campus!
+                <p style={{ color: 'var(--text-muted)', fontSize: '0.88rem', maxWidth: '380px', margin: '0 auto 1.25rem auto' }}>
+                  Be the first student to post an item on {activeCampusAcronym}!
                 </p>
-                <div style={{ display: 'flex', gap: '0.75rem', justifyContent: 'center', flexWrap: 'wrap' }}>
-                  <button className="btn-primary" onClick={handleOpenCreateModal}>
-                    <i className="fa-solid fa-plus" /> List an Item Now
-                  </button>
-                  <button className="btn-secondary" onClick={() => handleSelectCampus('')}>
-                    View All Campuses
-                  </button>
-                </div>
+                <button 
+                  className="btn-primary" 
+                  onClick={handleOpenCreateModal}
+                  style={{ borderRadius: '9999px', padding: '0.65rem 1.4rem' }}
+                >
+                  <i className="fa-solid fa-plus" /> List an Item
+                </button>
               </div>
             ) : (
-              <div className="listings-grid">
+              <div className="aesthetic-grid-2col">
                 {filteredListings.map(listing => {
                   const isSold = listing.status === 'sold';
                   const rawPrice = listing.price_kobo ? (listing.price_kobo / 100) : (listing.price || 0);
                   const priceFormatted = rawPrice.toLocaleString(undefined, { maximumFractionDigits: (rawPrice % 1 === 0 ? 0 : 2) });
-                  const isMine = currentUserId && listing.seller_id === currentUserId;
                   const isBookmarked = Array.isArray(savedItemIds) && savedItemIds.includes(listing.id);
-                  const campusBadge = listing.campus_acronym || 'Campus';
+                  const sellerName = listing.seller_handle ? listing.seller_handle.split('@').pop() : 'Seller';
 
                   return (
-                    <div 
+                    <article 
                       key={listing.id}
-                      className="listing-card"
+                      className="aesthetic-card"
                       onClick={() => setSelectedListing(listing)}
-                      style={{
-                        cursor: 'pointer',
-                        opacity: isSold ? 0.78 : 1,
-                        position: 'relative'
-                      }}
                     >
-                      {/* Thumbnail Container */}
-                      <div className="listing-thumbnail-container">
+                      {/* Image Box */}
+                      <div className="aesthetic-card-image-box">
                         {listing.image_url ? (
                           <img 
                             src={getImageUrl(listing.image_url)} 
                             alt={listing.title} 
-                            loading="lazy" decoding="async" style={{ width: '100%', height: '100%', objectFit: 'cover' }} 
+                            loading="lazy"
+                            style={{ width: '100%', height: '100%', objectFit: 'cover' }}
                             onError={(e) => {
                               e.currentTarget.style.display = 'none';
-                              const fb = e.currentTarget.parentElement?.querySelector('.listing-placeholder');
+                              const fb = e.currentTarget.parentElement?.querySelector('.listing-fallback');
                               if (fb) fb.style.display = 'flex';
                             }}
                           />
                         ) : null}
-                        <div className="listing-placeholder" style={{ width: '100%', height: '100%', borderRadius: 0, margin: 0, display: listing.image_url ? 'none' : 'flex' }}>
-                          <i className="fa-regular fa-image" style={{ fontSize: '2rem', opacity: 0.35 }} />
-                        </div>
-                        
-                        {/* Category & Campus Badges */}
-                        <div style={{
-                          position: 'absolute',
-                          top: '0.55rem',
-                          left: '0.55rem',
-                          display: 'flex',
-                          gap: '0.35rem',
-                          alignItems: 'center',
-                          maxWidth: 'calc(100% - 46px)',
-                          zIndex: 2
-                        }}>
-                          <div style={{
-                            padding: '0.22rem 0.55rem',
-                            borderRadius: '9999px',
-                            fontSize: '0.68rem',
-                            fontFamily: 'var(--font-display)',
-                            fontWeight: '700',
-                            textTransform: 'uppercase',
-                            backgroundColor: isSold ? '#4b5563' : 'var(--surface)',
-                            color: isSold ? '#ffffff' : 'var(--brandblue)',
-                            boxShadow: '0 2px 8px rgba(0,0,0,0.18)',
-                            backdropFilter: 'blur(8px)',
-                            whiteSpace: 'nowrap'
-                          }}>
-                            {isSold ? 'Sold' : (listing.category || 'Gear')}
-                          </div>
-
-                          <div 
-                            className="listing-thumb-campus-badge"
-                            style={{
-                              padding: '0.22rem 0.55rem',
-                              borderRadius: '9999px',
-                              fontSize: '0.68rem',
-                              fontFamily: 'var(--font-display)',
-                              fontWeight: '700',
-                              textTransform: 'uppercase',
-                              backgroundColor: 'var(--brandblue)',
-                              color: '#ffffff',
-                              boxShadow: '0 2px 8px rgba(0,0,0,0.18)',
-                              whiteSpace: 'nowrap'
-                            }}
-                          >
-                            {campusBadge}
-                          </div>
-                        </div>
-
-                        {/* Bookmark Heart Action Button */}
-                        <button
-                          onClick={(e) => toggleBookmark(e, listing.id)}
-                          title={isBookmarked ? "Remove Bookmark" : "Save Item"}
-                          style={{
-                            position: 'absolute',
-                            top: '0.65rem',
-                            right: '0.65rem',
-                            width: '34px',
-                            height: '34px',
-                            borderRadius: '50%',
-                            backgroundColor: 'var(--surface)',
-                            border: 'none',
-                            display: 'flex',
+                        <div 
+                          className="listing-fallback" 
+                          style={{ 
+                            width: '100%', 
+                            height: '100%', 
+                            display: listing.image_url ? 'none' : 'flex',
                             alignItems: 'center',
                             justifyContent: 'center',
-                            cursor: 'pointer',
-                            boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
-                            color: isBookmarked ? '#ef4444' : 'var(--text-muted)',
-                            fontSize: '0.95rem',
-                            transition: 'transform 0.15s ease'
+                            color: 'var(--text-light)',
+                            fontSize: '1.75rem'
                           }}
+                        >
+                          <i className="fa-regular fa-image" />
+                        </div>
+
+                        {/* Top-Left Pill: by {Seller} • Active */}
+                        <div className="aesthetic-card-seller-pill">
+                          <span>by {sellerName}</span>
+                          <span style={{ opacity: 0.5 }}>•</span>
+                          <span style={{ color: isSold ? '#ef4444' : '#2E7D32' }}>
+                            {isSold ? 'Sold' : 'Active'}
+                          </span>
+                        </div>
+
+                        {/* Top-Right Heart Button */}
+                        <button
+                          type="button"
+                          className={`aesthetic-card-heart-btn ${isBookmarked ? 'active' : ''}`}
+                          onClick={(e) => toggleBookmark(e, listing.id)}
+                          title={isBookmarked ? "Remove Bookmark" : "Save Item"}
                         >
                           <i className={isBookmarked ? "fa-solid fa-heart" : "fa-regular fa-heart"} />
                         </button>
                       </div>
 
-                      {/* Card Content Body */}
-                      <div className="listing-card-body">
-                        <div>
-                          <h3 className="listing-card-title">
-                            {listing.title}
-                          </h3>
-
-                          <p className="listing-card-desc">
-                            {listing.description || 'No description provided.'}
-                          </p>
-
-                          {/* Seller Tag */}
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', fontSize: '0.75rem', color: 'var(--text-muted)', marginBottom: '0.4rem', overflow: 'hidden' }}>
-                            <i className="fa-solid fa-user-shield" style={{ color: 'var(--brandblue)', flexShrink: 0 }} />
-                            <span style={{ fontWeight: '600', color: 'var(--text-main)', fontFamily: 'var(--font-display)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: '80px' }}>
-                              @{listing.seller_handle || 'anonymous'}
-                            </span>
-                            <span style={{ fontSize: '0.66rem', color: 'var(--brandblue)', fontWeight: '700', backgroundColor: 'var(--lightblue)', padding: '0.1rem 0.35rem', borderRadius: '4px', flexShrink: 0 }}>
-                              {campusBadge}
-                            </span>
-                          </div>
-                        </div>
-
-                        {/* Card Action Footer */}
-                        <div className="listing-card-footer">
-                          <div>
-                            <span className="listing-card-price">
-                              ₦{priceFormatted}
-                            </span>
-                          </div>
-
-                          <div style={{ display: 'flex', gap: '0.4rem', alignItems: 'center' }}>
-                            {isMine ? (
-                              <span style={{
-                                fontSize: '0.72rem',
-                                fontFamily: 'var(--font-display)',
-                                fontWeight: '700',
-                                color: 'var(--brandblue)',
-                                backgroundColor: 'var(--lightblue)',
-                                padding: '0.22rem 0.5rem',
-                                borderRadius: '9999px',
-                                whiteSpace: 'nowrap'
-                              }}>
-                                You
-                              </span>
-                            ) : (
-                              <button
-                                className="listing-chat-action-btn"
-                                onClick={(e) => handleOpenChat(listing, e)}
-                                title={`Chat with @${listing.seller_handle || 'seller'}`}
-                              >
-                                <i className="fa-regular fa-comment-dots" />
-                                <span className="chat-btn-label">Chat</span>
-                              </button>
-                            )}
-                          </div>
+                      {/* Card Details */}
+                      <div className="aesthetic-card-details">
+                        <h3 className="aesthetic-card-title">
+                          {listing.title}
+                        </h3>
+                        <div className="aesthetic-card-price">
+                          ₦{priceFormatted}
                         </div>
                       </div>
-                    </div>
+                    </article>
                   );
                 })}
               </div>
@@ -976,246 +855,99 @@ function Dashboard() {
         )}
 
         {/* ============================================================== */}
-        {/* TAB 2: WANTED BOARD (STUDENT REQUESTS)                         */}
+        {/* VIEW 2: DAILY REQUESTS (WANTED BOARD)                          */}
         {/* ============================================================== */}
         {activeTab === 'requests' && (
-          <div>
-            {/* Wanted Board Info Header */}
-            <div style={{
-              backgroundColor: 'var(--surface)',
-              border: '1px solid var(--border)',
-              borderRadius: '20px',
-              padding: '1.25rem 1.5rem',
-              marginBottom: '1.5rem',
-              display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'center',
-              flexWrap: 'wrap',
-              gap: '1rem'
-            }}>
-              <div>
-                <h3 style={{
-                  fontFamily: 'var(--font-display)',
-                  fontSize: '1.15rem',
-                  fontWeight: '800',
-                  color: 'var(--text-main)',
-                  margin: '0 0 0.25rem 0',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '0.5rem'
-                }}>
-                  <i className="fa-solid fa-bullhorn" style={{ color: 'var(--brandblue)' }} />
-                  Campus Wanted Board
-                </h3>
-                <p style={{ margin: 0, fontSize: '0.84rem', color: 'var(--text-muted)' }}>
-                  Students looking for items right now. Have what they need? Tap <strong>"I Have This"</strong> to chat directly!
-                </p>
-              </div>
-
-              {campuses.length > 0 && (
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', fontSize: '0.82rem' }}>
-                  <span style={{ color: 'var(--text-muted)' }}>Filtering for:</span>
-                  <span style={{
-                    fontWeight: '700',
-                    fontFamily: 'var(--font-display)',
-                    color: 'var(--brandblue)',
-                    backgroundColor: 'var(--lightblue)',
-                    padding: '0.25rem 0.65rem',
-                    borderRadius: '9999px'
-                  }}>
-                    {activeCampusName}
-                  </span>
-                </div>
-              )}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <p style={{ color: 'var(--text-muted)', fontSize: '0.88rem', margin: 0 }}>
+                What students on campus are currently looking for:
+              </p>
+              <button 
+                className="btn-primary" 
+                onClick={handleOpenCreateRequest}
+                style={{ borderRadius: '9999px', padding: '0.45rem 1rem', fontSize: '0.84rem' }}
+              >
+                <i className="fa-solid fa-plus" /> Post Request
+              </button>
             </div>
 
             {loadingRequests ? (
-              <div style={{ textAlign: 'center', padding: '3.5rem 1rem', color: 'var(--text-muted)' }}>
-                <i className="fa-solid fa-circle-notch fa-spin" style={{ fontSize: '2rem', color: 'var(--brandblue)', marginBottom: '0.75rem' }} />
-                <p style={{ fontFamily: 'var(--font-display)', fontWeight: '600' }}>Loading student requests...</p>
+              <div style={{ textAlign: 'center', padding: '3rem 1rem', color: 'var(--text-muted)' }}>
+                <i className="fa-solid fa-circle-notch fa-spin" style={{ fontSize: '1.8rem', color: 'var(--terracotta)', marginBottom: '0.5rem' }} />
+                <p>Loading student requests...</p>
               </div>
             ) : requests.length === 0 ? (
               <div style={{
                 textAlign: 'center',
-                padding: '4rem 1.5rem',
-                backgroundColor: 'var(--surface)',
-                borderRadius: '24px',
-                border: '1px dashed var(--border)'
+                padding: '3rem 1.5rem',
+                backgroundColor: '#FFFFFF',
+                borderRadius: '20px',
+                border: '1px solid var(--border)'
               }}>
-                <div style={{
-                  width: '64px',
-                  height: '64px',
-                  borderRadius: '50%',
-                  backgroundColor: 'var(--lightblue)',
-                  color: 'var(--brandblue)',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  fontSize: '1.6rem',
-                  margin: '0 auto 1.25rem auto'
-                }}>
-                  <i className="fa-solid fa-box-open" />
-                </div>
-                <h3 style={{ fontFamily: 'var(--font-display)', fontSize: '1.3rem', fontWeight: '800', marginBottom: '0.4rem', color: 'var(--text-main)' }}>
-                  No Requests Posted Yet
-                </h3>
-                <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem', maxWidth: '420px', margin: '0 auto 1.5rem auto', lineHeight: '1.5' }}>
-                  Need a textbook, dorm fan, scientific calculator, or pressing iron? Post what you need and campus sellers will reach out!
+                <i className="fa-solid fa-bullhorn" style={{ fontSize: '1.8rem', color: 'var(--terracotta)', opacity: 0.6, marginBottom: '0.75rem', display: 'block' }} />
+                <h4 style={{ fontSize: '1.1rem', fontWeight: '700', marginBottom: '0.25rem' }}>No Requests Yet</h4>
+                <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem', marginBottom: '1rem' }}>
+                  Looking for a specific book or gadget? Let campus peers know!
                 </p>
-                <button className="btn-primary" onClick={handleOpenCreateRequest}>
-                  <i className="fa-solid fa-plus" /> Post What You Need
+                <button className="btn-primary" onClick={handleOpenCreateRequest} style={{ borderRadius: '9999px' }}>
+                  Post What You Need
                 </button>
               </div>
             ) : (
-              <div className="requests-grid">
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '1rem' }}>
                 {requests.map(req => {
-                  const isMine = currentUserId && req.user_id === currentUserId;
-                  const budgetFormatted = (req.budget_naira || (req.budget_kobo ? req.budget_kobo / 100 : 0)).toLocaleString();
-                  const campusBadge = req.campus_acronym || 'Campus';
-
+                  const budgetFormatted = (req.budget_kobo ? (req.budget_kobo / 100) : (req.budget_naira || 0)).toLocaleString();
                   return (
-                    <div
+                    <div 
                       key={req.id}
-                      className="request-card"
+                      style={{
+                        backgroundColor: '#FFFFFF',
+                        border: '1px solid var(--border)',
+                        borderRadius: '18px',
+                        padding: '1.1rem',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        justifyContent: 'space-between',
+                        gap: '0.75rem',
+                        boxShadow: 'var(--shadow-card)'
+                      }}
                     >
                       <div>
-                        {/* Top Badge Row */}
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem' }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '0.35rem' }}>
                           <span style={{
-                            fontSize: '0.72rem',
-                            fontFamily: 'var(--font-display)',
-                            fontWeight: '700',
-                            textTransform: 'uppercase',
-                            backgroundColor: 'var(--lightblue)',
-                            color: 'var(--brandblue)',
-                            padding: '0.22rem 0.6rem',
+                            backgroundColor: 'var(--surface-alt)',
+                            color: 'var(--text-main)',
                             borderRadius: '9999px',
-                            display: 'inline-flex',
-                            alignItems: 'center',
-                            gap: '0.25rem'
+                            padding: '2px 8px',
+                            fontSize: '0.72rem',
+                            fontWeight: '600'
                           }}>
-                            <i className="fa-solid fa-graduation-cap" /> {campusBadge}
+                            Wanted
                           </span>
-
-                          <span style={{
-                            fontFamily: 'var(--font-display)',
-                            fontSize: '1.15rem',
-                            fontWeight: '800',
-                            color: 'var(--brandblue)'
-                          }}>
-                            {budgetFormatted && budgetFormatted !== '0' ? `₦${budgetFormatted}` : 'Open Budget'}
+                          <span style={{ fontSize: '1.05rem', fontWeight: '800', color: 'var(--terracotta)' }}>
+                            ₦{budgetFormatted}
                           </span>
                         </div>
-
-                        {/* Request Title */}
-                        <h4 style={{
-                          fontFamily: 'var(--font-display)',
-                          fontSize: '1.05rem',
-                          fontWeight: '800',
-                          color: 'var(--text-main)',
-                          marginBottom: '0.4rem',
-                          lineHeight: '1.3',
-                          minHeight: '2.6rem'
-                        }}>
-                          Looking for: {req.title}
+                        <h4 style={{ fontSize: '1rem', fontWeight: '700', color: 'var(--text-main)', marginBottom: '0.35rem' }}>
+                          {req.title}
                         </h4>
-
-                        {/* Request Description */}
-                        {req.description && (
-                          <p style={{
-                            fontSize: '0.84rem',
-                            color: 'var(--text-muted)',
-                            marginBottom: '0.85rem',
-                            lineHeight: '1.5',
-                            display: '-webkit-box',
-                            WebkitLineClamp: 3,
-                            WebkitBoxOrient: 'vertical',
-                            overflow: 'hidden'
-                          }}>
-                            {req.description}
-                          </p>
-                        )}
-
-                        {/* Requester Handle */}
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', fontSize: '0.78rem', color: 'var(--text-muted)' }}>
-                          <i className="fa-solid fa-user-shield" style={{ color: 'var(--brandblue)' }} />
-                          <span style={{ fontWeight: '600', color: 'var(--text-main)', fontFamily: 'var(--font-display)' }}>
-                            @{req.user_handle || 'student'}
-                          </span>
-                          <span style={{ fontSize: '0.7rem', color: 'var(--brandblue)', fontWeight: '600' }}>
-                            <i className="fa-solid fa-circle-check" style={{ marginRight: '0.2rem' }} /> Requester
-                          </span>
-                        </div>
+                        <p style={{ color: 'var(--text-muted)', fontSize: '0.84rem', lineHeight: '1.45', margin: 0 }}>
+                          {req.description || 'No additional details provided.'}
+                        </p>
                       </div>
 
-                      {/* Action Footer */}
-                      <div style={{
-                        display: 'flex',
-                        justifyContent: 'space-between',
-                        alignItems: 'center',
-                        paddingTop: '0.75rem',
-                        borderTop: '1px solid var(--border)'
-                      }}>
-                        {isMine ? (
-                          <div style={{ display: 'flex', gap: '0.5rem', width: '100%' }}>
-                            <button
-                              onClick={() => handleFulfillRequest(req.id)}
-                              style={{
-                                flex: 1,
-                                padding: '0.45rem 0.75rem',
-                                borderRadius: '10px',
-                                border: '1px solid rgba(16, 185, 129, 0.4)',
-                                backgroundColor: 'rgba(16, 185, 129, 0.08)',
-                                color: 'var(--brandgreen)',
-                                fontSize: '0.8rem',
-                                fontFamily: 'var(--font-display)',
-                                fontWeight: '700',
-                                cursor: 'pointer'
-                              }}
-                            >
-                              <i className="fa-solid fa-check" style={{ marginRight: '0.25rem' }} /> Mark Found
-                            </button>
-                            <button
-                              onClick={() => handleDeleteRequest(req.id)}
-                              style={{
-                                padding: '0.45rem 0.65rem',
-                                borderRadius: '10px',
-                                border: '1px solid rgba(239, 68, 68, 0.3)',
-                                backgroundColor: 'transparent',
-                                color: '#ef4444',
-                                fontSize: '0.8rem',
-                                cursor: 'pointer'
-                              }}
-                              title="Delete Request"
-                            >
-                              <i className="fa-solid fa-trash" />
-                            </button>
-                          </div>
-                        ) : (
-                          <button
-                            onClick={() => handleIHaveThis(req)}
-                            style={{
-                              width: '100%',
-                              backgroundColor: 'var(--brandblue)',
-                              color: '#ffffff',
-                              border: 'none',
-                              borderRadius: '12px',
-                              padding: '0.6rem 1rem',
-                              fontSize: '0.85rem',
-                              fontFamily: 'var(--font-display)',
-                              fontWeight: '700',
-                              cursor: 'pointer',
-                              display: 'flex',
-                              alignItems: 'center',
-                              justifyContent: 'center',
-                              gap: '0.4rem',
-                              boxShadow: 'var(--shadow-blue)'
-                            }}
-                          >
-                            <i className="fa-regular fa-comment-dots" />
-                            I Have This (Chat Now)
-                          </button>
-                        )}
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '1px solid var(--border)', paddingTop: '0.65rem' }}>
+                        <span style={{ fontSize: '0.75rem', color: 'var(--text-light)' }}>
+                          by @{req.user_handle || 'student'}
+                        </span>
+                        <button
+                          className="btn-primary"
+                          onClick={() => handleIHaveThis(req)}
+                          style={{ borderRadius: '9999px', padding: '0.35rem 0.85rem', fontSize: '0.78rem' }}
+                        >
+                          I Have This
+                        </button>
                       </div>
                     </div>
                   );
@@ -1224,44 +956,25 @@ function Dashboard() {
             )}
           </div>
         )}
-
-      </div>
+      </main>
 
       {/* Item Detail Modal */}
       {selectedListing && (
         <ItemDetailModal 
           isOpen={true}
           listing={selectedListing}
-          allListings={listings}
-          onSelectListing={(item) => setSelectedListing(item)}
           onClose={() => setSelectedListing(null)}
+          onMessageSeller={(item) => handleOpenChat(item)}
+          onRequireAuth={() => {
+            setAuthPromptMessage('Message Student Sellers');
+            setShowAuthPrompt(true);
+          }}
+          currentUserId={currentUserId}
           onEditListing={(item) => {
             setSelectedListing(null);
             setEditingListing(item);
           }}
-          onMessageSeller={(targetListing) => {
-            setSelectedListing(null);
-            handleOpenChat(targetListing);
-          }}
-          onRequireAuth={() => {
-            setSelectedListing(null);
-            setAuthPromptMessage('Message Seller');
-            setShowAuthPrompt(true);
-          }}
-          currentUserId={currentUserId}
-        />
-      )}
-
-      {/* Edit Listing Modal */}
-      {editingListing && (
-        <EditListingModal 
-          isOpen={!!editingListing}
-          listing={editingListing}
-          onClose={() => setEditingListing(null)}
-          onUpdated={() => {
-            setEditingListing(null);
-            fetchListings();
-          }}
+          allListings={listings}
         />
       )}
 
@@ -1279,46 +992,92 @@ function Dashboard() {
         <CreateListingModal 
           isOpen={isCreateOpen}
           onClose={() => setIsCreateOpen(false)}
-          onCreated={() => {
+          onSuccess={() => {
+            setIsCreateOpen(false);
             fetchListings();
           }}
         />
       )}
 
-      {/* Create Request Modal (Wanted Board) */}
-      <CreateRequestModal
-        isOpen={isRequestModalOpen}
-        onClose={() => setIsRequestModalOpen(false)}
-        onCreated={() => {
-          fetchRequests();
-        }}
-      />
+      {/* Edit Listing Modal */}
+      {editingListing && (
+        <EditListingModal 
+          isOpen={true}
+          listing={editingListing}
+          onClose={() => setEditingListing(null)}
+          onSuccess={() => {
+            setEditingListing(null);
+            fetchListings();
+          }}
+        />
+      )}
 
-      {/* Friendly Guest Auth Prompt Modal */}
+      {/* Create Request Modal */}
+      {isRequestModalOpen && (
+        <CreateRequestModal 
+          isOpen={isRequestModalOpen}
+          onClose={() => setIsRequestModalOpen(false)}
+          onSuccess={() => {
+            setIsRequestModalOpen(false);
+            fetchRequests();
+          }}
+        />
+      )}
+
+      {/* Quick Auth Prompt Modal */}
       {showAuthPrompt && (
         <div className="modal-overlay" onClick={() => setShowAuthPrompt(false)}>
-          <div className="modal-content animate-fade-in" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '420px', padding: '2rem', textAlign: 'center' }}>
-            <div style={{ width: '56px', height: '56px', borderRadius: '50%', backgroundColor: 'var(--lightblue)', color: 'var(--brandblue)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.5rem', margin: '0 auto 1.25rem auto' }}>
-              <i className="fa-solid fa-comments" />
+          <div 
+            className="modal-content animate-fade-in" 
+            onClick={(e) => e.stopPropagation()}
+            style={{ 
+              maxWidth: '380px', 
+              padding: '2rem 1.5rem', 
+              borderRadius: '24px', 
+              textAlign: 'center',
+              backgroundColor: '#FFFFFF',
+              border: '1px solid var(--border)'
+            }}
+          >
+            <div style={{
+              width: '56px',
+              height: '56px',
+              borderRadius: '50%',
+              backgroundColor: 'var(--surface-alt)',
+              color: 'var(--terracotta)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              fontSize: '1.4rem',
+              margin: '0 auto 1rem auto'
+            }}>
+              <i className="fa-solid fa-lock" />
             </div>
-            <h3 style={{ fontFamily: 'var(--font-display)', fontSize: '1.35rem', fontWeight: '800', marginBottom: '0.4rem', color: 'var(--text-main)' }}>
+            <h3 style={{ fontSize: '1.25rem', fontWeight: '800', marginBottom: '0.4rem', color: 'var(--text-main)' }}>
               {authPromptMessage}
             </h3>
-            <p style={{ color: 'var(--text-muted)', fontSize: '0.92rem', marginBottom: '1.5rem', lineHeight: '1.5' }}>
-              Log in or create a free student account to chat with peers, negotiate securely, or post listings on your campus.
+            <p style={{ color: 'var(--text-muted)', fontSize: '0.88rem', marginBottom: '1.5rem', lineHeight: '1.5' }}>
+              Sign in to your campus account to buy, sell, save items, and message student peers safely.
             </p>
-            <div style={{ display: 'flex', gap: '0.75rem', flexDirection: 'column' }}>
-              <button className="btn-primary" onClick={() => navigate('/auth')}>
-                Log In / Sign Up
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.65rem' }}>
+              <button 
+                className="btn-primary" 
+                onClick={() => navigate('/auth')}
+                style={{ width: '100%', borderRadius: '9999px', padding: '0.75rem' }}
+              >
+                Sign In or Register
               </button>
-              <button className="btn-secondary" onClick={() => setShowAuthPrompt(false)}>
+              <button 
+                className="btn-secondary" 
+                onClick={() => setShowAuthPrompt(false)}
+                style={{ width: '100%', borderRadius: '9999px', padding: '0.75rem' }}
+              >
                 Continue Browsing
               </button>
             </div>
           </div>
         </div>
       )}
-      <Footer />
     </div>
   );
 }

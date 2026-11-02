@@ -501,68 +501,69 @@ function Navbar({ onPrimaryAction, primaryActionText }) {
 
 
 
-      {/* Mobile Bottom Navigation Dock */}
+      {/* Aesthetic Minimal Floating Bottom Navigation Dock */}
+      <nav className="aesthetic-bottom-dock">
+        {/* 1. Home */}
+        <button
+          onClick={() => navigate('/dashboard')}
+          className={`aesthetic-dock-btn ${isHome ? 'active' : ''}`}
+          title="Marketplace Home"
+        >
+          <i className={isHome ? "fa-solid fa-house" : "fa-regular fa-house"} />
+          {isHome && <span className="aesthetic-dock-dot" />}
+        </button>
 
-      <nav className="mobile-bottom-dock">
+        {/* 2. Messages */}
+        <button
+          onClick={() => navigate('/messages')}
+          className={`aesthetic-dock-btn ${location.pathname === '/messages' ? 'active' : ''}`}
+          title="Campus Messages"
+        >
+          <div style={{ position: 'relative', display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}>
+            <i className={location.pathname === '/messages' ? "fa-solid fa-comment" : "fa-regular fa-comment"} />
+            {unreadCount > 0 && (
+              <span className="dock-badge-pill" style={{ top: '-8px', right: '-12px' }}>
+                {unreadCount > 99 ? '99+' : unreadCount}
+              </span>
+            )}
+          </div>
+          {location.pathname === '/messages' && <span className="aesthetic-dock-dot" />}
+        </button>
 
-        {navLinks.map((link) => {
+        {/* 3. Center Elevated Action Button (+) */}
+        <button 
+          className="aesthetic-dock-center-plus"
+          onClick={() => {
+            if (onPrimaryAction) {
+              onPrimaryAction();
+            } else {
+              navigate('/dashboard', { state: { openCreateModal: true } });
+            }
+          }}
+          title="Sell an Item"
+        >
+          <i className="fa-solid fa-plus" />
+        </button>
 
-          const isActive = location.pathname === link.path;
+        {/* 4. Saved Listings */}
+        <button
+          onClick={() => navigate('/profile?tab=saved')}
+          className={`aesthetic-dock-btn ${location.pathname === '/profile' && location.search.includes('saved') ? 'active' : ''}`}
+          title="Saved Items"
+        >
+          <i className={location.pathname === '/profile' && location.search.includes('saved') ? "fa-solid fa-bookmark" : "fa-regular fa-bookmark"} />
+          {location.pathname === '/profile' && location.search.includes('saved') && <span className="aesthetic-dock-dot" />}
+        </button>
 
-          return (
-
-            <button
-
-              key={link.path}
-
-              onClick={() => navigate(link.path)}
-
-              className={`mobile-dock-item ${isActive ? 'active' : ''}`}
-
-            >
-
-              <div style={{ position: 'relative', display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}>
-
-                <i className={link.icon} />
-
-                {link.path === '/messages' && unreadCount > 0 && (
-
-                  <span className="dock-badge-pill">
-
-                    {unreadCount > 99 ? '99+' : unreadCount}
-
-                  </span>
-
-                )}
-
-              </div>
-
-              <span>{link.label}</span>
-
-            </button>
-
-          );
-
-        })}
-
-        {!isProfile && onPrimaryAction && (
-
-          <button 
-
-            className="mobile-dock-sell-btn"
-
-            onClick={onPrimaryAction}
-
-            title="List Item"
-
-          >
-
-            <i className="fa-solid fa-plus" />
-
-          </button>
-
-        )}
-
+        {/* 5. Profile */}
+        <button
+          onClick={() => navigate('/profile')}
+          className={`aesthetic-dock-btn ${location.pathname === '/profile' && !location.search.includes('saved') ? 'active' : ''}`}
+          title="My Profile"
+        >
+          <i className={location.pathname === '/profile' && !location.search.includes('saved') ? "fa-solid fa-user" : "fa-regular fa-user"} />
+          {location.pathname === '/profile' && !location.search.includes('saved') && <span className="aesthetic-dock-dot" />}
+        </button>
       </nav>
 
 

@@ -13,14 +13,13 @@ function App() {
   const navigate = useNavigate();
 
   useEffect(() => {
-    // Theme Sync: 'system', 'light', or 'dark'
+    // Theme Sync: defaults to Aesthetic Minimal (light cream) unless explicitly set to dark
     const applyTheme = () => {
-      const savedTheme = localStorage.getItem('theme') || 'system';
-      if (savedTheme === 'system') {
-        const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-        document.documentElement.setAttribute('data-theme', prefersDark ? 'dark' : 'light');
+      const savedTheme = localStorage.getItem('theme');
+      if (savedTheme === 'dark') {
+        document.documentElement.setAttribute('data-theme', 'dark');
       } else {
-        document.documentElement.setAttribute('data-theme', savedTheme);
+        document.documentElement.setAttribute('data-theme', 'light');
       }
     };
 
