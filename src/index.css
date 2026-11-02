@@ -1550,25 +1550,13 @@ select option {
   padding: 0;
 }
 
-/* 2-Column Aesthetic Item Grid */
+/* 2-Column Aesthetic Item Grid (Always 2 Columns matching Reference Mockup) */
 .aesthetic-grid-2col {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 1rem;
-}
-
-@media (min-width: 768px) {
-  .aesthetic-grid-2col {
-    grid-template-columns: repeat(3, 1fr);
-    gap: 1.25rem;
-  }
-}
-
-@media (min-width: 1024px) {
-  .aesthetic-grid-2col {
-    grid-template-columns: repeat(4, 1fr);
-    gap: 1.35rem;
-  }
+  display: grid !important;
+  grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  gap: 0.85rem !important;
+  width: 100% !important;
+  box-sizing: border-box !important;
 }
 
 .aesthetic-card {
@@ -1795,4 +1783,188 @@ img {
 
 button {
   -webkit-tap-highlight-color: transparent;
+}
+
+
+/* ==========================================================================
+   DEVICE SHELL & RESPONSIVE VIEWPORT SYSTEM
+   ========================================================================== */
+
+/* Outer Canvas wrapper */
+.app-shell {
+  min-height: 100vh;
+  min-height: 100dvh;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  box-sizing: border-box;
+  background-color: var(--bg-color);
+  transition: background-color 0.25s ease;
+}
+
+/* Device Mode Active on Desktop */
+@media (min-width: 640px) {
+  .app-shell.device-mode-active {
+    background: radial-gradient(circle at 50% 15%, #F4EFEB 0%, #E6DDD2 100%);
+    padding: 16px 20px 24px 20px;
+  }
+
+  .app-shell.device-mode-active .device-frame {
+    width: 100%;
+    max-width: 430px;
+    height: 94vh;
+    max-height: 900px;
+    border-radius: 46px;
+    border: 10px solid #1C1917;
+    box-shadow: 0 25px 70px -10px rgba(100, 75, 55, 0.28), 0 0 0 1px rgba(255, 255, 255, 0.4);
+    background-color: var(--bg-color);
+    position: relative;
+    overflow-y: auto;
+    overflow-x: hidden;
+    scrollbar-width: none;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .app-shell.device-mode-active .device-frame::-webkit-scrollbar {
+    display: none;
+  }
+
+  .app-shell.device-mode-active .device-dynamic-island {
+    display: block;
+    width: 112px;
+    height: 24px;
+    background-color: #1C1917;
+    border-radius: 9999px;
+    margin: 10px auto 4px auto;
+    flex-shrink: 0;
+    z-index: 999;
+  }
+
+  .app-shell.device-mode-active .aesthetic-bottom-dock {
+    position: sticky;
+    bottom: 14px;
+    margin: auto auto 14px auto;
+    width: calc(100% - 32px);
+    max-width: 370px;
+    z-index: 1000;
+  }
+}
+
+/* Expanded Mode Active on Desktop */
+@media (min-width: 640px) {
+  .app-shell.expanded-mode-active {
+    background-color: var(--bg-color);
+    padding: 0;
+  }
+
+  .app-shell.expanded-mode-active .device-frame {
+    width: 100%;
+    max-width: 760px;
+    min-height: 100vh;
+    border: none;
+    border-radius: 0;
+    box-shadow: none;
+    background-color: var(--bg-color);
+    position: relative;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .app-shell.expanded-mode-active .device-dynamic-island {
+    display: none;
+  }
+
+  .app-shell.expanded-mode-active .aesthetic-bottom-dock {
+    position: fixed;
+    bottom: 16px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: calc(100% - 32px);
+    max-width: 400px;
+    z-index: 1000;
+  }
+}
+
+/* Mobile Screens (Phones & Android APK) */
+@media (max-width: 639px) {
+  .app-shell {
+    background-color: var(--bg-color) !important;
+    padding: 0 !important;
+  }
+
+  .device-toggle-bar {
+    display: none !important;
+  }
+
+  .device-frame {
+    width: 100% !important;
+    max-width: 100% !important;
+    min-height: 100vh !important;
+    height: auto !important;
+    border: none !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+    background-color: var(--bg-color) !important;
+    overflow-y: visible !important;
+    margin: 0 !important;
+  }
+
+  .device-dynamic-island {
+    display: none !important;
+  }
+
+  .aesthetic-bottom-dock {
+    position: fixed !important;
+    bottom: 14px !important;
+    left: 50% !important;
+    transform: translateX(-50%) !important;
+    width: calc(100% - 28px) !important;
+    max-width: 380px !important;
+    z-index: 1000 !important;
+  }
+}
+
+/* Device Mode Switcher Floating Pill */
+.device-toggle-bar {
+  display: flex;
+  justify-content: flex-end;
+  width: 100%;
+  max-width: 520px;
+  margin-bottom: 8px;
+  z-index: 10;
+}
+
+.device-toggle-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0.38rem 0.85rem;
+  border-radius: 9999px;
+  background-color: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border: 1px solid var(--border);
+  color: var(--text-main);
+  font-size: 0.76rem;
+  font-weight: 700;
+  font-family: var(--font-sans);
+  cursor: pointer;
+  box-shadow: var(--shadow-sm);
+  transition: all 0.15s ease;
+}
+
+.device-toggle-btn:hover {
+  background-color: #FFFFFF;
+  border-color: var(--terracotta);
+  color: var(--terracotta);
+}
+
+.device-viewport-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
 }
