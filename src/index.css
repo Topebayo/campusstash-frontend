@@ -1787,184 +1787,95 @@ button {
 
 
 /* ==========================================================================
-   DEVICE SHELL & RESPONSIVE VIEWPORT SYSTEM
+   AESTHETIC MINIMAL DEVICE SHELL (Centered on PC, Native on Mobile)
    ========================================================================== */
-
-/* Outer Canvas wrapper */
-.app-shell {
+html, body {
+  background-color: #F4EFEB;
+  margin: 0;
+  padding: 0;
   min-height: 100vh;
   min-height: 100dvh;
-  width: 100%;
+}
+
+#root {
+  min-height: 100vh;
+  min-height: 100dvh;
   display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: flex-start;
-  box-sizing: border-box;
+  justify-content: center;
+  background-color: #F4EFEB;
+}
+
+.app-container {
+  width: 100%;
+  max-width: 440px;
+  min-height: 100vh;
+  min-height: 100dvh;
   background-color: var(--bg-color);
-  transition: background-color 0.25s ease;
-}
-
-/* Device Mode Active on Desktop */
-@media (min-width: 640px) {
-  .app-shell.device-mode-active {
-    background: radial-gradient(circle at 50% 15%, #F4EFEB 0%, #E6DDD2 100%);
-    padding: 16px 20px 24px 20px;
-  }
-
-  .app-shell.device-mode-active .device-frame {
-    width: 100%;
-    max-width: 430px;
-    height: 94vh;
-    max-height: 900px;
-    border-radius: 46px;
-    border: 10px solid #1C1917;
-    box-shadow: 0 25px 70px -10px rgba(100, 75, 55, 0.28), 0 0 0 1px rgba(255, 255, 255, 0.4);
-    background-color: var(--bg-color);
-    position: relative;
-    overflow-y: auto;
-    overflow-x: hidden;
-    scrollbar-width: none;
-    display: flex;
-    flex-direction: column;
-  }
-
-  .app-shell.device-mode-active .device-frame::-webkit-scrollbar {
-    display: none;
-  }
-
-  .app-shell.device-mode-active .device-dynamic-island {
-    display: block;
-    width: 112px;
-    height: 24px;
-    background-color: #1C1917;
-    border-radius: 9999px;
-    margin: 10px auto 4px auto;
-    flex-shrink: 0;
-    z-index: 999;
-  }
-
-  .app-shell.device-mode-active .aesthetic-bottom-dock {
-    position: sticky;
-    bottom: 14px;
-    margin: auto auto 14px auto;
-    width: calc(100% - 32px);
-    max-width: 370px;
-    z-index: 1000;
-  }
-}
-
-/* Expanded Mode Active on Desktop */
-@media (min-width: 640px) {
-  .app-shell.expanded-mode-active {
-    background-color: var(--bg-color);
-    padding: 0;
-  }
-
-  .app-shell.expanded-mode-active .device-frame {
-    width: 100%;
-    max-width: 760px;
-    min-height: 100vh;
-    border: none;
-    border-radius: 0;
-    box-shadow: none;
-    background-color: var(--bg-color);
-    position: relative;
-    display: flex;
-    flex-direction: column;
-  }
-
-  .app-shell.expanded-mode-active .device-dynamic-island {
-    display: none;
-  }
-
-  .app-shell.expanded-mode-active .aesthetic-bottom-dock {
-    position: fixed;
-    bottom: 16px;
-    left: 50%;
-    transform: translateX(-50%);
-    width: calc(100% - 32px);
-    max-width: 400px;
-    z-index: 1000;
-  }
-}
-
-/* Mobile Screens (Phones & Android APK) */
-@media (max-width: 639px) {
-  .app-shell {
-    background-color: var(--bg-color) !important;
-    padding: 0 !important;
-  }
-
-  .device-toggle-bar {
-    display: none !important;
-  }
-
-  .device-frame {
-    width: 100% !important;
-    max-width: 100% !important;
-    min-height: 100vh !important;
-    height: auto !important;
-    border: none !important;
-    border-radius: 0 !important;
-    box-shadow: none !important;
-    background-color: var(--bg-color) !important;
-    overflow-y: visible !important;
-    margin: 0 !important;
-  }
-
-  .device-dynamic-island {
-    display: none !important;
-  }
-
-  .aesthetic-bottom-dock {
-    position: fixed !important;
-    bottom: 14px !important;
-    left: 50% !important;
-    transform: translateX(-50%) !important;
-    width: calc(100% - 28px) !important;
-    max-width: 380px !important;
-    z-index: 1000 !important;
-  }
-}
-
-/* Device Mode Switcher Floating Pill */
-.device-toggle-bar {
-  display: flex;
-  justify-content: flex-end;
-  width: 100%;
-  max-width: 520px;
-  margin-bottom: 8px;
-  z-index: 10;
-}
-
-.device-toggle-btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.45rem;
-  padding: 0.38rem 0.85rem;
-  border-radius: 9999px;
-  background-color: rgba(255, 255, 255, 0.85);
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
-  border: 1px solid var(--border);
-  color: var(--text-main);
-  font-size: 0.76rem;
-  font-weight: 700;
-  font-family: var(--font-sans);
-  cursor: pointer;
-  box-shadow: var(--shadow-sm);
-  transition: all 0.15s ease;
-}
-
-.device-toggle-btn:hover {
-  background-color: #FFFFFF;
-  border-color: var(--terracotta);
-  color: var(--terracotta);
-}
-
-.device-viewport-content {
-  flex: 1;
+  position: relative;
+  box-shadow: 0 0 60px rgba(120, 95, 75, 0.12), 0 0 0 1px var(--border);
   display: flex;
   flex-direction: column;
+  box-sizing: border-box;
+}
+
+@media (max-width: 639px) {
+  html, body, #root {
+    background-color: var(--bg-color);
+  }
+
+  .app-container {
+    max-width: 100%;
+    box-shadow: none;
+    border: none;
+  }
+}
+
+/* Ensure bottom dock is fixed and centered over the 440px container */
+.aesthetic-bottom-dock {
+  position: fixed;
+  bottom: 16px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: calc(100% - 32px);
+  max-width: 380px;
+  background: rgba(251, 248, 243, 0.94);
+  backdrop-filter: blur(24px) saturate(160%);
+  -webkit-backdrop-filter: blur(24px) saturate(160%);
+  border: 1px solid rgba(232, 224, 213, 0.95);
+  border-radius: 9999px;
+  padding: 7px 16px;
+  box-shadow: 0 10px 30px rgba(120, 90, 65, 0.12), 0 2px 8px rgba(0, 0, 0, 0.04);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  z-index: 1000;
+}
+
+/* 2-Column Marketplace Grid: always 2 columns, never stretched */
+.aesthetic-grid-2col {
+  display: grid !important;
+  grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  gap: 0.85rem !important;
+  width: 100% !important;
+  box-sizing: border-box !important;
+}
+
+.aesthetic-card {
+  background: #FFFFFF;
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  overflow: hidden;
+  box-shadow: var(--shadow-card);
+  transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.2s ease;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+}
+
+.aesthetic-card-image-box {
+  position: relative;
   width: 100%;
+  height: 150px;
+  background-color: var(--surface-alt);
+  overflow: hidden;
 }
