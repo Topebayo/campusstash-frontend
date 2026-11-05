@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { apiFetch, clearAppNotifications } from '../api';
+import { apiFetch, clearAppNotifications, getImageUrl } from '../api';
 import { Capacitor } from '@capacitor/core';
 import { LocalNotifications } from '@capacitor/local-notifications';
 import Navbar from '../components/Navbar';
@@ -210,7 +210,11 @@ function Messages() {
                     setActiveChatListing({ 
                       conversation_id: convId,
                       id: thread.listing_id || convId, 
+                      listing_id: thread.listing_id,
                       title: title, 
+                      price: thread.listing_price,
+                      price_kobo: thread.listing_price_kobo || thread.listing_price,
+                      image_url: thread.listing_image_url,
                       seller_id: thread.other_user?.id || thread.other_user_id,
                       seller_handle: peerName
                     });

@@ -27,6 +27,7 @@ function ChatModal({ isOpen = true, onClose, listing }) {
   const [showDropzonePicker, setShowDropzonePicker] = useState(false);
   const [conversationId, setConversationId] = useState(null);
   const [error, setError] = useState('');
+  const [modalListing, setModalListing] = useState(listing);
 
   const ws = useRef(null);
   const messagesEndRef = useRef(null);
@@ -40,6 +41,20 @@ function ChatModal({ isOpen = true, onClose, listing }) {
       }
     }
   }, []);
+
+  useEffect(() => {
+    setModalListing(listing);
+    const targetListingId = listing?.id || listing?.listing_id;
+    if (targetListingId && listing?.price_kobo === undefined && listing?.price === undefined) {
+      apiFetch(`/listings/${targetListingId}`)
+        .then((data) => {
+          if (data && data.id) {
+            setModalListing((prev) => ({ ...prev, ...data }));
+          }
+        })
+        .catch(() => {});
+    }
+  }, [listing]);
 
   // Fetch campus dropzones
   useEffect(() => {
@@ -202,14 +217,41 @@ function ChatModal({ isOpen = true, onClose, listing }) {
 
   if (!isOpen || !listing) return null;
 
-  const peerName = listing.seller_handle 
-    ? listing.seller_handle.split('@').pop() 
-    : 'Debby';
+  const activeItem = modalListing || listing;
 
-  const campusAcronym = listing.campus_acronym || 'LCU';
-  const priceFormatted = listing.price 
-    ? Number(listing.price).toLocaleString() 
-    : (listing.price_kobo ? (listing.price_kobo / 100).toLocaleString() : '4,500');
+  const peerName = (activeItem?.seller_handle || listing?.seller_handle)
+    ? (activeItem?.seller_handle || listing?.seller_handle).split('@').pop()
+    : 'Campus Peer';
+
+  const campusAcronym = activeItem?.campus_acronym || listing?.campus_acronym || 'LCU';
+
+  // Accurate Nigerian Naira formatting matching Dashboard and ItemDetailModal
+  const getFormattedPrice = () => {
+    if (!activeItem) return '';
+    
+    // 1. If it's a request chat where budget was entered directly in Naira
+    if (activeItem.is_request_chat) {
+      const budget = activeItem.price !== undefined ? Number(activeItem.price) : (activeItem.budget_naira || 0);
+      return budget ? budget.toLocaleString(undefined, { maximumFractionDigits: (budget % 1 === 0 ? 0 : 2) }) : '';
+    }
+
+    // 2. Database listings: price_kobo / 100
+    if (activeItem.price_kobo !== undefined && activeItem.price_kobo !== null) {
+      const naira = activeItem.price_kobo / 100;
+      return naira.toLocaleString(undefined, { maximumFractionDigits: (naira % 1 === 0 ? 0 : 2) });
+    }
+
+    // 3. Fallback: if price is provided and stored in kobo (values >= 1000 in DB)
+    if (activeItem.price !== undefined && activeItem.price !== null) {
+      const num = Number(activeItem.price);
+      const naira = num >= 1000 ? (num / 100) : num;
+      return naira.toLocaleString(undefined, { maximumFractionDigits: (naira % 1 === 0 ? 0 : 2) });
+    }
+
+    return '';
+  };
+
+  const priceFormatted = getFormattedPrice();
 
   return (
     <div className="modal-overlay" onClick={onClose} style={{ zIndex: 1100 }}>
@@ -345,10 +387,10 @@ function ChatModal({ isOpen = true, onClose, listing }) {
             justifyContent: 'center',
             color: 'var(--text-light)'
           }}>
-            {listing.image_url ? (
+            {(activeItem?.image_url || listing?.image_url) ? (
               <img 
-                src={getImageUrl(listing.image_url)} 
-                alt={listing.title} 
+                src={getImageUrl(activeItem?.image_url || listing?.image_url)} 
+                alt={activeItem?.title || listing?.title} 
                 style={{ width: '100%', height: '100%', objectFit: 'cover' }} 
               />
             ) : (
@@ -366,11 +408,13 @@ function ChatModal({ isOpen = true, onClose, listing }) {
                 overflow: 'hidden',
                 textOverflow: 'ellipsis'
               }}>
-                {listing.title}
+                {activeItem?.title || listing?.title}
               </span>
-              <span style={{ fontWeight: '800', fontSize: '0.95rem', color: 'var(--text-main)', marginLeft: '0.5rem' }}>
-                ₦{priceFormatted}
-              </span>
+              {priceFormatted ? (
+                <span style={{ fontWeight: '800', fontSize: '0.95rem', color: 'var(--text-main)', marginLeft: '0.5rem' }}>
+                  ₦{priceFormatted}
+                </span>
+              ) : null}
             </div>
             <div style={{ fontSize: '0.74rem', color: 'var(--text-muted)' }}>
               Regarding: {listing.title}
