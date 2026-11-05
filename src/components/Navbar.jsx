@@ -66,6 +66,7 @@ function Navbar({ onPrimaryAction, primaryActionText }) {
   const isHome = location.pathname === '/dashboard' || location.pathname === '/';
   const isProfile = location.pathname === '/profile';
   const isMessages = location.pathname === '/messages';
+  const isSaved = location.pathname === '/saved';
 
   useEffect(() => {
     setToken(localStorage.getItem('token'));
