@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { getImageUrl, CLOUD_HOST } from '../api';
+import { getImageUrl, CLOUD_HOST, apiFetch } from '../api';
 import ImageLightbox from './ImageLightbox';
 
 function ItemDetailModal({ 
@@ -20,6 +20,22 @@ function ItemDetailModal({
   const [copyFeedback, setCopyFeedback] = useState(false);
   const [isBookmarked, setIsBookmarked] = useState(false);
   const [isLightboxOpen, setIsLightboxOpen] = useState(false);
+  const [enrichedListing, setEnrichedListing] = useState(listing);
+
+  useEffect(() => {
+    setEnrichedListing(listing);
+    if (listing?.id && (!listing.seller_handle && !listing.seller)) {
+      apiFetch(`/listings/${listing.id}`)
+        .then(full => {
+          if (full && full.id) {
+            setEnrichedListing(prev => ({ ...prev, ...full }));
+          }
+        })
+        .catch(() => {});
+    }
+  }, [listing?.id]);
+
+  const activeListing = enrichedListing || listing;
 
   useEffect(() => {
     if (!isOpen) return;
@@ -67,9 +83,13 @@ function ItemDetailModal({
   const rawPrice = listing.price_kobo ? (listing.price_kobo / 100) : (listing.price || 0);
   const priceFormatted = rawPrice.toLocaleString(undefined, { maximumFractionDigits: (rawPrice % 1 === 0 ? 0 : 2) });
 
-  const sellerDisplayName = listing.seller_handle 
-    ? listing.seller_handle.split('@').pop() 
-    : 'Student Seller';
+  const sellerDisplayName = activeListing.seller_handle 
+    ? activeListing.seller_handle.split('@').pop() 
+    : (activeListing.seller?.burner_handle 
+        ? activeListing.seller.burner_handle.split('@').pop() 
+        : (activeListing.seller?.name || activeListing.seller_name || (activeListing.seller_id ? `Student (${String(activeListing.seller_id).slice(-4)})` : 'Student Seller')));
+
+  const sellerAvatar = activeListing.seller_avatar || activeListing.seller?.avatar_slug || activeListing.seller?.avatar;
 
   const campusName = listing.campus_name || listing.campus_acronym || 'Lead City University (LCU)';
 
@@ -417,9 +437,11 @@ function ItemDetailModal({
                         width: '34px',
                         height: '34px',
                         borderRadius: '50%',
-                        backgroundColor: 'rgba(255, 255, 255, 0.92)',
+                        backgroundColor: 'var(--surface-pill-alpha)',
+                        backdropFilter: 'blur(8px)',
+                        WebkitBackdropFilter: 'blur(8px)',
                         color: 'var(--text-main)',
-                        border: 'none',
+                        border: '1px solid var(--border)',
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
@@ -445,9 +467,11 @@ function ItemDetailModal({
                         width: '34px',
                         height: '34px',
                         borderRadius: '50%',
-                        backgroundColor: 'rgba(255, 255, 255, 0.92)',
+                        backgroundColor: 'var(--surface-pill-alpha)',
+                        backdropFilter: 'blur(8px)',
+                        WebkitBackdropFilter: 'blur(8px)',
                         color: 'var(--text-main)',
-                        border: 'none',
+                        border: '1px solid var(--border)',
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
@@ -533,27 +557,29 @@ function ItemDetailModal({
               <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', marginBottom: '1.25rem' }}>
                 {/* Condition Pill */}
                 <span style={{
-                  backgroundColor: '#E8F3EB',
-                  color: '#2E7D32',
+                  backgroundColor: 'var(--badge-active-bg)',
+                  color: 'var(--badge-active-text)',
+                  border: '1px solid var(--border)',
                   borderRadius: '9999px',
                   padding: '4px 12px',
                   fontSize: '0.78rem',
                   fontWeight: '600'
                 }}>
-                  {listing.condition || (isSold ? 'Sold' : 'Like New')}
+                  {activeListing.condition || (isSold ? 'Sold' : 'Like New')}
                 </span>
 
                 {/* Category Pill */}
-                {listing.category && (
+                {activeListing.category && (
                   <span style={{
-                    backgroundColor: '#FAF1EC',
+                    backgroundColor: 'var(--primary-light)',
                     color: 'var(--terracotta)',
+                    border: '1px solid var(--border)',
                     borderRadius: '9999px',
                     padding: '4px 12px',
                     fontSize: '0.78rem',
                     fontWeight: '600'
                   }}>
-                    {listing.category}
+                    {activeListing.category}
                   </span>
                 )}
 
@@ -572,7 +598,7 @@ function ItemDetailModal({
 
               {/* VERIFIED SELLER CARD */}
               <div style={{
-                backgroundColor: 'var(--surface)',
+                backgroundColor: 'var(--surface-alt)',
                 borderRadius: '18px',
                 border: '1px solid var(--border)',
                 padding: '1rem',
@@ -584,24 +610,24 @@ function ItemDetailModal({
               }}>
                 {/* Seller Avatar */}
                 <div style={{
-                  width: '46px',
-                  height: '46px',
+                  width: '48px',
+                  height: '48px',
                   borderRadius: '50%',
-                  backgroundColor: 'var(--surface-alt)',
+                  backgroundColor: 'var(--surface-pill)',
                   border: '2px solid var(--border)',
-                  boxShadow: '0 2px 6px rgba(0,0,0,0.06)',
+                  boxShadow: '0 2px 6px rgba(0,0,0,0.12)',
                   overflow: 'hidden',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
                   color: 'var(--terracotta)',
                   fontWeight: '700',
-                  fontSize: '1.1rem',
+                  fontSize: '1.15rem',
                   flexShrink: 0
                 }}>
-                  {listing.seller_avatar ? (
+                  {sellerAvatar ? (
                     <img 
-                      src={getImageUrl(listing.seller_avatar)} 
+                      src={getImageUrl(sellerAvatar)} 
                       alt={sellerDisplayName} 
                       style={{ width: '100%', height: '100%', objectFit: 'cover' }} 
                     />
@@ -611,16 +637,27 @@ function ItemDetailModal({
                 </div>
 
                 <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', flexWrap: 'wrap' }}>
-                    <span style={{ fontWeight: '700', color: 'var(--text-main)', fontSize: '0.94rem' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem', flexWrap: 'wrap' }}>
+                    <span style={{ fontWeight: '700', color: 'var(--text-main)', fontSize: '0.98rem' }}>
                       {sellerDisplayName}
                     </span>
-                    <span style={{ color: 'var(--terracotta)', fontSize: '0.78rem', fontWeight: '600' }}>
-                      (verified)
+                    <span style={{ 
+                      backgroundColor: 'var(--primary-light)', 
+                      color: 'var(--terracotta)', 
+                      fontSize: '0.74rem', 
+                      fontWeight: '700',
+                      padding: '2px 8px',
+                      borderRadius: '9999px',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '4px'
+                    }}>
+                      <i className="fa-solid fa-circle-check" style={{ fontSize: '0.7rem' }} /> verified
                     </span>
                   </div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem', fontSize: '0.78rem', color: 'var(--text-muted)', marginTop: '2px' }}>
-                    <span>★ 4.9 (12 reviews)</span>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem', fontSize: '0.82rem', color: 'var(--text-muted)', marginTop: '3px' }}>
+                    <span style={{ color: '#F59E0B', fontWeight: '700' }}>★ 4.9</span>
+                    <span>(12 campus reviews)</span>
                     <span>•</span>
                     <span>{campusName}</span>
                   </div>
@@ -629,7 +666,7 @@ function ItemDetailModal({
 
               {/* DESCRIPTION CARD */}
               <div style={{
-                backgroundColor: 'var(--surface)',
+                backgroundColor: 'var(--surface-alt)',
                 borderRadius: '18px',
                 border: '1px solid var(--border)',
                 padding: '1rem',
@@ -643,13 +680,13 @@ function ItemDetailModal({
                   margin: 0,
                   whiteSpace: 'pre-line'
                 }}>
-                  {listing.description || 'Hardly used, in great condition. Works flawlessly. DM me to meet up on campus.'}
+                  {activeListing.description || 'Hardly used, in great condition. Works flawlessly. DM me to meet up on campus.'}
                 </p>
               </div>
 
               {/* CAMPUS PICKUP DROPZONE CARD */}
               <div style={{
-                backgroundColor: 'var(--surface)',
+                backgroundColor: 'var(--surface-alt)',
                 borderRadius: '18px',
                 border: '1px solid var(--border)',
                 padding: '0.85rem 1rem',

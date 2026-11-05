@@ -862,7 +862,7 @@ function Dashboard() {
                   const rawPrice = listing.price_kobo ? (listing.price_kobo / 100) : (listing.price || 0);
                   const priceFormatted = rawPrice.toLocaleString(undefined, { maximumFractionDigits: (rawPrice % 1 === 0 ? 0 : 2) });
                   const isBookmarked = Array.isArray(savedItemIds) && savedItemIds.includes(listing.id);
-                  const sellerName = listing.seller_handle ? listing.seller_handle.split('@').pop() : 'Seller';
+                  const sellerName = listing.seller_handle ? listing.seller_handle.split('@').pop() : (listing.seller?.burner_handle ? listing.seller.burner_handle.split('@').pop() : (listing.seller?.name || 'Student'));
 
                   return (
                     <article 

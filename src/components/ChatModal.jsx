@@ -251,7 +251,11 @@ function ChatModal({ isOpen = true, onClose, listing }) {
 
   const peerName = (activeItem?.seller_handle || listing?.seller_handle)
     ? (activeItem?.seller_handle || listing?.seller_handle).split('@').pop()
-    : 'Campus Peer';
+    : (activeItem?.seller?.burner_handle 
+        ? activeItem.seller.burner_handle.split('@').pop() 
+        : (listing?.seller?.burner_handle 
+            ? listing.seller.burner_handle.split('@').pop() 
+            : (activeItem?.seller?.name || listing?.seller?.name || 'Campus Peer')));
 
   const campusAcronym = activeItem?.campus_acronym || listing?.campus_acronym || 'LCU';
 
