@@ -36,8 +36,6 @@ function CreateRequestModal({ isOpen, onClose, onCreated }) {
     }
   }, [isOpen]);
 
-  if (!isOpen) return null;
-
   useEffect(() => {
     if (!isOpen) return;
     const handleKeyDown = (e) => {
@@ -46,6 +44,8 @@ function CreateRequestModal({ isOpen, onClose, onCreated }) {
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [isOpen, onClose]);
+
+  if (!isOpen) return null;
 
   const handleSubmit = async (e) => {
     e.preventDefault();
