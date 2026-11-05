@@ -72,6 +72,15 @@ function SettingsModal({ isOpen, onClose, onLogout, userProfile, onUpdateUser })
     }
   }, [isOpen, userProfile]);
 
+  useEffect(() => {
+    if (!isOpen) return;
+    const handleKeyDown = (e) => {
+      if (e.key === 'Escape') onClose();
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isOpen, onClose]);
+
   if (!isOpen) return null;
 
   const handleAccountSubmit = async (e) => {

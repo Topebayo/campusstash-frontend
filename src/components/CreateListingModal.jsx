@@ -45,6 +45,14 @@ const CATEGORIES = [
 ];
 
 function CreateListingModal({ isOpen, onClose, onCreated }) {
+  useEffect(() => {
+    if (!isOpen) return;
+    const handleKeyDown = (e) => {
+      if (e.key === 'Escape') onClose();
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isOpen, onClose]);
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [price, setPrice] = useState('');
@@ -162,7 +170,8 @@ function CreateListingModal({ isOpen, onClose, onCreated }) {
     setIsSubmitting(true);
 
     try {
-      const priceFloat = parseFloat(price);
+      const cleanPrice = String(price || '').replace(/[₦,\s,]/g, '');
+      const priceFloat = parseFloat(cleanPrice);
       if (isNaN(priceFloat) || priceFloat <= 0) {
         throw new Error('Please enter a valid positive price in Naira.');
       }

@@ -19,6 +19,15 @@ function ItemDetailModal({
   const [isBookmarked, setIsBookmarked] = useState(false);
 
   useEffect(() => {
+    if (!isOpen) return;
+    const handleKeyDown = (e) => {
+      if (e.key === 'Escape') onClose();
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isOpen, onClose]);
+
+  useEffect(() => {
     setActiveImageIdx(0);
     if (listing?.id) {
       try {

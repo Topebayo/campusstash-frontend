@@ -177,6 +177,15 @@ function ChatModal({ isOpen = true, onClose, listing }) {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
+  useEffect(() => {
+    if (!isOpen) return;
+    const handleKeyDown = (e) => {
+      if (e.key === 'Escape') onClose();
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isOpen, onClose]);
+
   const handleSend = (e) => {
     e.preventDefault();
     if (!inputValue.trim() || !ws.current || ws.current.readyState !== WebSocket.OPEN) return;

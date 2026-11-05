@@ -116,6 +116,22 @@ function Dashboard() {
   });
   const [selectedCampusId, setSelectedCampusId] = useState(() => getActiveCampusId());
   const [showCampusPicker, setShowCampusPicker] = useState(false);
+  const campusPickerRef = useRef(null);
+
+  useEffect(() => {
+    if (!showCampusPicker) return;
+    const handleClickOutside = (e) => {
+      if (campusPickerRef.current && !campusPickerRef.current.contains(e.target)) {
+        setShowCampusPicker(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    document.addEventListener('touchstart', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener('touchstart', handleClickOutside);
+    };
+  }, [showCampusPicker]);
 
   // User profile preview for top bar avatar
   const [currentUser, setCurrentUser] = useState(() => {
@@ -713,7 +729,7 @@ function Dashboard() {
               return (
                 <div 
                   key={cat.name}
-                  onClick={() => setSelectedCategory(cat.name)}
+                  onClick={() => setSelectedCategory(prev => prev === cat.name ? 'All' : cat.name)}
                   className={`trending-card ${isActive ? 'active' : ''}`}
                 >
                   <img 

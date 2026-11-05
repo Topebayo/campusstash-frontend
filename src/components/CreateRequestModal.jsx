@@ -38,6 +38,15 @@ function CreateRequestModal({ isOpen, onClose, onCreated }) {
 
   if (!isOpen) return null;
 
+  useEffect(() => {
+    if (!isOpen) return;
+    const handleKeyDown = (e) => {
+      if (e.key === 'Escape') onClose();
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isOpen, onClose]);
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
