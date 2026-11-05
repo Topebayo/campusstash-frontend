@@ -1339,22 +1339,24 @@ select option {
 .campus-pill-btn {
   display: inline-flex;
   align-items: center;
-  gap: 0.45rem;
+  gap: 0.35rem;
   background-color: var(--surface-alt);
   border: 1px solid var(--border);
   border-radius: 9999px;
-  padding: 0.42rem 0.95rem;
-  font-size: 0.84rem;
+  padding: 0.32rem 0.68rem;
+  font-size: 0.78rem;
   font-weight: 600;
   color: var(--text-main);
   cursor: pointer;
   transition: all 0.2s ease;
   white-space: nowrap;
+  max-width: 170px;
+  box-shadow: var(--shadow-sm);
 }
 
 .campus-pill-btn:hover {
   border-color: var(--terracotta);
-  background-color: #FFFFFF;
+  background-color: var(--surface);
 }
 
 /* Aesthetic Search Bar */

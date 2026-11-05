@@ -546,8 +546,8 @@ function Dashboard() {
               }
             }}
             style={{
-              width: '42px',
-              height: '42px',
+              width: '38px',
+              height: '38px',
               borderRadius: '50%',
               backgroundColor: 'var(--surface-alt)',
               border: '2px solid var(--border)',
@@ -581,13 +581,20 @@ function Dashboard() {
             <div style={{ position: 'relative' }} ref={campusPickerRef}>
               <button
                 onClick={() => setShowCampusPicker(prev => !prev)}
-              className="campus-pill-btn"
-              title="Select Campus"
-            >
-              <span>🎓</span>
-              <span>{activeCampusAcronym ? `${activeCampusName} (${activeCampusAcronym})` : 'All Campuses'}</span>
-              <i className="fa-solid fa-chevron-down" style={{ fontSize: '0.72rem', opacity: 0.65 }} />
-            </button>
+                className="campus-pill-btn"
+                title={`Selected Campus: ${activeCampusName}`}
+              >
+                <span style={{ fontSize: '0.85rem', lineHeight: 1 }}>🎓</span>
+                <span style={{
+                  maxWidth: '120px',
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis',
+                  whiteSpace: 'nowrap'
+                }}>
+                  {activeCampusAcronym || activeCampusName || 'All Campuses'}
+                </span>
+                <i className="fa-solid fa-chevron-down" style={{ fontSize: '0.62rem', opacity: 0.65 }} />
+              </button>
 
             {/* Campus Dropdown Popover */}
             {showCampusPicker && (
