@@ -28,6 +28,27 @@ function ChatModal({ isOpen = true, onClose, listing }) {
   const [conversationId, setConversationId] = useState(null);
   const [error, setError] = useState('');
   const [modalListing, setModalListing] = useState(listing);
+  const [showItemDetail, setShowItemDetail] = useState(false);
+  const [detailItem, setDetailItem] = useState(null);
+
+  const handleOpenItemDetail = async () => {
+    if (activeItem?.is_request_chat) return;
+    const targetId = activeItem?.id || activeItem?.listing_id || listing?.id || listing?.listing_id;
+    if (!targetId) return;
+
+    setDetailItem(activeItem);
+    setShowItemDetail(true);
+
+    try {
+      const fullData = await apiFetch(`/listings/${targetId}`);
+      if (fullData && fullData.id) {
+        setDetailItem(fullData);
+        setModalListing((prev) => ({ ...prev, ...fullData }));
+      }
+    } catch (e) {
+      // Non-blocking fallback
+    }
+  };
 
   const ws = useRef(null);
   const messagesEndRef = useRef(null);
@@ -372,29 +393,38 @@ function ChatModal({ isOpen = true, onClose, listing }) {
         </div>
 
         {/* ============================================================== */}
-        {/* CONTEXT ITEM CARD                                              */}
+        {/* CONTEXT ITEM CARD (Click to View Item Details)                 */}
         {/* ============================================================== */}
-        <div style={{
-          padding: '0.65rem 1.15rem',
-          backgroundColor: 'var(--surface-alt)',
-          borderBottom: '1px solid var(--border)',
-          display: 'flex',
-          alignItems: 'center',
-          gap: '0.75rem',
-          flexShrink: 0
-        }}>
+        <div 
+          onClick={handleOpenItemDetail}
+          style={{
+            padding: '0.65rem 1.15rem',
+            backgroundColor: 'var(--surface-alt)',
+            borderBottom: '1px solid var(--border)',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '0.75rem',
+            flexShrink: 0,
+            cursor: activeItem?.is_request_chat ? 'default' : 'pointer',
+            transition: 'background-color 0.15s ease'
+          }}
+          title={activeItem?.is_request_chat ? 'Wanted Request' : 'Click to inspect item details'}
+          className="chat-context-item-card"
+        >
           {/* Item thumbnail */}
           <div style={{
-            width: '44px',
-            height: '44px',
-            borderRadius: '10px',
-            backgroundColor: 'var(--surface-alt)',
+            width: '46px',
+            height: '46px',
+            borderRadius: '12px',
+            backgroundColor: 'var(--surface)',
+            border: '1px solid var(--border)',
             overflow: 'hidden',
             flexShrink: 0,
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            color: 'var(--text-light)'
+            color: 'var(--text-light)',
+            boxShadow: 'var(--shadow-sm)'
           }}>
             {(activeItem?.image_url || listing?.image_url) ? (
               <img 
@@ -420,13 +450,21 @@ function ChatModal({ isOpen = true, onClose, listing }) {
                 {activeItem?.title || listing?.title}
               </span>
               {priceFormatted ? (
-                <span style={{ fontWeight: '800', fontSize: '0.95rem', color: 'var(--text-main)', marginLeft: '0.5rem' }}>
+                <span style={{ fontWeight: '800', fontSize: '0.95rem', color: 'var(--terracotta)', marginLeft: '0.5rem', flexShrink: 0 }}>
                   ₦{priceFormatted}
                 </span>
               ) : null}
             </div>
-            <div style={{ fontSize: '0.74rem', color: 'var(--text-muted)' }}>
-              Regarding: {listing.title}
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: '2px' }}>
+              <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                {activeItem?.is_request_chat ? 'Wanted Request' : 'Tap to inspect item'}
+              </span>
+              {!activeItem?.is_request_chat && (
+                <span style={{ fontSize: '0.74rem', color: 'var(--terracotta)', fontWeight: '600', display: 'inline-flex', alignItems: 'center', gap: '3px' }}>
+                  <span>View</span>
+                  <i className="fa-solid fa-chevron-right" style={{ fontSize: '0.65rem' }} />
+                </span>
+              )}
             </div>
           </div>
         </div>
@@ -686,6 +724,18 @@ function ChatModal({ isOpen = true, onClose, listing }) {
         </form>
 
       </div>
+
+      {/* Item Detail Modal overlay inside Chat */}
+      {showItemDetail && detailItem && (
+        <ItemDetailModal
+          isOpen={true}
+          listing={detailItem}
+          onClose={() => setShowItemDetail(false)}
+          onMessageSeller={() => setShowItemDetail(false)}
+          currentUserId={currentUserId}
+          zIndex={1300}
+        />
+      )}
     </div>
   );
 }

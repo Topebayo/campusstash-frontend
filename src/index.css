@@ -1890,3 +1890,16 @@ html, body {
 .aesthetic-theme-toggle-btn:active {
   transform: scale(0.92);
 }
+
+/* Chat Context Item Card Clickable Style */
+.chat-context-item-card {
+  transition: all 0.15s ease;
+}
+
+.chat-context-item-card:hover {
+  background-color: var(--surface) !important;
+}
+
+.chat-context-item-card:active {
+  transform: scale(0.99);
+}

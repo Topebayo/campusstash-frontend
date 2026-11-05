@@ -12,7 +12,8 @@ function ItemDetailModal({
   onToggleStatus,
   onDeleteListing,
   allListings = [],
-  onSelectListing
+  onSelectListing,
+  zIndex = 1100
 }) {
   const [activeImageIdx, setActiveImageIdx] = useState(0);
   const [copyFeedback, setCopyFeedback] = useState(false);
@@ -133,7 +134,7 @@ function ItemDetailModal({
   };
 
   return (
-    <div className="modal-overlay" onClick={onClose} style={{ zIndex: 1100 }}>
+    <div className="modal-overlay" onClick={onClose} style={{ zIndex }}>
       <div 
         className="modal-content animate-fade-in" 
         onClick={(e) => e.stopPropagation()} 
