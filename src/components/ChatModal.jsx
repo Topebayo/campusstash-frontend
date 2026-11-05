@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { apiFetch, getWebSocketUrl, getImageUrl, clearAppNotifications } from '../api';
 import { Capacitor } from '@capacitor/core';
+import ItemDetailModal from './ItemDetailModal';
 
 function decodeJwt(token) {
   try {
@@ -28,6 +29,7 @@ function ChatModal({ isOpen = true, onClose, listing }) {
   const [conversationId, setConversationId] = useState(null);
   const [error, setError] = useState('');
   const [modalListing, setModalListing] = useState(listing);
+  const activeItem = modalListing || listing;
   const [showItemDetail, setShowItemDetail] = useState(false);
   const [detailItem, setDetailItem] = useState(null);
 
@@ -246,8 +248,6 @@ function ChatModal({ isOpen = true, onClose, listing }) {
   };
 
   if (!isOpen || !listing) return null;
-
-  const activeItem = modalListing || listing;
 
   const peerName = (activeItem?.seller_handle || listing?.seller_handle)
     ? (activeItem?.seller_handle || listing?.seller_handle).split('@').pop()
