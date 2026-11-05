@@ -1446,6 +1446,7 @@ select option {
   gap: 0.85rem;
   overflow-x: auto;
   scroll-behavior: smooth;
+  scroll-snap-type: x mandatory;
   padding-bottom: 0.65rem;
   -webkit-overflow-scrolling: touch;
   scrollbar-width: none;
@@ -1457,8 +1458,9 @@ select option {
 }
 
 .trending-card {
-  flex: 0 0 110px;
+  flex: 0 0 115px;
   height: 120px;
+  scroll-snap-align: start;
   border-radius: 18px;
   position: relative;
   overflow: hidden;
@@ -1477,6 +1479,27 @@ select option {
 .trending-card.active {
   border-color: var(--terracotta);
   box-shadow: 0 0 0 2px var(--terracotta);
+}
+
+@media (min-width: 768px) {
+  .trending-scroll-row {
+    overflow-x: visible;
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 1rem;
+    padding-bottom: 0;
+  }
+
+  .trending-card {
+    flex: none;
+    width: 100%;
+    height: 135px;
+    border-radius: 20px;
+  }
+
+  .trending-nav-arrows {
+    display: none !important;
+  }
 }
 
 .trending-card-img {
@@ -1783,35 +1806,38 @@ html, body {
   min-height: 100dvh;
   display: flex;
   justify-content: center;
-  background-color: var(--surface-alt);
+  background-color: var(--bg-color);
+  width: 100%;
 }
 
 .app-container {
   width: 100%;
-  max-width: 440px;
+  max-width: 100%;
   min-height: 100vh;
   min-height: 100dvh;
   background-color: var(--bg-color);
   position: relative;
-  box-shadow: 0 0 60px rgba(120, 95, 75, 0.12), 0 0 0 1px var(--border);
   display: flex;
   flex-direction: column;
   box-sizing: border-box;
 }
 
-@media (max-width: 639px) {
-  html, body, #root {
-    background-color: var(--bg-color);
-  }
-
+@media (min-width: 768px) {
   .app-container {
-    max-width: 100%;
+    max-width: 1140px;
+    margin: 0 auto;
     box-shadow: none;
-    border: none;
   }
 }
 
-/* Ensure bottom dock is fixed and centered over the 440px container */
+@media (min-width: 1200px) {
+  .app-container {
+    max-width: 1240px;
+    margin: 0 auto;
+  }
+}
+
+/* Ensure bottom dock is fixed and centered */
 .aesthetic-bottom-dock {
   position: fixed;
   bottom: 16px;
@@ -1830,15 +1856,38 @@ html, body {
   align-items: center;
   justify-content: space-between;
   z-index: 1000;
+  transition: all 0.25s ease;
 }
 
-/* 2-Column Marketplace Grid: always 2 columns, never stretched */
+@media (min-width: 768px) {
+  .aesthetic-bottom-dock {
+    max-width: 480px;
+    padding: 9px 24px;
+    bottom: 24px;
+  }
+}
+
+/* Responsive Marketplace Grid: 2 cols on mobile, 3 on tablet, 4 on desktop */
 .aesthetic-grid-2col {
   display: grid !important;
   grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
   gap: 0.85rem !important;
   width: 100% !important;
   box-sizing: border-box !important;
+}
+
+@media (min-width: 640px) {
+  .aesthetic-grid-2col {
+    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+    gap: 1.15rem !important;
+  }
+}
+
+@media (min-width: 1024px) {
+  .aesthetic-grid-2col {
+    grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+    gap: 1.35rem !important;
+  }
 }
 
 .aesthetic-card {
@@ -1856,9 +1905,121 @@ html, body {
 .aesthetic-card-image-box {
   position: relative;
   width: 100%;
-  height: 150px;
+  height: 155px;
   background-color: var(--surface-alt);
   overflow: hidden;
+}
+
+@media (min-width: 640px) {
+  .aesthetic-card-image-box {
+    height: 175px;
+  }
+}
+
+@media (min-width: 1024px) {
+  .aesthetic-card-image-box {
+    height: 195px;
+  }
+}
+
+/* Item Detail Modal - Desktop & Mobile Responsive */
+.item-detail-dialog {
+  max-width: 480px;
+  width: 100%;
+  max-height: 92vh;
+  max-height: 92dvh;
+  display: flex;
+  flex-direction: column;
+  padding: 0;
+  overflow: hidden;
+  border-radius: 28px;
+  background-color: var(--surface);
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow-xl);
+  position: relative;
+  transition: max-width 0.25s ease;
+}
+
+@media (min-width: 768px) {
+  .item-detail-dialog {
+    max-width: 860px !important;
+    border-radius: 24px;
+  }
+
+  .item-detail-body {
+    display: flex !important;
+    flex-direction: row !important;
+    gap: 1.5rem !important;
+    padding: 0 1.5rem 1.5rem 1.5rem !important;
+    overflow-y: hidden !important;
+  }
+
+  .item-detail-gallery-col {
+    flex: 1.1 !important;
+    display: flex !important;
+    flex-direction: column !important;
+  }
+
+  .item-detail-hero-box {
+    height: 380px !important;
+  }
+
+  .item-detail-info-col {
+    flex: 1.2 !important;
+    overflow-y: auto !important;
+    max-height: calc(88vh - 120px) !important;
+    padding-right: 0.35rem !important;
+    display: flex !important;
+    flex-direction: column !important;
+  }
+
+  .item-detail-mobile-bottom-bar {
+    display: none !important;
+  }
+
+  .item-detail-desktop-actions {
+    display: flex !important;
+    margin-top: auto !important;
+    padding-top: 1rem !important;
+  }
+}
+
+@media (max-width: 767px) {
+  .item-detail-desktop-actions {
+    display: none !important;
+  }
+
+  .item-detail-hero-box {
+    height: 310px !important;
+  }
+}
+
+/* Hero image expand pill button */
+.item-expand-pill {
+  position: absolute;
+  bottom: 12px;
+  right: 12px;
+  background-color: rgba(28, 25, 23, 0.78);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  color: #FFFFFF;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  padding: 5px 12px;
+  border-radius: 9999px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  pointer-events: none;
+  transition: all 0.2s ease;
+  z-index: 5;
+}
+
+.item-detail-hero-box:hover .item-expand-pill {
+  background-color: var(--terracotta);
+  border-color: var(--terracotta);
+  transform: scale(1.04);
 }
 
 
@@ -1902,4 +2063,30 @@ html, body {
 
 .chat-context-item-card:active {
   transform: scale(0.99);
+}
+
+
+/* Chat Modal Dialog - Responsive Desktop & Mobile */
+.chat-modal-dialog {
+  max-width: 480px;
+  width: 100%;
+  height: 88vh;
+  max-height: 720px;
+  display: flex;
+  flex-direction: column;
+  padding: 0;
+  overflow: hidden;
+  border-radius: 28px;
+  background-color: var(--surface);
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow-xl);
+  transition: max-width 0.25s ease;
+}
+
+@media (min-width: 768px) {
+  .chat-modal-dialog {
+    max-width: 660px !important;
+    max-height: 780px !important;
+    border-radius: 24px;
+  }
 }

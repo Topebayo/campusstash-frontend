@@ -77,14 +77,14 @@ function Dashboard() {
   const { id: routeItemId } = useParams();
   const carouselRef = useRef(null);
   const [canScrollLeft, setCanScrollLeft] = useState(false);
-  const [canScrollRight, setCanScrollRight] = useState(true);
+  const [canScrollRight, setCanScrollRight] = useState(false);
 
   const checkCarouselBounds = useCallback(() => {
     if (carouselRef.current) {
       const { scrollLeft, scrollWidth, clientWidth } = carouselRef.current;
       const maxScroll = Math.max(0, scrollWidth - clientWidth);
-      setCanScrollLeft(scrollLeft > 5);
-      setCanScrollRight(scrollLeft < maxScroll - 5);
+      setCanScrollLeft(scrollLeft > 6);
+      setCanScrollRight(maxScroll > 6 && scrollLeft < maxScroll - 6);
     }
   }, []);
 
@@ -493,7 +493,8 @@ function Dashboard() {
       const maxScroll = Math.max(0, el.scrollWidth - el.clientWidth);
       if (maxScroll <= 0) return;
 
-      const step = 200;
+      const cardWidth = 125;
+      const step = cardWidth * 2;
       if (direction === 'left') {
         const target = Math.max(0, el.scrollLeft - step);
         el.scrollTo({ left: target, behavior: 'smooth' });

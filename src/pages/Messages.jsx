@@ -70,7 +70,7 @@ function Messages() {
       <main 
         className="animate-fade-in" 
         style={{ 
-          maxWidth: '520px', 
+          maxWidth: '860px', 
           margin: '0 auto', 
           padding: '0.5rem 1.15rem 7rem 1.15rem', 
           width: '100%', 

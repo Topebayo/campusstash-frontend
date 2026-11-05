@@ -286,22 +286,8 @@ function ChatModal({ isOpen = true, onClose, listing }) {
   return (
     <div className="modal-overlay" onClick={onClose} style={{ zIndex: 1100 }}>
       <div 
-        className="modal-content animate-fade-in" 
+        className="modal-content animate-fade-in chat-modal-dialog" 
         onClick={(e) => e.stopPropagation()} 
-        style={{
-          maxWidth: '480px',
-          width: '100%',
-          height: '88vh',
-          maxHeight: '720px',
-          display: 'flex',
-          flexDirection: 'column',
-          padding: 0,
-          overflow: 'hidden',
-          borderRadius: '28px',
-          backgroundColor: 'var(--surface)',
-          border: '1px solid var(--border)',
-          boxShadow: 'var(--shadow-xl)'
-        }}
       >
         {/* ============================================================== */}
         {/* HEADER: BACK, TITLE, STATUS & PEER AVATAR                      */}
