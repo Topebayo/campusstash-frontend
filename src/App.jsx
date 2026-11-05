@@ -31,8 +31,8 @@ class ErrorBoundary extends React.Component {
           justifyContent: 'center',
           padding: '2rem',
           textAlign: 'center',
-          backgroundColor: '#FBF8F3',
-          color: '#1C1917',
+          backgroundColor: 'var(--bg-color)',
+          color: 'var(--text-main)',
           fontFamily: 'sans-serif'
         }}>
           <div style={{

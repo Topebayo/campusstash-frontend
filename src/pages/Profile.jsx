@@ -327,7 +327,7 @@ function Profile() {
         {/* ============================================================== */}
         <div style={{
           display: 'flex',
-          backgroundColor: '#F4EFEB',
+          backgroundColor: 'var(--surface-alt)',
           borderRadius: '9999px',
           padding: '4px',
           marginBottom: '1.25rem',

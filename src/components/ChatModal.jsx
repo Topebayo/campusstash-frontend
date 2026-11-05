@@ -277,7 +277,7 @@ function ChatModal({ isOpen = true, onClose, listing }) {
           padding: 0,
           overflow: 'hidden',
           borderRadius: '28px',
-          backgroundColor: '#FBF8F3',
+          backgroundColor: 'var(--surface)',
           border: '1px solid var(--border)',
           boxShadow: 'var(--shadow-xl)'
         }}
@@ -287,7 +287,7 @@ function ChatModal({ isOpen = true, onClose, listing }) {
         {/* ============================================================== */}
         <div style={{
           padding: '0.85rem 1.25rem',
-          backgroundColor: '#FBF8F3',
+          backgroundColor: 'var(--surface)',
           borderBottom: '1px solid var(--border)',
           display: 'flex',
           justifyContent: 'space-between',
@@ -349,7 +349,7 @@ function ChatModal({ isOpen = true, onClose, listing }) {
             height: '36px',
             borderRadius: '50%',
             backgroundColor: 'var(--surface-alt)',
-            border: '2px solid #FFFFFF',
+            border: '2px solid var(--border)',
             boxShadow: '0 2px 6px rgba(0,0,0,0.08)',
             display: 'flex',
             alignItems: 'center',
@@ -436,14 +436,14 @@ function ChatModal({ isOpen = true, onClose, listing }) {
         {/* ============================================================== */}
         <div style={{
           margin: '0.65rem 1.15rem 0.25rem 1.15rem',
-          backgroundColor: '#F4EFEB',
+          backgroundColor: 'var(--surface-alt)',
           borderRadius: '14px',
           padding: '0.65rem 0.95rem',
           display: 'flex',
           alignItems: 'center',
           gap: '0.5rem',
           fontSize: '0.78rem',
-          color: '#44403C',
+          color: 'var(--text-main)',
           lineHeight: '1.4',
           border: '1px solid var(--border)',
           flexShrink: 0
@@ -563,12 +563,12 @@ function ChatModal({ isOpen = true, onClose, listing }) {
                 return (
                   <div key={msg.id || index} style={{
                     alignSelf: 'center',
-                    backgroundColor: '#E8F3EB',
+                    backgroundColor: 'var(--badge-active-bg)',
                     borderRadius: '9999px',
                     padding: '0.45rem 1rem',
                     fontSize: '0.78rem',
                     fontWeight: '700',
-                    color: '#2E7D32'
+                    color: 'var(--badge-active-text)'
                   }}>
                     ✓ Meetup Agreed: {dzName}
                   </div>
@@ -649,7 +649,7 @@ function ChatModal({ isOpen = true, onClose, listing }) {
             placeholder="Message..."
             style={{
               flex: 1,
-              backgroundColor: '#F4EFEB',
+              backgroundColor: 'var(--surface-alt)',
               border: '1px solid var(--border)',
               borderRadius: '9999px',
               padding: '0.65rem 1.15rem',
@@ -668,7 +668,7 @@ function ChatModal({ isOpen = true, onClose, listing }) {
               width: '38px',
               height: '38px',
               borderRadius: '50%',
-              backgroundColor: inputValue.trim() ? 'var(--terracotta)' : '#D6CEC5',
+              backgroundColor: inputValue.trim() ? 'var(--terracotta)' : 'var(--surface-pill)',
               border: 'none',
               color: '#FFFFFF',
               display: 'flex',

@@ -146,7 +146,7 @@ function ItemDetailModal({
           padding: 0, 
           overflow: 'hidden', 
           borderRadius: '28px',
-          backgroundColor: '#FBF8F3',
+          backgroundColor: 'var(--surface)',
           border: '1px solid var(--border)',
           boxShadow: 'var(--shadow-xl)',
           position: 'relative'
@@ -160,7 +160,7 @@ function ItemDetailModal({
           alignItems: 'center',
           justifyContent: 'space-between',
           padding: '1rem 1.25rem 0.75rem 1.25rem',
-          backgroundColor: '#FBF8F3',
+          backgroundColor: 'var(--surface)',
           zIndex: 10
         }}>
           {/* Back Button */}
@@ -563,7 +563,7 @@ function ItemDetailModal({
         {/* ============================================================== */}
         <div style={{
           padding: '0.85rem 1.25rem 1.25rem 1.25rem',
-          backgroundColor: '#FBF8F3',
+          backgroundColor: 'var(--surface)',
           borderTop: '1px solid var(--border)',
           display: 'flex',
           alignItems: 'center',
