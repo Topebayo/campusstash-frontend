@@ -7,6 +7,7 @@ import Auth from './pages/Auth';
 import Dashboard from './pages/Dashboard';
 import Profile from './pages/Profile';
 import Messages from './pages/Messages';
+import Saved from './pages/Saved';
 
 function App() {
   useEffect(() => {
@@ -64,6 +65,7 @@ function App() {
         <Route path="/l/:id" element={<Dashboard />} />
         <Route path="/profile" element={<Profile />} />
         <Route path="/messages" element={<Messages />} />
+        <Route path="/saved" element={<Saved />} />
         <Route path="*" element={<Dashboard />} />
       </Routes>
     </div>

@@ -1469,6 +1469,7 @@ select option {
   padding-bottom: 0.65rem;
   -webkit-overflow-scrolling: touch;
   scrollbar-width: none;
+  overscroll-behavior-x: contain;
 }
 
 .trending-scroll-row::-webkit-scrollbar {

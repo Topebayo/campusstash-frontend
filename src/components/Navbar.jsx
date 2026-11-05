@@ -196,23 +196,23 @@ function Navbar({ onPrimaryAction, primaryActionText }) {
           <i className="fa-solid fa-plus" />
         </button>
 
-        {/* 4. Saved Listings */}
+        {/* 4. Dedicated Saved Items Page */}
         <button
           onClick={() => {
             if (!token) {
               navigate('/auth');
             } else {
-              navigate('/profile?tab=saved');
+              navigate('/saved');
             }
           }}
-          className={`aesthetic-dock-btn ${isProfile && location.search.includes('saved') ? 'active' : ''}`}
+          className={`aesthetic-dock-btn ${isSaved ? 'active' : ''}`}
           title="Saved Items"
         >
-          <i className={isProfile && location.search.includes('saved') ? "fa-solid fa-bookmark" : "fa-regular fa-bookmark"} />
-          {isProfile && location.search.includes('saved') && <span className="aesthetic-dock-dot" />}
+          <i className={isSaved ? "fa-solid fa-bookmark" : "fa-regular fa-bookmark"} />
+          {isSaved && <span className="aesthetic-dock-dot" />}
         </button>
 
-        {/* 5. Profile */}
+        {/* 5. My Profile Page */}
         <button
           onClick={() => {
             if (!token) {
@@ -221,11 +221,11 @@ function Navbar({ onPrimaryAction, primaryActionText }) {
               navigate('/profile');
             }
           }}
-          className={`aesthetic-dock-btn ${isProfile && !location.search.includes('saved') ? 'active' : ''}`}
+          className={`aesthetic-dock-btn ${isProfile ? 'active' : ''}`}
           title="My Profile"
         >
-          <i className={isProfile && !location.search.includes('saved') ? "fa-solid fa-user" : "fa-regular fa-user"} />
-          {isProfile && !location.search.includes('saved') && <span className="aesthetic-dock-dot" />}
+          <i className={isProfile ? "fa-solid fa-user" : "fa-regular fa-user"} />
+          {isProfile && <span className="aesthetic-dock-dot" />}
         </button>
       </nav>
 

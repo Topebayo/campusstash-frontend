@@ -75,6 +75,32 @@ function Dashboard() {
   const location = useLocation();
   const { id: routeItemId } = useParams();
   const carouselRef = useRef(null);
+  const [canScrollLeft, setCanScrollLeft] = useState(false);
+  const [canScrollRight, setCanScrollRight] = useState(true);
+
+  const checkCarouselBounds = useCallback(() => {
+    if (carouselRef.current) {
+      const { scrollLeft, scrollWidth, clientWidth } = carouselRef.current;
+      const maxScroll = Math.max(0, scrollWidth - clientWidth);
+      setCanScrollLeft(scrollLeft > 5);
+      setCanScrollRight(scrollLeft < maxScroll - 5);
+    }
+  }, []);
+
+  useEffect(() => {
+    const el = carouselRef.current;
+    if (!el) return;
+
+    const timer = setTimeout(checkCarouselBounds, 150);
+    el.addEventListener('scroll', checkCarouselBounds, { passive: true });
+    window.addEventListener('resize', checkCarouselBounds);
+
+    return () => {
+      clearTimeout(timer);
+      el.removeEventListener('scroll', checkCarouselBounds);
+      window.removeEventListener('resize', checkCarouselBounds);
+    };
+  }, [checkCarouselBounds]);
 
   // Active view: 'items' (Marketplace) vs 'requests' (Daily Requests / Wanted Board)
   const [activeTab, setActiveTab] = useState('items');
@@ -446,8 +472,18 @@ function Dashboard() {
 
   const handleScrollCarousel = (direction) => {
     if (carouselRef.current) {
-      const scrollAmount = direction === 'left' ? -220 : 220;
-      carouselRef.current.scrollBy({ left: scrollAmount, behavior: 'smooth' });
+      const el = carouselRef.current;
+      const maxScroll = Math.max(0, el.scrollWidth - el.clientWidth);
+      if (maxScroll <= 0) return;
+
+      const step = 200;
+      if (direction === 'left') {
+        const target = Math.max(0, el.scrollLeft - step);
+        el.scrollTo({ left: target, behavior: 'smooth' });
+      } else {
+        const target = Math.min(maxScroll, el.scrollLeft + step);
+        el.scrollTo({ left: target, behavior: 'smooth' });
+      }
     }
   };
 
@@ -646,6 +682,12 @@ function Dashboard() {
                 className="trending-arrow-btn"
                 onClick={() => handleScrollCarousel('left')}
                 title="Scroll Left"
+                disabled={!canScrollLeft}
+                style={{
+                  opacity: canScrollLeft ? 1 : 0.3,
+                  cursor: canScrollLeft ? 'pointer' : 'default',
+                  pointerEvents: canScrollLeft ? 'auto' : 'none'
+                }}
               >
                 <i className="fa-solid fa-chevron-left" />
               </button>
@@ -653,6 +695,12 @@ function Dashboard() {
                 className="trending-arrow-btn"
                 onClick={() => handleScrollCarousel('right')}
                 title="Scroll Right"
+                disabled={!canScrollRight}
+                style={{
+                  opacity: canScrollRight ? 1 : 0.3,
+                  cursor: canScrollRight ? 'pointer' : 'default',
+                  pointerEvents: canScrollRight ? 'auto' : 'none'
+                }}
               >
                 <i className="fa-solid fa-chevron-right" />
               </button>
