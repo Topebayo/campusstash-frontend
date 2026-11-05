@@ -20,6 +20,7 @@ import ChatModal from '../components/ChatModal';
 import CreateListingModal from '../components/CreateListingModal';
 import EditListingModal from '../components/EditListingModal';
 import CreateRequestModal from '../components/CreateRequestModal';
+import ThemeToggleBtn from '../components/ThemeToggleBtn';
 
 function decodeJwt(token) {
   try {
@@ -549,7 +550,7 @@ function Dashboard() {
               height: '42px',
               borderRadius: '50%',
               backgroundColor: 'var(--surface-alt)',
-              border: '2px solid #FFFFFF',
+              border: '2px solid var(--border)',
               boxShadow: '0 2px 8px rgba(120, 95, 75, 0.12)',
               overflow: 'hidden',
               cursor: 'pointer',
@@ -574,10 +575,12 @@ function Dashboard() {
             )}
           </div>
 
-          {/* Campus Selector Pill */}
-          <div style={{ position: 'relative' }}>
-            <button
-              onClick={() => setShowCampusPicker(prev => !prev)}
+          {/* Top Actions: Theme Toggle & Campus Selector */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.55rem' }}>
+            <ThemeToggleBtn />
+            <div style={{ position: 'relative' }} ref={campusPickerRef}>
+              <button
+                onClick={() => setShowCampusPicker(prev => !prev)}
               className="campus-pill-btn"
               title="Select Campus"
             >
@@ -594,7 +597,7 @@ function Dashboard() {
                   top: '100%',
                   right: 0,
                   marginTop: '0.5rem',
-                  backgroundColor: '#FFFFFF',
+                  backgroundColor: 'var(--surface)',
                   border: '1px solid var(--border)',
                   borderRadius: '16px',
                   boxShadow: 'var(--shadow-xl)',
@@ -643,6 +646,7 @@ function Dashboard() {
                 ))}
               </div>
             )}
+            </div>
           </div>
         </div>
 
@@ -809,7 +813,7 @@ function Dashboard() {
               <div style={{
                 textAlign: 'center',
                 padding: '3.5rem 1.5rem',
-                backgroundColor: '#FFFFFF',
+                backgroundColor: 'var(--surface)',
                 borderRadius: '24px',
                 border: '1px solid var(--border)',
                 marginTop: '1rem',
@@ -952,7 +956,7 @@ function Dashboard() {
               <div style={{
                 textAlign: 'center',
                 padding: '3rem 1.5rem',
-                backgroundColor: '#FFFFFF',
+                backgroundColor: 'var(--surface)',
                 borderRadius: '20px',
                 border: '1px solid var(--border)'
               }}>
@@ -973,7 +977,7 @@ function Dashboard() {
                     <div 
                       key={req.id}
                       style={{
-                        backgroundColor: '#FFFFFF',
+                        backgroundColor: 'var(--surface)',
                         border: '1px solid var(--border)',
                         borderRadius: '18px',
                         padding: '1.1rem',
@@ -1106,7 +1110,7 @@ function Dashboard() {
               padding: '2rem 1.5rem', 
               borderRadius: '24px', 
               textAlign: 'center',
-              backgroundColor: '#FFFFFF',
+              backgroundColor: 'var(--surface)',
               border: '1px solid var(--border)'
             }}
           >

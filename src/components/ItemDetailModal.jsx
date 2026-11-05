@@ -170,7 +170,7 @@ function ItemDetailModal({
               width: '36px',
               height: '36px',
               borderRadius: '50%',
-              backgroundColor: '#FFFFFF',
+              backgroundColor: 'var(--surface)',
               border: '1px solid var(--border)',
               display: 'flex',
               alignItems: 'center',
@@ -203,7 +203,7 @@ function ItemDetailModal({
                 width: '36px',
                 height: '36px',
                 borderRadius: '50%',
-                backgroundColor: '#FFFFFF',
+                backgroundColor: 'var(--surface)',
                 border: '1px solid var(--border)',
                 display: 'flex',
                 alignItems: 'center',
@@ -240,7 +240,7 @@ function ItemDetailModal({
                 width: '36px',
                 height: '36px',
                 borderRadius: '50%',
-                backgroundColor: '#FFFFFF',
+                backgroundColor: 'var(--surface)',
                 border: '1px solid var(--border)',
                 display: 'flex',
                 alignItems: 'center',
@@ -454,7 +454,7 @@ function ItemDetailModal({
           {/* VERIFIED SELLER CARD                                           */}
           {/* ============================================================== */}
           <div style={{
-            backgroundColor: '#FFFFFF',
+            backgroundColor: 'var(--surface)',
             borderRadius: '18px',
             border: '1px solid var(--border)',
             padding: '1rem',
@@ -470,7 +470,7 @@ function ItemDetailModal({
               height: '46px',
               borderRadius: '50%',
               backgroundColor: 'var(--surface-alt)',
-              border: '2px solid #FFFFFF',
+              border: '2px solid var(--border)',
               boxShadow: '0 2px 6px rgba(0,0,0,0.06)',
               overflow: 'hidden',
               display: 'flex',
@@ -513,7 +513,7 @@ function ItemDetailModal({
           {/* DESCRIPTION CARD                                               */}
           {/* ============================================================== */}
           <div style={{
-            backgroundColor: '#FFFFFF',
+            backgroundColor: 'var(--surface)',
             borderRadius: '18px',
             border: '1px solid var(--border)',
             padding: '1rem',
@@ -521,7 +521,7 @@ function ItemDetailModal({
             boxShadow: 'var(--shadow-sm)'
           }}>
             <p style={{
-              color: '#44403C',
+              color: 'var(--text-main)',
               fontSize: '0.9rem',
               lineHeight: 1.55,
               margin: 0,
@@ -535,7 +535,7 @@ function ItemDetailModal({
           {/* CAMPUS PICKUP DROPZONE CARD                                    */}
           {/* ============================================================== */}
           <div style={{
-            backgroundColor: '#FFFFFF',
+            backgroundColor: 'var(--surface)',
             borderRadius: '18px',
             border: '1px solid var(--border)',
             padding: '0.85rem 1rem',
@@ -608,7 +608,7 @@ function ItemDetailModal({
                   width: '48px',
                   height: '48px',
                   borderRadius: '50%',
-                  backgroundColor: '#FFFFFF',
+                  backgroundColor: 'var(--surface)',
                   border: '1px solid var(--border)',
                   display: 'flex',
                   alignItems: 'center',

@@ -5,6 +5,7 @@ import Navbar from '../components/Navbar';
 import EditListingModal from '../components/EditListingModal';
 import CreateListingModal from '../components/CreateListingModal';
 import SettingsModal from '../components/SettingsModal';
+import ThemeToggleBtn from '../components/ThemeToggleBtn';
 import ItemDetailModal from '../components/ItemDetailModal';
 
 function Profile() {
@@ -180,33 +181,36 @@ function Profile() {
             Profile
           </h1>
 
-          <button
-            onClick={() => setIsSettingsOpen(true)}
-            style={{
-              width: '36px',
-              height: '36px',
-              borderRadius: '50%',
-              backgroundColor: '#FFFFFF',
-              border: '1px solid var(--border)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              cursor: 'pointer',
-              color: 'var(--text-main)',
-              fontSize: '0.95rem',
-              boxShadow: 'var(--shadow-sm)'
-            }}
-            title="Settings & Security"
-          >
-            <i className="fa-solid fa-gear" />
-          </button>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
+            <ThemeToggleBtn />
+            <button
+              onClick={() => setIsSettingsOpen(true)}
+              style={{
+                width: '36px',
+                height: '36px',
+                borderRadius: '50%',
+                backgroundColor: 'var(--surface)',
+                border: '1px solid var(--border)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                cursor: 'pointer',
+                color: 'var(--text-main)',
+                fontSize: '0.95rem',
+                boxShadow: 'var(--shadow-sm)'
+              }}
+              title="Settings & Security"
+            >
+              <i className="fa-solid fa-gear" />
+            </button>
+          </div>
         </div>
 
         {/* ============================================================== */}
         {/* USER PROFILE CARD (CENTERED AVATAR & STATS)                     */}
         {/* ============================================================== */}
         <div style={{
-          backgroundColor: '#FFFFFF',
+          backgroundColor: 'var(--surface)',
           borderRadius: '26px',
           padding: '1.75rem 1.25rem',
           border: '1px solid var(--border)',
@@ -227,7 +231,7 @@ function Profile() {
               height: '100%',
               borderRadius: '50%',
               backgroundColor: 'var(--surface-alt)',
-              border: '3px solid #FFFFFF',
+              border: '3px solid var(--border)',
               boxShadow: '0 4px 16px rgba(120, 95, 75, 0.14)',
               overflow: 'hidden',
               display: 'flex',
@@ -253,7 +257,7 @@ function Profile() {
               position: 'absolute',
               bottom: '0px',
               right: '-10px',
-              backgroundColor: '#FFFFFF',
+              backgroundColor: 'var(--surface)',
               border: '1px solid var(--border)',
               borderRadius: '9999px',
               padding: '2px 8px',
@@ -379,7 +383,7 @@ function Profile() {
               <div style={{
                 textAlign: 'center',
                 padding: '3rem 1.5rem',
-                backgroundColor: '#FFFFFF',
+                backgroundColor: 'var(--surface)',
                 borderRadius: '24px',
                 border: '1px solid var(--border)'
               }}>
@@ -503,7 +507,7 @@ function Profile() {
               <div style={{
                 textAlign: 'center',
                 padding: '3rem 1.5rem',
-                backgroundColor: '#FFFFFF',
+                backgroundColor: 'var(--surface)',
                 borderRadius: '24px',
                 border: '1px solid var(--border)'
               }}>

@@ -376,7 +376,7 @@ function ChatModal({ isOpen = true, onClose, listing }) {
         {/* ============================================================== */}
         <div style={{
           padding: '0.65rem 1.15rem',
-          backgroundColor: '#FFFFFF',
+          backgroundColor: 'var(--surface-alt)',
           borderBottom: '1px solid var(--border)',
           display: 'flex',
           alignItems: 'center',
@@ -457,7 +457,7 @@ function ChatModal({ isOpen = true, onClose, listing }) {
           <div style={{
             margin: '0.5rem 1.15rem',
             padding: '0.75rem',
-            backgroundColor: '#FFFFFF',
+            backgroundColor: 'var(--surface)',
             borderRadius: '14px',
             border: '1px solid var(--border)',
             boxShadow: 'var(--shadow-sm)',
@@ -532,7 +532,7 @@ function ChatModal({ isOpen = true, onClose, listing }) {
                   <div key={msg.id || index} style={{
                     alignSelf: 'center',
                     maxWidth: '90%',
-                    backgroundColor: '#FFFFFF',
+                    backgroundColor: 'var(--surface)',
                     border: '1px solid var(--border)',
                     borderRadius: '16px',
                     padding: '0.75rem 1rem',
@@ -586,7 +586,7 @@ function ChatModal({ isOpen = true, onClose, listing }) {
                   <div style={{
                     padding: '0.7rem 1rem',
                     borderRadius: '18px',
-                    backgroundColor: isMine ? '#4A5568' : '#FFFFFF',
+                    backgroundColor: isMine ? 'var(--terracotta)' : 'var(--surface-alt)',
                     color: isMine ? '#FFFFFF' : 'var(--text-main)',
                     border: isMine ? 'none' : '1px solid var(--border)',
                     boxShadow: 'var(--shadow-sm)',
@@ -610,7 +610,7 @@ function ChatModal({ isOpen = true, onClose, listing }) {
           onSubmit={handleSend}
           style={{
             padding: '0.75rem 1.15rem 1.15rem 1.15rem',
-            backgroundColor: '#FBF8F3',
+            backgroundColor: 'var(--surface)',
             borderTop: '1px solid var(--border)',
             display: 'flex',
             alignItems: 'center',
@@ -626,7 +626,7 @@ function ChatModal({ isOpen = true, onClose, listing }) {
               width: '38px',
               height: '38px',
               borderRadius: '50%',
-              backgroundColor: '#FFFFFF',
+              backgroundColor: 'var(--surface-alt)',
               border: '1px solid var(--border)',
               display: 'flex',
               alignItems: 'center',

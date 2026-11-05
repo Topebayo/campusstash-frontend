@@ -5,6 +5,7 @@ import { Capacitor } from '@capacitor/core';
 import { LocalNotifications } from '@capacitor/local-notifications';
 import Navbar from '../components/Navbar';
 import ChatModal from '../components/ChatModal';
+import ThemeToggleBtn from '../components/ThemeToggleBtn';
 
 function Messages() {
   const navigate = useNavigate();
@@ -97,19 +98,22 @@ function Messages() {
             Messages
           </h1>
 
-          <button
-            onClick={fetchInbox}
-            style={{
-              background: 'none',
-              border: 'none',
-              color: 'var(--terracotta)',
-              fontSize: '0.88rem',
-              fontWeight: '600',
-              cursor: 'pointer'
-            }}
-          >
-            Refresh
-          </button>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+            <ThemeToggleBtn />
+            <button
+              onClick={fetchInbox}
+              style={{
+                background: 'none',
+                border: 'none',
+                color: 'var(--terracotta)',
+                fontSize: '0.88rem',
+                fontWeight: '600',
+                cursor: 'pointer'
+              }}
+            >
+              Refresh
+            </button>
+          </div>
         </div>
 
         {/* Inbox Content */}
@@ -117,7 +121,7 @@ function Messages() {
           <div style={{
             padding: '4rem 2rem',
             textAlign: 'center',
-            backgroundColor: '#FFFFFF',
+            backgroundColor: 'var(--surface)',
             borderRadius: '24px',
             border: '1px solid var(--border)'
           }}>
@@ -151,7 +155,7 @@ function Messages() {
             borderRadius: '24px',
             textAlign: 'center',
             color: 'var(--text-muted)',
-            backgroundColor: '#FFFFFF',
+            backgroundColor: 'var(--surface)',
             border: '1px solid var(--border)',
             boxShadow: 'var(--shadow-card)'
           }}>
@@ -224,7 +228,7 @@ function Messages() {
                     alignItems: 'center',
                     gap: '1rem',
                     padding: '1.1rem', 
-                    backgroundColor: '#FFFFFF', 
+                    backgroundColor: 'var(--surface)', 
                     border: '1px solid var(--border)', 
                     borderRadius: '20px', 
                     cursor: 'pointer',
@@ -240,7 +244,7 @@ function Messages() {
                     borderRadius: '50%',
                     backgroundColor: 'var(--surface-alt)',
                     color: 'var(--terracotta)',
-                    border: '2px solid #FFFFFF',
+                    border: '2px solid var(--border)',
                     boxShadow: '0 2px 6px rgba(0,0,0,0.06)',
                     display: 'flex',
                     alignItems: 'center',

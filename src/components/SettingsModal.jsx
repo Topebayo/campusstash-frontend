@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { setAppTheme, getAppTheme } from './ThemeToggleBtn';
 import { apiFetch } from '../api';
 
 function SettingsModal({ isOpen, onClose, onLogout, userProfile, onUpdateUser }) {
@@ -32,9 +33,13 @@ function SettingsModal({ isOpen, onClose, onLogout, userProfile, onUpdateUser })
   });
 
   // Theme state
-  const [theme, setTheme] = useState(() => {
-    return document.documentElement.getAttribute('data-theme') || 'light';
-  });
+  const [theme, setTheme] = useState(() => getAppTheme());
+
+  useEffect(() => {
+    const handleSync = (e) => setTheme(e.detail || getAppTheme());
+    window.addEventListener('campus:theme_change', handleSync);
+    return () => window.removeEventListener('campus:theme_change', handleSync);
+  }, []);
 
   const [cacheCleared, setCacheCleared] = useState(false);
 
@@ -174,8 +179,7 @@ function SettingsModal({ isOpen, onClose, onLogout, userProfile, onUpdateUser })
 
   const handleThemeChange = (newTheme) => {
     setTheme(newTheme);
-    document.documentElement.setAttribute('data-theme', newTheme);
-    localStorage.setItem('theme', newTheme);
+    setAppTheme(newTheme);
   };
 
   const handleClearCache = () => {
@@ -762,12 +766,12 @@ function SettingsModal({ isOpen, onClose, onLogout, userProfile, onUpdateUser })
                     padding: '1.25rem 1rem',
                     borderRadius: '16px',
                     border: '2px solid',
-                    borderColor: theme === 'light' ? 'var(--brandblue)' : 'var(--border)',
-                    backgroundColor: '#ffffff',
-                    color: '#0f172a',
+                    borderColor: theme === 'light' ? 'var(--terracotta)' : 'var(--border)',
+                    backgroundColor: 'var(--surface)',
+                    color: 'var(--text-main)',
                     cursor: 'pointer',
                     textAlign: 'center',
-                    boxShadow: theme === 'light' ? 'var(--shadow-blue)' : 'none',
+                    boxShadow: theme === 'light' ? 'var(--shadow-card)' : 'none',
                     transition: 'all 0.15s ease'
                   }}
                 >
@@ -775,8 +779,8 @@ function SettingsModal({ isOpen, onClose, onLogout, userProfile, onUpdateUser })
                   <div style={{ fontWeight: '700', fontSize: '0.9rem', fontFamily: 'var(--font-display)' }}>
                     Light Mode
                   </div>
-                  <div style={{ fontSize: '0.75rem', color: '#64748b', marginTop: '0.2rem' }}>
-                    Bright Royal & White
+                  <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '0.2rem' }}>
+                    Warm Cream Linen
                   </div>
                 </div>
 
@@ -786,21 +790,21 @@ function SettingsModal({ isOpen, onClose, onLogout, userProfile, onUpdateUser })
                     padding: '1.25rem 1rem',
                     borderRadius: '16px',
                     border: '2px solid',
-                    borderColor: theme === 'dark' ? 'var(--brandblue)' : 'var(--border)',
-                    backgroundColor: '#0f172a',
-                    color: '#f8fafc',
+                    borderColor: theme === 'dark' ? 'var(--terracotta)' : 'var(--border)',
+                    backgroundColor: 'var(--surface-alt)',
+                    color: 'var(--text-main)',
                     cursor: 'pointer',
                     textAlign: 'center',
-                    boxShadow: theme === 'dark' ? 'var(--shadow-blue)' : 'none',
+                    boxShadow: theme === 'dark' ? 'var(--shadow-card)' : 'none',
                     transition: 'all 0.15s ease'
                   }}
                 >
-                  <i className="fa-solid fa-moon" style={{ fontSize: '1.6rem', color: '#60a5fa', marginBottom: '0.5rem', display: 'block' }} />
+                  <i className="fa-solid fa-moon" style={{ fontSize: '1.6rem', color: 'var(--terracotta)', marginBottom: '0.5rem', display: 'block' }} />
                   <div style={{ fontWeight: '700', fontSize: '0.9rem', fontFamily: 'var(--font-display)' }}>
                     Dark Mode
                   </div>
-                  <div style={{ fontSize: '0.75rem', color: '#94a3b8', marginTop: '0.2rem' }}>
-                    Sleek Midnight Navy
+                  <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '0.2rem' }}>
+                    Warm Obsidian & Clay
                   </div>
                 </div>
               </div>

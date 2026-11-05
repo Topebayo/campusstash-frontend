@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { apiFetch, getImageUrl } from '../api';
 import Navbar from '../components/Navbar';
 import ItemDetailModal from '../components/ItemDetailModal';
+import ThemeToggleBtn from '../components/ThemeToggleBtn';
 import ChatModal from '../components/ChatModal';
 
 function Saved() {
@@ -97,21 +98,24 @@ function Saved() {
             </p>
           </div>
 
-          {savedListings.length > 0 && (
-            <button
-              onClick={fetchSavedListings}
-              style={{
-                background: 'none',
-                border: 'none',
-                color: 'var(--terracotta)',
-                fontSize: '0.88rem',
-                fontWeight: '600',
-                cursor: 'pointer'
-              }}
-            >
-              Refresh
-            </button>
-          )}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+            <ThemeToggleBtn />
+            {savedListings.length > 0 && (
+              <button
+                onClick={fetchSavedListings}
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  color: 'var(--terracotta)',
+                  fontSize: '0.88rem',
+                  fontWeight: '600',
+                  cursor: 'pointer'
+                }}
+              >
+                Refresh
+              </button>
+            )}
+          </div>
         </div>
 
         {/* Content */}
@@ -119,7 +123,7 @@ function Saved() {
           <div style={{
             padding: '4rem 2rem',
             textAlign: 'center',
-            backgroundColor: '#FFFFFF',
+            backgroundColor: 'var(--surface)',
             borderRadius: '24px',
             border: '1px solid var(--border)'
           }}>
@@ -133,7 +137,7 @@ function Saved() {
             padding: '3.5rem 1.5rem',
             borderRadius: '24px',
             textAlign: 'center',
-            backgroundColor: '#FFFFFF',
+            backgroundColor: 'var(--surface)',
             border: '1px solid var(--border)',
             boxShadow: 'var(--shadow-card)'
           }}>
