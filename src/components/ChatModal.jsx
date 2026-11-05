@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { apiFetch, getWebSocketUrl, getImageUrl } from '../api';
+import { apiFetch, getWebSocketUrl, getImageUrl, clearAppNotifications } from '../api';
 import { Capacitor } from '@capacitor/core';
 
 function decodeJwt(token) {
@@ -83,6 +83,7 @@ function ChatModal({ isOpen = true, onClose, listing }) {
 
         if (!isMounted) return;
         setConversationId(convId);
+        clearAppNotifications(convId);
 
         try {
           const historyData = await apiFetch(`/conversations/${convId}/messages`);
@@ -115,6 +116,9 @@ function ChatModal({ isOpen = true, onClose, listing }) {
                 }
                 return [...prev, newMsg];
               });
+              if (convId) {
+                clearAppNotifications(convId);
+              }
             }
           } catch (e) {
             console.error("Error parsing message", e);
@@ -169,6 +173,12 @@ function ChatModal({ isOpen = true, onClose, listing }) {
 
     ws.current.send(JSON.stringify(payload));
     setInputValue('');
+
+    // User responded: clear native notifications & mark read
+    const activeConvId = conversationId || listing.conversation_id;
+    if (activeConvId) {
+      clearAppNotifications(activeConvId);
+    }
   };
 
   const handleProposeDropzone = (dz) => {

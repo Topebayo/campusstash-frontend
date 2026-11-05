@@ -1,6 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { apiFetch } from '../api';
+import { apiFetch, clearAppNotifications } from '../api';
+import { Capacitor } from '@capacitor/core';
+import { LocalNotifications } from '@capacitor/local-notifications';
 import Navbar from '../components/Navbar';
 import ChatModal from '../components/ChatModal';
 
@@ -40,7 +42,22 @@ function Messages() {
       navigate('/auth', { replace: true });
       return;
     }
+    if (Capacitor.isNativePlatform()) {
+      LocalNotifications.removeAllDeliveredNotifications().catch(() => {});
+    }
     fetchInbox();
+
+    const onRead = (e) => {
+      const cId = e.detail?.conversationId;
+      if (cId) {
+        setThreads(prev => prev.map(t => {
+          const tId = t.id || t.conversation_id;
+          return tId === cId ? { ...t, unread_count: 0 } : t;
+        }));
+      }
+    };
+    window.addEventListener('campus:messages_read', onRead);
+    return () => window.removeEventListener('campus:messages_read', onRead);
   }, [token, navigate]);
 
   if (!token) return null;
@@ -180,13 +197,24 @@ function Messages() {
               return (
                 <div 
                   key={convId || thread.listing_id} 
-                  onClick={() => setActiveChatListing({ 
-                    conversation_id: convId,
-                    id: thread.listing_id || convId, 
-                    title: title, 
-                    seller_id: thread.other_user?.id || thread.other_user_id,
-                    seller_handle: peerName
-                  })} 
+                  onClick={() => {
+                    // Instantly zero out unread count badge in UI
+                    setThreads(prev => prev.map(t => {
+                      const tId = t.id || t.conversation_id;
+                      return tId === convId ? { ...t, unread_count: 0 } : t;
+                    }));
+                    // Clear native notification from phone bar and mark read on backend
+                    if (convId) {
+                      clearAppNotifications(convId);
+                    }
+                    setActiveChatListing({ 
+                      conversation_id: convId,
+                      id: thread.listing_id || convId, 
+                      title: title, 
+                      seller_id: thread.other_user?.id || thread.other_user_id,
+                      seller_handle: peerName
+                    });
+                  }} 
                   style={{ 
                     display: 'flex', 
                     alignItems: 'center',

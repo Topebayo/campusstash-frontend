@@ -116,9 +116,19 @@ function Navbar({ onPrimaryAction, primaryActionText }) {
 
     checkUnread();
     const interval = setInterval(checkUnread, 10000);
+
+    const handleMessagesRead = () => {
+      if (Capacitor.isNativePlatform()) {
+        LocalNotifications.removeAllDeliveredNotifications().catch(() => {});
+      }
+      checkUnread();
+    };
+    window.addEventListener('campus:messages_read', handleMessagesRead);
+
     return () => {
       isMounted = false;
       clearInterval(interval);
+      window.removeEventListener('campus:messages_read', handleMessagesRead);
     };
   }, [token, location.pathname]);
 

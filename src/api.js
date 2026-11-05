@@ -1,4 +1,5 @@
 import { Capacitor } from '@capacitor/core';
+import { LocalNotifications } from '@capacitor/local-notifications';
 
 // Production Cloud Backend on Render
 export const CLOUD_API_BASE = 'https://campusstash-backend.onrender.com/api/v1';
@@ -119,6 +120,31 @@ export const apiFetch = async (endpoint, options = {}) => {
   }
 
   return response.json();
+};
+
+export const clearAppNotifications = async (conversationId = null) => {
+  // 1. Clear native delivered push/local notifications from Android notification tray
+  if (Capacitor.isNativePlatform()) {
+    try {
+      await LocalNotifications.removeAllDeliveredNotifications();
+    } catch (e) {
+      console.warn('Could not remove delivered notifications', e);
+    }
+  }
+
+  // 2. Mark conversation as read on backend if conversationId is provided
+  if (conversationId) {
+    try {
+      await apiFetch(`/conversations/${conversationId}/read`, { method: 'POST' });
+    } catch (e) {
+      // Non-blocking fallback
+    }
+  }
+
+  // 3. Dispatch global custom event for UI components (Navbar dock badge, Messages list)
+  if (typeof window !== 'undefined') {
+    window.dispatchEvent(new CustomEvent('campus:messages_read', { detail: { conversationId } }));
+  }
 };
 
 // ─── Render Keep-Alive System ───────────────────────────────────────────────
