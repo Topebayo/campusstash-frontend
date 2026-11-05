@@ -10,12 +10,23 @@ import ItemDetailModal from '../components/ItemDetailModal';
 function Profile() {
   const navigate = useNavigate();
   const location = useLocation();
+  const token = localStorage.getItem('token');
 
   const [profile, setProfile] = useState(null);
   const [myListings, setMyListings] = useState([]);
   const [savedListings, setSavedListings] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [loadError, setLoadError] = useState('');
+
+  useEffect(() => {
+    if (!token) {
+      navigate('/auth', { replace: true });
+    }
+  }, [token, navigate]);
+
+  if (!token) {
+    return null;
+  }
 
   // Active tab: 'listings' (My Active Listings) vs 'saved' (My Saved)
   const [activeTab, setActiveTab] = useState(() => {
@@ -118,10 +129,13 @@ function Profile() {
 
   const displayName = profile?.profile?.burner_handle 
     ? `@${profile.profile.burner_handle}`
-    : (profile?.full_name || profile?.email?.split('@')[0] || 'Tobiloba Akinbayo');
+    : (profile?.full_name || profile?.email?.split('@')[0] || (isLoading ? 'Loading...' : 'Student'));
 
-  const campusMajor = `${profile?.campus_name || profile?.campus_acronym || 'Lead City University'} • ${profile?.major || 'Computer Science'}`;
-  const userBio = profile?.bio || 'Clearing out my stash before graduation! 🎓 DM me for bundles.';
+  const campusMajor = profile?.campus_name 
+    ? `${profile.campus_name}${profile.major ? ` • ${profile.major}` : ''}`
+    : (profile?.campus_acronym || 'Campus Student');
+
+  const userBio = profile?.bio || 'Verified student on CampusStash.';
   
   const soldCount = myListings.filter(l => l.status === 'sold').length;
   const activeCount = myListings.filter(l => l.status !== 'sold').length;

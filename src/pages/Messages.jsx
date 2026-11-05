@@ -33,14 +33,17 @@ function Messages() {
     }
   };
 
+  const token = localStorage.getItem('token');
+
   useEffect(() => {
-    const token = localStorage.getItem('token');
     if (!token) {
-      navigate('/auth');
+      navigate('/auth', { replace: true });
       return;
     }
     fetchInbox();
-  }, [navigate]);
+  }, [token, navigate]);
+
+  if (!token) return null;
 
   return (
     <div style={{ backgroundColor: 'var(--bg-color)', minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>

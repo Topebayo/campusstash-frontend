@@ -148,7 +148,13 @@ function Navbar({ onPrimaryAction, primaryActionText }) {
 
         {/* 2. Messages */}
         <button
-          onClick={() => navigate('/messages')}
+          onClick={() => {
+            if (!token) {
+              navigate('/auth');
+            } else {
+              navigate('/messages');
+            }
+          }}
           className={`aesthetic-dock-btn ${isMessages ? 'active' : ''}`}
           title="Campus Messages"
         >
@@ -167,7 +173,9 @@ function Navbar({ onPrimaryAction, primaryActionText }) {
         <button 
           className="aesthetic-dock-center-plus"
           onClick={() => {
-            if (onPrimaryAction) {
+            if (!token) {
+              navigate('/auth');
+            } else if (onPrimaryAction) {
               onPrimaryAction();
             } else {
               navigate('/dashboard', { state: { openCreateModal: true } });
@@ -180,7 +188,13 @@ function Navbar({ onPrimaryAction, primaryActionText }) {
 
         {/* 4. Saved Listings */}
         <button
-          onClick={() => navigate('/profile?tab=saved')}
+          onClick={() => {
+            if (!token) {
+              navigate('/auth');
+            } else {
+              navigate('/profile?tab=saved');
+            }
+          }}
           className={`aesthetic-dock-btn ${isProfile && location.search.includes('saved') ? 'active' : ''}`}
           title="Saved Items"
         >
@@ -190,7 +204,13 @@ function Navbar({ onPrimaryAction, primaryActionText }) {
 
         {/* 5. Profile */}
         <button
-          onClick={() => navigate('/profile')}
+          onClick={() => {
+            if (!token) {
+              navigate('/auth');
+            } else {
+              navigate('/profile');
+            }
+          }}
           className={`aesthetic-dock-btn ${isProfile && !location.search.includes('saved') ? 'active' : ''}`}
           title="My Profile"
         >

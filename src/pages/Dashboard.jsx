@@ -484,7 +484,14 @@ function Dashboard() {
         }}>
           {/* User Circular Avatar */}
           <div 
-            onClick={() => navigate('/profile')}
+            onClick={() => {
+              const token = localStorage.getItem('token');
+              if (!token) {
+                navigate('/auth');
+              } else {
+                navigate('/profile');
+              }
+            }}
             style={{
               width: '42px',
               height: '42px',
