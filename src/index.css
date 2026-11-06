@@ -10,6 +10,10 @@ html, body {
   -ms-user-select: none !important;
   user-select: none !important;
   -webkit-touch-callout: none !important;
+  -webkit-text-size-adjust: 100% !important;
+  -moz-text-size-adjust: 100% !important;
+  text-size-adjust: 100% !important;
+  touch-action: manipulation;
 }
 
 /* Allow text selection ONLY in input and editable fields */
@@ -19,6 +23,7 @@ input, textarea, [contenteditable="true"] {
   -ms-user-select: text !important;
   user-select: text !important;
   -webkit-touch-callout: default !important;
+  touch-action: manipulation;
 }
 
 #root {
@@ -27,6 +32,7 @@ input, textarea, [contenteditable="true"] {
   width: 100% !important;
   min-height: 100vh;
   min-height: 100dvh;
+  touch-action: manipulation;
 }
 
 *, *::before, *::after {
@@ -34,6 +40,7 @@ input, textarea, [contenteditable="true"] {
   overflow-wrap: break-word;
   -webkit-tap-highlight-color: transparent !important;
   -webkit-focus-ring-color: transparent !important;
+  touch-action: manipulation;
 }
 
 /* Smooth micro-interaction for touch & click */
@@ -2159,3 +2166,31 @@ html, body {
     border-radius: 24px;
   }
 }
+
+/* ==========================================================================
+   VIEWPORT RESOLUTION STABILIZATION & AUTO-ZOOM PREVENTION
+   Prevents mobile browsers (iOS Safari, Android Chrome) from auto-zooming 
+   when focusing search, inputs, tapping cards, or opening modals.
+   ========================================================================== */
+@media (max-width: 768px) {
+  input,
+  textarea,
+  select,
+  .aesthetic-search-input,
+  .form-input {
+    font-size: 16px !important;
+  }
+}
+
+/* Maintain crisp 1:1 pixel resolution without blur or scaling distortion */
+.aesthetic-card,
+.aesthetic-card-image-box,
+.item-detail-dialog,
+.chat-modal-dialog,
+.seller-storefront-dialog,
+.modal-overlay {
+  touch-action: manipulation;
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
+
