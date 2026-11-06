@@ -59,8 +59,14 @@ class ErrorBoundary extends React.Component {
             onClick={() => {
               try {
                 localStorage.removeItem('cs_cached_listings');
+                sessionStorage.clear();
+                if ('caches' in window) {
+                  caches.keys().then(names => {
+                    names.forEach(name => caches.delete(name));
+                  });
+                }
               } catch(e) {}
-              window.location.reload();
+              window.location.href = window.location.origin + window.location.pathname + '?reload=' + Date.now();
             }}
             style={{
               backgroundColor: '#C87A5B',
