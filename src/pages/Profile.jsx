@@ -25,10 +25,17 @@ function Profile() {
   const location = useLocation();
   const token = localStorage.getItem('token');
 
-  const [profile, setProfile] = useState(null);
+  const [profile, setProfile] = useState(() => {
+    try {
+      const saved = localStorage.getItem('user');
+      return saved ? JSON.parse(saved) : null;
+    } catch (e) {
+      return null;
+    }
+  });
   const [myListings, setMyListings] = useState([]);
   const [savedListings, setSavedListings] = useState([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(() => !localStorage.getItem('user'));
   const [loadError, setLoadError] = useState('');
 
   useEffect(() => {
@@ -58,23 +65,39 @@ function Profile() {
   const [showStoreManagerModal, setShowStoreManagerModal] = useState(false);
   const [isSavingStore, setIsSavingStore] = useState(false);
   const [storeFormError, setStoreFormError] = useState('');
-  const [storeForm, setStoreForm] = useState({
-    account_type: 'individual',
-    business_name: '',
-    business_category: 'Fashion & Thrift',
-    business_description: '',
-    business_address: '',
-    business_whatsapp: '',
-    business_instagram: ''
+  const [storeForm, setStoreForm] = useState(() => {
+    try {
+      const saved = localStorage.getItem('user');
+      const u = saved ? JSON.parse(saved) : null;
+      return {
+        account_type: u?.account_type || 'individual',
+        business_name: u?.business_name || '',
+        business_category: u?.business_category || 'Fashion & Thrift',
+        business_description: u?.business_description || '',
+        business_address: u?.business_address || '',
+        business_whatsapp: u?.business_whatsapp || '',
+        business_instagram: u?.business_instagram || ''
+      };
+    } catch (e) {
+      return {
+        account_type: 'individual',
+        business_name: '',
+        business_category: 'Fashion & Thrift',
+        business_description: '',
+        business_address: '',
+        business_whatsapp: '',
+        business_instagram: ''
+      };
+    }
   });
 
   const fetchProfile = async () => {
-    setIsLoading(true);
     setLoadError('');
     try {
       const data = await apiFetch('/users/me');
       setProfile(data);
       if (data) {
+        localStorage.setItem('user', JSON.stringify(data));
         setStoreForm({
           account_type: data.account_type || 'individual',
           business_name: data.business_name || '',
@@ -188,6 +211,7 @@ function Profile() {
         })
       });
       setProfile(updated);
+      localStorage.setItem('user', JSON.stringify(updated));
       setShowStoreManagerModal(false);
     } catch (err) {
       console.error('Failed to update store:', err);
@@ -324,25 +348,27 @@ function Profile() {
             </div>
 
             {/* Verified / Store Badge Pill */}
-            <div style={{
-              position: 'absolute',
-              bottom: '0px',
-              right: '-10px',
-              backgroundColor: 'var(--surface)',
-              border: '1px solid var(--border)',
-              borderRadius: '9999px',
-              padding: '2px 8px',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '4px',
-              fontSize: '0.72rem',
-              fontWeight: '700',
-              color: isStore ? 'var(--terracotta)' : '#2E7D32',
-              boxShadow: '0 2px 6px rgba(0,0,0,0.06)'
-            }}>
-              <i className={isStore ? "fa-solid fa-store" : "fa-solid fa-circle-check"} />
-              {isStore ? 'Campus Store' : 'Verified'}
-            </div>
+            {profile && (
+              <div style={{
+                position: 'absolute',
+                bottom: '0px',
+                right: '-10px',
+                backgroundColor: 'var(--surface)',
+                border: '1px solid var(--border)',
+                borderRadius: '9999px',
+                padding: '2px 8px',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '4px',
+                fontSize: '0.72rem',
+                fontWeight: '700',
+                color: isStore ? 'var(--terracotta)' : '#2E7D32',
+                boxShadow: '0 2px 6px rgba(0,0,0,0.06)'
+              }}>
+                <i className={isStore ? "fa-solid fa-store" : "fa-solid fa-circle-check"} />
+                {isStore ? 'Campus Store' : 'Verified'}
+              </div>
+            )}
           </div>
 
           {/* User Full Name / Handle or Business Name */}
@@ -412,7 +438,7 @@ function Profile() {
             fontWeight: '600',
             color: 'var(--text-main)'
           }}>
-            <span>★ 4.9 (12 reviews)</span>
+            <span>★ {profile?.rating ? profile.rating.toFixed(1) : '0.0'} ({profile?.reviews_count || 0} reviews)</span>
             <span style={{ opacity: 0.4 }}>•</span>
             <span>{soldCount} Items Sold</span>
           </div>
@@ -471,7 +497,7 @@ function Profile() {
                 <i className="fa-solid fa-pen-to-square" /> Edit Store Profile
               </button>
             </div>
-          ) : (
+          ) : (!isLoading && profile) ? (
             <div style={{
               marginTop: '1.25rem',
               padding: '0.85rem 1rem',
@@ -523,7 +549,7 @@ function Profile() {
                 Upgrade to Store
               </button>
             </div>
-          )}
+          ) : null}
         </div>
 
         {/* ============================================================== */}

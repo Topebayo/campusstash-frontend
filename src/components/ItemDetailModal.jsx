@@ -682,8 +682,10 @@ function ItemDetailModal({
                     </div>
                   )}
                   <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem', fontSize: '0.82rem', color: 'var(--text-muted)', marginTop: '3px' }}>
-                    <span style={{ color: '#F59E0B', fontWeight: '700' }}>★ 4.9</span>
-                    <span>(12 campus reviews)</span>
+                    <span style={{ color: '#F59E0B', fontWeight: '700' }}>
+                      ★ {activeListing.seller?.rating ? activeListing.seller.rating.toFixed(1) : '0.0'}
+                    </span>
+                    <span>({activeListing.seller?.reviews_count || 0} reviews)</span>
                     <span>•</span>
                     <span>{campusName}</span>
                   </div>
