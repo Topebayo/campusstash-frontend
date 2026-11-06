@@ -86,7 +86,7 @@ function Footer() {
                   display: 'block',
                   marginTop: '0.2rem'
                 }}>
-                  Peer-to-peer campus marketplace & verified student stores
+                  Peer-to-peer campus marketplace & student stores across Nigerian Universities
                 </span>
               </div>
             </div>
@@ -175,7 +175,7 @@ function Footer() {
             }}
           >
             <div>
-              &copy; {new Date().getFullYear()} CampusStash • Built for Lead City University & Nigerian Campuses
+              &copy; {new Date().getFullYear()} CampusStash • Built for Nigerian Universities 🇳🇬
             </div>
 
             <button
