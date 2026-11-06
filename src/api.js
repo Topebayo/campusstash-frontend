@@ -8,20 +8,68 @@ export const CLOUD_HOST = 'https://campusstash-backend.onrender.com';
 
 // Standard Nigerian Tertiary Institutions (Ibadan Cluster & Launch Hubs)
 export const DEFAULT_CAMPUSES = [
-  { id: 'af705f54-8603-46c7-8282-dba21e92d614', name: 'Lead City University', acronym: 'LCU', state: 'Ibadan' },
-  { id: '8636a3e5-dd7f-41cb-9687-f9178e3d832a', name: 'University of Ibadan', acronym: 'UI', state: 'Ibadan' },
-  { id: '7b38d39f-2f78-4389-980e-3fa5e9b9281a', name: 'The Polytechnic, Ibadan', acronym: 'Poly Ibadan', state: 'Ibadan' },
-  { id: 'e4b52cb1-5367-4228-b210-917711468d60', name: 'KolaDaisi University', acronym: 'KDU', state: 'Ibadan' },
-  { id: '3f8b059e-e317-4581-996b-0726b219fa51', name: 'First Technical University', acronym: 'Tech-U', state: 'Ibadan' },
-  { id: 'c98fa326-809f-4318-ba90-2771fef45823', name: 'Dominican University', acronym: 'DU', state: 'Ibadan' },
-  { id: '5d2780ca-ebf0-42f5-b982-f3f009405d15', name: 'Precious Cornerstone University', acronym: 'PCU', state: 'Ibadan' },
-  { id: '8e7421cb-4ef9-4971-8bc4-c6899451de70', name: 'Federal College of Animal Health and Production Technology', acronym: 'FCAH&PT', state: 'Ibadan' },
-  { id: 'a6d39478-f7b9-4089-9132-723eb8f27802', name: 'Federal College of Forestry', acronym: 'FCF', state: 'Ibadan' },
-  { id: 'd5c78912-320e-4ab8-8b54-914068f23471', name: 'Federal School of Statistics', acronym: 'FSS', state: 'Ibadan' },
-  { id: '8c47396b-5188-41b0-93e3-e9104b72ab83', name: 'University of Lagos', acronym: 'UNILAG', state: 'Lagos' },
-  { id: '5c701cef-35a9-4f29-9232-ed8cd3afeba1', name: 'Obafemi Awolowo University', acronym: 'OAU', state: 'Osun' },
-  { id: 'e8e285fa-a7b1-4b52-a170-0807db95afd7', name: 'Federal University of Technology, Akure', acronym: 'FUTA', state: 'Ondo' },
+  { id: 'af705f54-8603-46c7-8282-dba21e92d614', name: 'Lead City University', acronym: 'LCU', state: 'Ibadan', lat: 7.3328, lon: 3.8824 },
+  { id: '8636a3e5-dd7f-41cb-9687-f9178e3d832a', name: 'University of Ibadan', acronym: 'UI', state: 'Ibadan', lat: 7.4443, lon: 3.9003 },
+  { id: '7b38d39f-2f78-4389-980e-3fa5e9b9281a', name: 'The Polytechnic, Ibadan', acronym: 'Poly Ibadan', state: 'Ibadan', lat: 7.4338, lon: 3.8742 },
+  { id: 'e4b52cb1-5367-4228-b210-917711468d60', name: 'KolaDaisi University', acronym: 'KDU', state: 'Ibadan', lat: 7.5501, lon: 3.9210 },
+  { id: '3f8b059e-e317-4581-996b-0726b219fa51', name: 'First Technical University', acronym: 'Tech-U', state: 'Ibadan', lat: 7.2850, lon: 3.8650 },
+  { id: 'c98fa326-809f-4318-ba90-2771fef45823', name: 'Dominican University', acronym: 'DU', state: 'Ibadan', lat: 7.4310, lon: 3.8970 },
+  { id: '5d2780ca-ebf0-42f5-b982-f3f009405d15', name: 'Precious Cornerstone University', acronym: 'PCU', state: 'Ibadan', lat: 7.3912, lon: 3.9550 },
+  { id: '8e7421cb-4ef9-4971-8bc4-c6899451de70', name: 'Federal College of Animal Health and Production Technology', acronym: 'FCAH&PT', state: 'Ibadan', lat: 7.3780, lon: 3.8430 },
+  { id: 'a6d39478-f7b9-4089-9132-723eb8f27802', name: 'Federal College of Forestry', acronym: 'FCF', state: 'Ibadan', lat: 7.3980, lon: 3.8670 },
+  { id: 'd5c78912-320e-4ab8-8b54-914068f23471', name: 'Federal School of Statistics', acronym: 'FSS', state: 'Ibadan', lat: 7.4260, lon: 3.8880 },
+  { id: '8c47396b-5188-41b0-93e3-e9104b72ab83', name: 'University of Lagos', acronym: 'UNILAG', state: 'Lagos', lat: 6.5173, lon: 3.3986 },
+  { id: '5c701cef-35a9-4f29-9232-ed8cd3afeba1', name: 'Obafemi Awolowo University', acronym: 'OAU', state: 'Osun', lat: 7.5186, lon: 4.5262 },
+  { id: 'e8e285fa-a7b1-4b52-a170-0807db95afd7', name: 'Federal University of Technology, Akure', acronym: 'FUTA', state: 'Ondo', lat: 7.3039, lon: 5.1384 },
+  { id: '9a112233-4455-6677-8899-aabbccddeeff', name: 'Lagos State University', acronym: 'LASU', state: 'Lagos', lat: 6.4673, lon: 3.1979 },
+  { id: '1b223344-5566-7788-99aa-bbccddeeff00', name: 'Covenant University', acronym: 'CU', state: 'Ogun', lat: 6.6725, lon: 3.1593 },
+  { id: '2c334455-6677-8899-aabb-ccddeeff0011', name: 'Babcock University', acronym: 'BU', state: 'Ogun', lat: 6.8925, lon: 3.7225 },
+  { id: '3d445566-7788-99aa-bbcc-ddeeff001122', name: 'University of Ilorin', acronym: 'UNILORIN', state: 'Kwara', lat: 8.4799, lon: 4.6716 },
+  { id: '4e556677-8899-aabb-ccdd-eeff00112233', name: 'University of Benin', acronym: 'UNIBEN', state: 'Edo', lat: 6.3995, lon: 5.6148 },
 ];
+
+export function calculateDistanceKm(lat1, lon1, lat2, lon2) {
+  const R = 6371; // Earth's radius in km
+  const dLat = (lat2 - lat1) * (Math.PI / 180);
+  const dLon = (lon2 - lon1) * (Math.PI / 180);
+  const a =
+    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+    Math.cos(lat1 * (Math.PI / 180)) * Math.cos(lat2 * (Math.PI / 180)) *
+    Math.sin(dLon / 2) * Math.sin(dLon / 2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  return R * c;
+}
+
+export function findNearestCampus(userLat, userLon, campuses = DEFAULT_CAMPUSES) {
+  if (userLat == null || userLon == null || !Array.isArray(campuses) || campuses.length === 0) {
+    return null;
+  }
+  let closest = null;
+  let minDistance = Infinity;
+
+  // Build coordinate lookup from DEFAULT_CAMPUSES for fallback
+  const coordLookup = {};
+  for (const dc of DEFAULT_CAMPUSES) {
+    coordLookup[dc.name.toLowerCase()] = { lat: dc.lat, lon: dc.lon };
+    coordLookup[dc.acronym.toLowerCase()] = { lat: dc.lat, lon: dc.lon };
+  }
+
+  for (const c of campuses) {
+    const lat = c.lat || coordLookup[c.name?.toLowerCase()]?.lat || coordLookup[c.acronym?.toLowerCase()]?.lat;
+    const lon = c.lon || coordLookup[c.name?.toLowerCase()]?.lon || coordLookup[c.acronym?.toLowerCase()]?.lon;
+    if (lat && lon) {
+      const d = calculateDistanceKm(userLat, userLon, lat, lon);
+      if (d < minDistance) {
+        minDistance = d;
+        closest = {
+          campus: c,
+          distanceKm: Math.round(d * 10) / 10
+        };
+      }
+    }
+  }
+  return closest;
+}
 
 // Clean up any stale private LAN IP stored in localStorage from earlier development
 if (typeof window !== 'undefined') {

@@ -22,6 +22,7 @@ import EditListingModal from '../components/EditListingModal';
 import CreateRequestModal from '../components/CreateRequestModal';
 import ThemeToggleBtn from '../components/ThemeToggleBtn';
 import SellerStorefrontModal from '../components/SellerStorefrontModal';
+import CampusOnboardingModal from '../components/CampusOnboardingModal';
 
 function decodeJwt(token) {
   try {
@@ -119,6 +120,17 @@ function Dashboard() {
   const [selectedCampusId, setSelectedCampusId] = useState(() => getActiveCampusId());
   const [showCampusPicker, setShowCampusPicker] = useState(false);
   const campusPickerRef = useRef(null);
+
+  // Mandatory Campus Selection Onboarding Gate for new users
+  const [showCampusOnboarding, setShowCampusOnboarding] = useState(() => {
+    try {
+      const hasChosen = localStorage.getItem('campusstash_campus_selected');
+      const activeCampus = localStorage.getItem('campusstash_campus_id');
+      return !hasChosen || !activeCampus;
+    } catch (e) {
+      return true;
+    }
+  });
 
   useEffect(() => {
     if (!showCampusPicker) return;
@@ -230,6 +242,14 @@ function Dashboard() {
     setSelectedCampusId(campusId);
     setActiveCampusId(campusId);
     setShowCampusPicker(false);
+    try {
+      localStorage.setItem('campusstash_campus_selected', 'true');
+    } catch (e) {}
+  };
+
+  const handleOnboardingSelectCampus = (campusId) => {
+    handleSelectCampus(campusId);
+    setShowCampusOnboarding(false);
   };
 
   const toggleBookmark = (e, listingId) => {
@@ -525,7 +545,11 @@ function Dashboard() {
           width: '100%', 
           padding: '0.5rem 1.15rem 7rem 1.15rem', 
           boxSizing: 'border-box', 
-          flex: 1 
+          flex: 1,
+          filter: showCampusOnboarding ? 'blur(8px)' : 'none',
+          pointerEvents: showCampusOnboarding ? 'none' : 'auto',
+          userSelect: showCampusOnboarding ? 'none' : 'auto',
+          transition: 'filter 0.3s ease'
         }}
       >
         {/* ============================================================== */}
@@ -1226,6 +1250,14 @@ function Dashboard() {
           </div>
         </div>
       )}
+
+      {/* Mandatory Campus Selection Onboarding Gate (GPS Auto-Detect or Manual Select) */}
+      <CampusOnboardingModal
+        isOpen={showCampusOnboarding}
+        campuses={campuses}
+        currentCampusId={selectedCampusId}
+        onSelectCampus={handleOnboardingSelectCampus}
+      />
     </div>
   );
 }
