@@ -1598,7 +1598,7 @@ select option {
   -webkit-backdrop-filter: blur(10px);
   border-radius: 9999px;
   padding: 3px 10px;
-  font-size: 0.73rem;
+  font-size: 0.72rem;
   font-weight: 700;
   color: var(--text-main);
   border: 1px solid var(--border);
@@ -1606,7 +1606,7 @@ select option {
   display: inline-flex;
   align-items: center;
   gap: 0.35rem;
-  max-width: calc(100% - 60px);
+  max-width: calc(100% - 54px);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -1618,6 +1618,67 @@ select option {
   color: #F4F4F6 !important;
   border: 1px solid rgba(255, 255, 255, 0.18) !important;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.5) !important;
+}
+
+/* Dedicated Status Pill (Separate from Seller Pill) */
+.aesthetic-card-status-pill {
+  position: absolute;
+  bottom: 10px;
+  left: 10px;
+  background: var(--surface-pill-alpha);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border-radius: 9999px;
+  padding: 2.5px 8px;
+  font-size: 0.68rem;
+  font-weight: 700;
+  border: 1px solid var(--border);
+  z-index: 2;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.32rem;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+  white-space: nowrap;
+}
+
+.aesthetic-card-status-pill.active {
+  color: #15803d;
+}
+
+[data-theme="dark"] .aesthetic-card-status-pill.active {
+  color: #4ade80 !important;
+}
+
+.aesthetic-card-status-pill.sold {
+  color: #b91c1c;
+}
+
+[data-theme="dark"] .aesthetic-card-status-pill.sold {
+  color: #f87171 !important;
+}
+
+[data-theme="dark"] .aesthetic-card-status-pill {
+  background: rgba(28, 28, 33, 0.92) !important;
+  border: 1px solid rgba(255, 255, 255, 0.18) !important;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.5) !important;
+}
+
+.aesthetic-status-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  display: inline-block;
+  flex-shrink: 0;
+}
+
+.aesthetic-status-dot.active {
+  background-color: #22c55e;
+  box-shadow: 0 0 6px rgba(34, 197, 94, 0.7);
+}
+
+.aesthetic-status-dot.sold {
+  background-color: #ef4444;
+  box-shadow: 0 0 6px rgba(239, 68, 68, 0.7);
 }
 
 .aesthetic-card-heart-btn {

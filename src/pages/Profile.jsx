@@ -432,11 +432,10 @@ function Profile() {
                           </div>
                         )}
 
-                        {/* Top-Left Pill */}
-                        <div className="aesthetic-card-seller-pill">
-                          <span style={{ color: isSold ? '#ef4444' : '#2E7D32' }}>
-                            {isSold ? 'Sold' : 'Active'}
-                          </span>
+                        {/* Status Pill */}
+                        <div className={`aesthetic-card-status-pill ${isSold ? 'sold' : 'active'}`} style={{ bottom: 'auto', top: '10px' }}>
+                          <span className={`aesthetic-status-dot ${isSold ? 'sold' : 'active'}`} />
+                          <span>{isSold ? 'Sold' : 'Active'}</span>
                         </div>
                       </div>
 

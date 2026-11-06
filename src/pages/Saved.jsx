@@ -213,13 +213,16 @@ function Saved() {
                       <i className="fa-regular fa-image" />
                     </div>
 
-                    {/* Top-Left Pill */}
-                    <div className="aesthetic-card-seller-pill">
+                    {/* Top-Left: Dedicated Seller Pill */}
+                    <div className="aesthetic-card-seller-pill" title={`Listed by ${sellerName}`}>
+                      <i className="fa-regular fa-user" style={{ fontSize: '0.65rem', opacity: 0.75 }} />
                       <span>by {sellerName}</span>
-                      <span style={{ opacity: 0.5 }}>•</span>
-                      <span style={{ color: isSold ? '#ef4444' : '#2E7D32' }}>
-                        {isSold ? 'Sold' : 'Active'}
-                      </span>
+                    </div>
+
+                    {/* Bottom-Left: Dedicated Status Pill (Separate from Seller Name) */}
+                    <div className={`aesthetic-card-status-pill ${isSold ? 'sold' : 'active'}`}>
+                      <span className={`aesthetic-status-dot ${isSold ? 'sold' : 'active'}`} />
+                      <span>{isSold ? 'Sold' : 'Active'}</span>
                     </div>
 
                     {/* Top-Right Heart Button (Active/Saved) */}
