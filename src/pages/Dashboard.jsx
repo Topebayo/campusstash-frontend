@@ -610,7 +610,10 @@ function Dashboard() {
                   borderRadius: '16px',
                   boxShadow: 'var(--shadow-xl)',
                   zIndex: 100,
-                  minWidth: '240px',
+                  minWidth: '260px',
+                  maxWidth: '320px',
+                  maxHeight: '340px',
+                  overflowY: 'auto',
                   padding: '0.5rem',
                   display: 'flex',
                   flexDirection: 'column',
@@ -628,10 +631,13 @@ function Dashboard() {
                     fontWeight: !selectedCampusId ? '700' : '500',
                     textAlign: 'left',
                     cursor: 'pointer',
-                    fontSize: '0.85rem'
+                    fontSize: '0.85rem',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between'
                   }}
                 >
-                  🌐 All Nigerian Campuses
+                  <span>🌐 All Nigerian Campuses</span>
                 </button>
                 {campuses.map(c => (
                   <button
@@ -646,10 +652,19 @@ function Dashboard() {
                       fontWeight: selectedCampusId === c.id ? '700' : '500',
                       textAlign: 'left',
                       cursor: 'pointer',
-                      fontSize: '0.85rem'
+                      fontSize: '0.84rem',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      gap: '0.5rem'
                     }}
                   >
-                    🎓 {c.name} ({c.acronym})
+                    <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                      🎓 {c.name} ({c.acronym})
+                    </span>
+                    <span style={{ fontSize: '0.72rem', opacity: 0.6, flexShrink: 0, fontWeight: '600' }}>
+                      {c.state}
+                    </span>
                   </button>
                 ))}
               </div>

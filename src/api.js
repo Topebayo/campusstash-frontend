@@ -6,10 +6,18 @@ export const CLOUD_API_BASE = 'https://campusstash-backend.onrender.com/api/v1';
 export const CLOUD_WS_BASE = 'wss://campusstash-backend.onrender.com/api/v1/chat/ws';
 export const CLOUD_HOST = 'https://campusstash-backend.onrender.com';
 
-// Standard Nigerian Launch Universities
+// Standard Nigerian Tertiary Institutions (Ibadan Cluster & Launch Hubs)
 export const DEFAULT_CAMPUSES = [
-  { id: 'af705f54-8603-46c7-8282-dba21e92d614', name: 'Lead City University', acronym: 'LCU', state: 'Oyo' },
-  { id: '8636a3e5-dd7f-41cb-9687-f9178e3d832a', name: 'University of Ibadan', acronym: 'UI', state: 'Oyo' },
+  { id: 'af705f54-8603-46c7-8282-dba21e92d614', name: 'Lead City University', acronym: 'LCU', state: 'Ibadan' },
+  { id: '8636a3e5-dd7f-41cb-9687-f9178e3d832a', name: 'University of Ibadan', acronym: 'UI', state: 'Ibadan' },
+  { id: '7b38d39f-2f78-4389-980e-3fa5e9b9281a', name: 'The Polytechnic, Ibadan', acronym: 'Poly Ibadan', state: 'Ibadan' },
+  { id: 'e4b52cb1-5367-4228-b210-917711468d60', name: 'KolaDaisi University', acronym: 'KDU', state: 'Ibadan' },
+  { id: '3f8b059e-e317-4581-996b-0726b219fa51', name: 'First Technical University', acronym: 'Tech-U', state: 'Ibadan' },
+  { id: 'c98fa326-809f-4318-ba90-2771fef45823', name: 'Dominican University', acronym: 'DU', state: 'Ibadan' },
+  { id: '5d2780ca-ebf0-42f5-b982-f3f009405d15', name: 'Precious Cornerstone University', acronym: 'PCU', state: 'Ibadan' },
+  { id: '8e7421cb-4ef9-4971-8bc4-c6899451de70', name: 'Federal College of Animal Health and Production Technology', acronym: 'FCAH&PT', state: 'Ibadan' },
+  { id: 'a6d39478-f7b9-4089-9132-723eb8f27802', name: 'Federal College of Forestry', acronym: 'FCF', state: 'Ibadan' },
+  { id: 'd5c78912-320e-4ab8-8b54-914068f23471', name: 'Federal School of Statistics', acronym: 'FSS', state: 'Ibadan' },
   { id: '8c47396b-5188-41b0-93e3-e9104b72ab83', name: 'University of Lagos', acronym: 'UNILAG', state: 'Lagos' },
   { id: '5c701cef-35a9-4f29-9232-ed8cd3afeba1', name: 'Obafemi Awolowo University', acronym: 'OAU', state: 'Osun' },
   { id: 'e8e285fa-a7b1-4b52-a170-0807db95afd7', name: 'Federal University of Technology, Akure', acronym: 'FUTA', state: 'Ondo' },
@@ -30,6 +38,10 @@ if (typeof window !== 'undefined') {
           localStorage.removeItem('cs_cached_listings');
         }
       } catch (e) {}
+    }
+    const cachedCampuses = localStorage.getItem('campusstash_cached_campuses');
+    if (cachedCampuses && (cachedCampuses.includes('"state":"Oyo"') || !cachedCampuses.includes('Poly Ibadan'))) {
+      localStorage.removeItem('campusstash_cached_campuses');
     }
   } catch (e) {}
 }
