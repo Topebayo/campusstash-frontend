@@ -719,7 +719,7 @@ function Dashboard() {
         {/* ============================================================== */}
         {/* "TRENDING ON CAMPUS" CAROUSEL                                  */}
         {/* ============================================================== */}
-        <div style={{ marginBottom: '1.75rem' }}>
+        <div style={{ marginTop: '0.5rem', marginBottom: '2rem' }}>
           <div className="trending-header">
             <h2 className="trending-header-title">Trending on Campus</h2>
             <div className="trending-nav-arrows">
