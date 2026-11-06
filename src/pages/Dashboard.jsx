@@ -1075,6 +1075,8 @@ function Dashboard() {
         )}
       </main>
 
+      <Footer />
+
       {/* Item Detail Modal */}
       {selectedListing && (
         <ItemDetailModal 

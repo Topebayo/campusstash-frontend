@@ -6,6 +6,7 @@ import ItemDetailModal from '../components/ItemDetailModal';
 import ThemeToggleBtn from '../components/ThemeToggleBtn';
 import ChatModal from '../components/ChatModal';
 import SellerStorefrontModal from '../components/SellerStorefrontModal';
+import Footer from '../components/Footer';
 
 function Saved() {
   const navigate = useNavigate();
@@ -264,6 +265,8 @@ function Saved() {
           </div>
         )}
       </main>
+
+      <Footer />
 
       {/* Item Detail Modal */}
       {selectedDetailListing && (

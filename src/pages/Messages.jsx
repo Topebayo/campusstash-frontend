@@ -6,6 +6,7 @@ import { LocalNotifications } from '@capacitor/local-notifications';
 import Navbar from '../components/Navbar';
 import ChatModal from '../components/ChatModal';
 import ThemeToggleBtn from '../components/ThemeToggleBtn';
+import Footer from '../components/Footer';
 
 function Messages() {
   const navigate = useNavigate();
@@ -331,6 +332,8 @@ function Messages() {
           </div>
         )}
       </main>
+
+      <Footer />
 
       {/* Direct Chat Modal */}
       {activeChatListing && (

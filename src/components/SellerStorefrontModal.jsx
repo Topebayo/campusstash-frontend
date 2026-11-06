@@ -63,7 +63,6 @@ function SellerStorefrontModal({
   const storeCategory = storeData?.seller?.business_category;
   const storeBio = storeData?.seller?.business_description;
   const pickupLocation = storeData?.seller?.business_address;
-  const whatsappNum = storeData?.seller?.business_whatsapp || storeData?.seller?.phone;
   const instagramHandle = storeData?.seller?.business_instagram;
 
   return (
@@ -263,34 +262,6 @@ function SellerStorefrontModal({
                 >
                   <i className="fa-regular fa-comment" />
                   <span>{isStore ? 'Chat with Store' : 'Message Seller'}</span>
-                </button>
-              )}
-
-              {whatsappNum && (
-                <button
-                  type="button"
-                  className="btn-secondary"
-                  onClick={() => {
-                    const cleanPhone = String(whatsappNum).replace(/[^0-9]/g, '');
-                    const formatted = cleanPhone.startsWith('0') ? `234${cleanPhone.slice(1)}` : cleanPhone;
-                    const msg = encodeURIComponent(`Hi ${ownerDisplayName}! I saw ${storeTitle} on CampusStash and wanted to ask about your items.`);
-                    window.open(`https://wa.me/${formatted}?text=${msg}`, '_blank');
-                  }}
-                  style={{
-                    borderRadius: '9999px',
-                    padding: '0.65rem 1rem',
-                    fontSize: '0.86rem',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    gap: '0.4rem',
-                    color: '#22c55e',
-                    borderColor: 'rgba(34, 197, 94, 0.3)'
-                  }}
-                  title="Chat on WhatsApp"
-                >
-                  <i className="fa-brands fa-whatsapp" />
-                  <span>WhatsApp</span>
                 </button>
               )}
 

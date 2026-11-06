@@ -1237,18 +1237,6 @@ function Auth() {
                         />
                       </div>
 
-                      {/* Business WhatsApp Number */}
-                      <div>
-                        <label className="form-label">Store WhatsApp for Orders (Optional)</label>
-                        <input
-                          className="form-input"
-                          type="tel"
-                          value={businessWhatsapp}
-                          onChange={(e) => setBusinessWhatsapp(e.target.value)}
-                          placeholder="Leave blank to use verification phone"
-                        />
-                      </div>
-
                       {/* Instagram / Social Handle */}
                       <div>
                         <label className="form-label">Instagram / TikTok Handle (Optional)</label>

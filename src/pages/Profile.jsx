@@ -8,6 +8,7 @@ import SettingsModal from '../components/SettingsModal';
 import ThemeToggleBtn from '../components/ThemeToggleBtn';
 import ItemDetailModal from '../components/ItemDetailModal';
 import SellerStorefrontModal from '../components/SellerStorefrontModal';
+import Footer from '../components/Footer';
 
 const STORE_CATEGORIES = [
   'Fashion & Thrift',
@@ -516,7 +517,7 @@ function Profile() {
                   Running a Student Business?
                 </div>
                 <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)', marginTop: '2px' }}>
-                  Upgrade to a Campus Store to brand your shopfront, showcase items, and take WhatsApp orders!
+                  Upgrade to a Campus Store to brand your shopfront, showcase items, and chat directly with campus buyers!
                 </div>
               </div>
               <button
@@ -528,7 +529,6 @@ function Profile() {
                     business_category: 'Fashion & Thrift',
                     business_description: '',
                     business_address: '',
-                    business_whatsapp: profile?.phone || '',
                     business_instagram: ''
                   });
                   setShowStoreManagerModal(true);
@@ -802,6 +802,8 @@ function Profile() {
 
       </main>
 
+      <Footer />
+
       {/* Item Detail Modal */}
       {selectedDetailListing && (
         <ItemDetailModal 
@@ -970,19 +972,6 @@ function Profile() {
                   value={storeForm.business_address}
                   onChange={(e) => setStoreForm(prev => ({ ...prev, business_address: e.target.value }))}
                   placeholder="e.g. Achievers Hall Room B12 or Sub Car Park"
-                />
-              </div>
-
-              <div>
-                <label className="form-label" style={{ fontWeight: '600', fontSize: '0.84rem', display: 'block', marginBottom: '0.35rem' }}>
-                  WhatsApp Number for Orders (Optional)
-                </label>
-                <input
-                  type="tel"
-                  className="form-input"
-                  value={storeForm.business_whatsapp}
-                  onChange={(e) => setStoreForm(prev => ({ ...prev, business_whatsapp: e.target.value }))}
-                  placeholder="e.g. +234 812 345 6789"
                 />
               </div>
 
