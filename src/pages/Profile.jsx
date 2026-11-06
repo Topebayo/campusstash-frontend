@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
+import { Capacitor } from '@capacitor/core';
 import { apiFetch, getImageUrl } from '../api';
 import Navbar from '../components/Navbar';
 import EditListingModal from '../components/EditListingModal';
@@ -250,7 +251,7 @@ function Profile() {
           maxWidth: '860px', 
           margin: '0 auto', 
           width: '100%', 
-          padding: '0.5rem 1.15rem 7rem 1.15rem', 
+          padding: Capacitor.isNativePlatform() ? '0.5rem 1.15rem 7rem 1.15rem' : '0.5rem 1.15rem 2.5rem 1.15rem', 
           boxSizing: 'border-box', 
           flex: 1 
         }}

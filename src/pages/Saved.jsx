@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { Capacitor } from '@capacitor/core';
 import { apiFetch, getImageUrl } from '../api';
 import Navbar from '../components/Navbar';
 import ItemDetailModal from '../components/ItemDetailModal';
@@ -70,7 +71,7 @@ function Saved() {
         style={{ 
           maxWidth: '100%', 
           margin: '0 auto', 
-          padding: '0.5rem 1.15rem 7rem 1.15rem', 
+          padding: Capacitor.isNativePlatform() ? '0.5rem 1.15rem 7rem 1.15rem' : '0.5rem 1.15rem 2.5rem 1.15rem', 
           width: '100%', 
           boxSizing: 'border-box', 
           flex: 1 

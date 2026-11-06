@@ -537,21 +537,26 @@ function Dashboard() {
         primaryActionText="Sell an Item"
       />
 
-      <main 
-        className="animate-fade-in"
-        style={{ 
-          maxWidth: '100%', 
-          margin: '0 auto', 
-          width: '100%', 
-          padding: '0.5rem 1.15rem 7rem 1.15rem', 
-          boxSizing: 'border-box', 
-          flex: 1,
-          filter: showCampusOnboarding ? 'blur(8px)' : 'none',
-          pointerEvents: showCampusOnboarding ? 'none' : 'auto',
-          userSelect: showCampusOnboarding ? 'none' : 'auto',
-          transition: 'filter 0.3s ease'
-        }}
-      >
+      <div style={{
+        flex: 1,
+        display: 'flex',
+        flexDirection: 'column',
+        filter: showCampusOnboarding ? 'blur(8px)' : 'none',
+        pointerEvents: showCampusOnboarding ? 'none' : 'auto',
+        userSelect: showCampusOnboarding ? 'none' : 'auto',
+        transition: 'filter 0.3s ease'
+      }}>
+        <main 
+          className="animate-fade-in"
+          style={{ 
+            maxWidth: '100%', 
+            margin: '0 auto', 
+            width: '100%', 
+            padding: Capacitor.isNativePlatform() ? '0.5rem 1.15rem 7rem 1.15rem' : '0.5rem 1.15rem 2.5rem 1.15rem', 
+            boxSizing: 'border-box', 
+            flex: 1
+          }}
+        >
         {/* ============================================================== */}
         {/* AESTHETIC MINIMAL TOP BAR: AVATAR & CAMPUS SELECTOR PILL       */}
         {/* ============================================================== */}
@@ -1099,7 +1104,8 @@ function Dashboard() {
         )}
       </main>
 
-      <Footer />
+        <Footer />
+      </div>
 
       {/* Item Detail Modal */}
       {selectedListing && (

@@ -1308,9 +1308,24 @@ select option {
     flex: 1;
   }
 
-  /* NEVER show web footer on mobile screens where bottom dock is active */
+  /* Ensure web footer is visible on mobile web with bottom clearance for the floating dock */
   .web-only-footer {
-    display: none !important;
+    display: block !important;
+    padding-bottom: 7.5rem !important;
+  }
+}
+
+/* Default web footer styling across all desktop & responsive views */
+.web-only-footer {
+  display: block !important;
+  width: 100%;
+  margin-top: auto;
+  box-sizing: border-box;
+}
+
+@media (min-width: 768px) {
+  .web-only-footer {
+    padding-bottom: 5.5rem !important;
   }
 }
 
