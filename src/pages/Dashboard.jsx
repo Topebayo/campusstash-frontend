@@ -1084,6 +1084,7 @@ function Dashboard() {
             setStorefrontSeller(vendor);
           }}
           onRequireAuth={() => {
+            setSelectedListing(null);
             setAuthPromptMessage('Message Student Sellers');
             setShowAuthPrompt(true);
           }}
@@ -1168,7 +1169,7 @@ function Dashboard() {
 
       {/* Quick Auth Prompt Modal */}
       {showAuthPrompt && (
-        <div className="modal-overlay" onClick={() => setShowAuthPrompt(false)}>
+        <div className="modal-overlay" onClick={() => setShowAuthPrompt(false)} style={{ zIndex: 2000 }}>
           <div 
             className="modal-content animate-fade-in" 
             onClick={(e) => e.stopPropagation()}

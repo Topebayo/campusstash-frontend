@@ -143,6 +143,7 @@ function ItemDetailModal({
     if (e) e.stopPropagation();
     const token = localStorage.getItem('token');
     if (!token) {
+      onClose();
       if (onRequireAuth) {
         onRequireAuth();
       } else {
@@ -152,7 +153,7 @@ function ItemDetailModal({
     }
     onClose();
     if (onMessageSeller) {
-      onMessageSeller(listing);
+      onMessageSeller(activeListing || listing);
     }
   };
 
@@ -556,18 +557,35 @@ function ItemDetailModal({
 
               {/* PASTEL TAGS: CONDITION & CATEGORY */}
               <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', marginBottom: '1.25rem' }}>
-                {/* Condition Pill */}
-                <span style={{
-                  backgroundColor: 'var(--badge-active-bg)',
-                  color: 'var(--badge-active-text)',
-                  border: '1px solid var(--border)',
-                  borderRadius: '9999px',
-                  padding: '4px 12px',
-                  fontSize: '0.78rem',
-                  fontWeight: '600'
-                }}>
-                  {activeListing.condition || (isSold ? 'Sold' : 'Like New')}
-                </span>
+                {/* Condition Pill - only display if explicitly set by seller */}
+                {activeListing.condition && (
+                  <span style={{
+                    backgroundColor: 'var(--badge-active-bg)',
+                    color: 'var(--badge-active-text)',
+                    border: '1px solid var(--border)',
+                    borderRadius: '9999px',
+                    padding: '4px 12px',
+                    fontSize: '0.78rem',
+                    fontWeight: '600'
+                  }}>
+                    {activeListing.condition}
+                  </span>
+                )}
+
+                {/* Status Pill for Sold items */}
+                {isSold && (
+                  <span style={{
+                    backgroundColor: 'rgba(239, 68, 68, 0.12)',
+                    color: '#EF4444',
+                    border: '1px solid rgba(239, 68, 68, 0.25)',
+                    borderRadius: '9999px',
+                    padding: '4px 12px',
+                    fontSize: '0.78rem',
+                    fontWeight: '700'
+                  }}>
+                    Sold
+                  </span>
+                )}
 
                 {/* Category Pill */}
                 {activeListing.category && (

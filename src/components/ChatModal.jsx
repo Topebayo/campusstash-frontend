@@ -109,9 +109,14 @@ function ChatModal({ isOpen = true, onClose, listing }) {
 
         let convId = listing.conversation_id;
         if (!convId) {
+          const targetListingId = listing.id || listing.listing_id;
+          const targetRecipientId = listing.seller_id || listing.recipient_id;
           const bodyPayload = listing.request_id 
             ? { request_id: listing.request_id }
-            : { listing_id: listing.id, recipient_id: listing.seller_id };
+            : targetListingId 
+              ? { listing_id: targetListingId, recipient_id: targetRecipientId }
+              : { recipient_id: targetRecipientId };
+
           const conv = await apiFetch('/conversations/', {
             method: 'POST',
             body: JSON.stringify(bodyPayload)
@@ -209,42 +214,88 @@ function ChatModal({ isOpen = true, onClose, listing }) {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [isOpen, onClose]);
 
-  const handleSend = (e) => {
+  const handleSend = async (e) => {
     e.preventDefault();
-    if (!inputValue.trim() || !ws.current || ws.current.readyState !== WebSocket.OPEN) return;
+    const textToSend = inputValue.trim();
+    if (!textToSend) return;
 
-    const payload = {
-      text: inputValue.trim(),
-      recipient_id: listing.seller_id
-    };
-
-    ws.current.send(JSON.stringify(payload));
+    const activeConvId = conversationId || listing.conversation_id;
+    const targetRecipientId = listing.seller_id || listing.recipient_id;
     setInputValue('');
 
+    let sentViaWs = false;
+    if (ws.current && ws.current.readyState === WebSocket.OPEN) {
+      try {
+        const payload = {
+          text: textToSend,
+          recipient_id: targetRecipientId
+        };
+        ws.current.send(JSON.stringify(payload));
+        sentViaWs = true;
+      } catch (wsErr) {
+        console.warn("WebSocket send failed, falling back to HTTP REST", wsErr);
+      }
+    }
+
+    if (!sentViaWs && activeConvId) {
+      try {
+        const savedMsg = await apiFetch(`/conversations/${activeConvId}/messages`, {
+          method: 'POST',
+          body: JSON.stringify({ text: textToSend })
+        });
+        if (savedMsg) {
+          setMessages((prev) => {
+            if (prev.some(m => m.id === savedMsg.id)) return prev;
+            return [...prev, savedMsg];
+          });
+        }
+      } catch (postErr) {
+        console.error("HTTP send message failed:", postErr);
+        setError("Failed to send: " + (postErr.message || 'Network error'));
+      }
+    }
+
     // User responded: clear native notifications & mark read
-    const activeConvId = conversationId || listing.conversation_id;
     if (activeConvId) {
       clearAppNotifications(activeConvId);
     }
   };
 
-  const handleProposeDropzone = (dz) => {
-    if (!ws.current || ws.current.readyState !== WebSocket.OPEN) return;
+  const handleProposeDropzone = async (dz) => {
     const msgText = `PROPOSAL:DROPZONE:${dz.id}:${dz.name}`;
-    ws.current.send(JSON.stringify({
-      text: msgText,
-      recipient_id: listing.seller_id
-    }));
+    const activeConvId = conversationId || listing.conversation_id;
+    const targetRecipientId = listing.seller_id || listing.recipient_id;
     setShowDropzonePicker(false);
+
+    if (ws.current && ws.current.readyState === WebSocket.OPEN) {
+      ws.current.send(JSON.stringify({ text: msgText, recipient_id: targetRecipientId }));
+    } else if (activeConvId) {
+      try {
+        const saved = await apiFetch(`/conversations/${activeConvId}/messages`, {
+          method: 'POST',
+          body: JSON.stringify({ text: msgText })
+        });
+        if (saved) setMessages(prev => [...prev, saved]);
+      } catch (e) {}
+    }
   };
 
-  const handleAcceptDropzone = (dzName) => {
-    if (!ws.current || ws.current.readyState !== WebSocket.OPEN) return;
+  const handleAcceptDropzone = async (dzName) => {
     const msgText = `AGREED:DROPZONE:${dzName}`;
-    ws.current.send(JSON.stringify({
-      text: msgText,
-      recipient_id: listing.seller_id
-    }));
+    const activeConvId = conversationId || listing.conversation_id;
+    const targetRecipientId = listing.seller_id || listing.recipient_id;
+
+    if (ws.current && ws.current.readyState === WebSocket.OPEN) {
+      ws.current.send(JSON.stringify({ text: msgText, recipient_id: targetRecipientId }));
+    } else if (activeConvId) {
+      try {
+        const saved = await apiFetch(`/conversations/${activeConvId}/messages`, {
+          method: 'POST',
+          body: JSON.stringify({ text: msgText })
+        });
+        if (saved) setMessages(prev => [...prev, saved]);
+      } catch (e) {}
+    }
   };
 
   if (!isOpen || !listing) return null;
