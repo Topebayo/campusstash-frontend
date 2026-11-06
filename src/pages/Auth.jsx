@@ -1,6 +1,17 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { apiFetch } from '../api';
+import { apiFetch, getCampuses, DEFAULT_CAMPUSES } from '../api';
+
+const STORE_CATEGORIES = [
+  'Fashion & Thrift',
+  'Phones, Gadgets & Tech',
+  'Food, Snacks & Pastries',
+  'Beauty, Hair & Skincare',
+  'Textbooks & Academics',
+  'Hostel & Dorm Essentials',
+  'Services, Printing & Repairs',
+  'General Variety Store'
+];
 
 function Auth() {
   const [isLogin, setIsLogin] = useState(true);
@@ -12,6 +23,34 @@ function Auth() {
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
+
+  // Account Type & Store Onboarding States
+  const [accountType, setAccountType] = useState('individual'); // 'individual' | 'store'
+  const [fullName, setFullName] = useState('');
+  const [businessName, setBusinessName] = useState('');
+  const [businessCategory, setBusinessCategory] = useState('Fashion & Thrift');
+  const [businessDescription, setBusinessDescription] = useState('');
+  const [businessAddress, setBusinessAddress] = useState('');
+  const [businessWhatsapp, setBusinessWhatsapp] = useState('');
+  const [businessInstagram, setBusinessInstagram] = useState('');
+  const [campuses, setCampuses] = useState(() => {
+    try {
+      const cached = localStorage.getItem('campusstash_cached_campuses');
+      return cached ? JSON.parse(cached) : DEFAULT_CAMPUSES;
+    } catch (e) {
+      return DEFAULT_CAMPUSES;
+    }
+  });
+  const [campusId, setCampusId] = useState('');
+
+  useEffect(() => {
+    getCampuses().then(data => {
+      if (Array.isArray(data) && data.length > 0) {
+        setCampuses(data);
+        if (!campusId) setCampusId(data[0].id);
+      }
+    }).catch(() => {});
+  }, []);
 
   // Registration OTP Verification State
   const [otpChannel, setOtpChannel] = useState('sms'); // 'sms' | 'whatsapp' | 'voice'
@@ -245,6 +284,20 @@ function Auth() {
           return;
         }
 
+        // Validate store account requirements: Real business name & owner real name
+        if (accountType === 'store') {
+          if (!businessName.trim()) {
+            setError('Please enter your real business / store name.');
+            setIsLoading(false);
+            return;
+          }
+          if (!fullName.trim()) {
+            setError("Please enter the store owner's real name.");
+            setIsLoading(false);
+            return;
+          }
+        }
+
         // Check if phone has been verified
         if (!isPhoneVerified) {
           // If code was sent and user typed the code, verify it now
@@ -268,11 +321,30 @@ function Auth() {
           }
         }
 
+        let computedHandle = burnerHandle.trim().replace(/^@/, '');
+        if (!computedHandle) {
+          if (accountType === 'store' && businessName.trim()) {
+            computedHandle = businessName.trim().toLowerCase().replace(/[^a-z0-9_]/g, '_').replace(/_+/g, '_').slice(0, 20);
+          } else if (fullName.trim()) {
+            computedHandle = fullName.trim().toLowerCase().replace(/[^a-z0-9_]/g, '_').replace(/_+/g, '_').slice(0, 20);
+          }
+        }
+
         const payload = {
           email: email.trim(),
           password,
           phone: phone.trim(),
-          profile: { burner_handle: burnerHandle.trim() }
+          account_type: accountType,
+          name: fullName.trim() || undefined,
+          business_name: accountType === 'store' ? businessName.trim() : undefined,
+          business_category: accountType === 'store' ? (businessCategory || 'Other') : undefined,
+          business_description: accountType === 'store' ? businessDescription.trim() : undefined,
+          business_address: accountType === 'store' ? businessAddress.trim() : undefined,
+          business_whatsapp: accountType === 'store' ? (businessWhatsapp.trim() || phone.trim()) : undefined,
+          business_instagram: accountType === 'store' ? businessInstagram.trim().replace(/^@/, '') : undefined,
+          campus_id: campusId || undefined,
+          burner_handle: computedHandle || undefined,
+          profile: { burner_handle: computedHandle || `user_${Math.floor(1000 + Math.random() * 9000)}` }
         };
 
         await apiFetch('/auth/register', {
@@ -935,6 +1007,95 @@ function Auth() {
             )}
 
             <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1.1rem' }}>
+              {!isLogin && (
+                <div>
+                  <label className="form-label" style={{ marginBottom: '0.45rem' }}>Account Type</label>
+                  <div style={{
+                    display: 'grid',
+                    gridTemplateColumns: '1fr 1fr',
+                    gap: '0.65rem'
+                  }}>
+                    {/* Individual Student Option */}
+                    <button
+                      type="button"
+                      onClick={() => setAccountType('individual')}
+                      style={{
+                        display: 'flex',
+                        flexDirection: 'column',
+                        alignItems: 'flex-start',
+                        padding: '0.85rem 0.95rem',
+                        borderRadius: '16px',
+                        border: accountType === 'individual' ? '2px solid var(--terracotta)' : '1px solid var(--border)',
+                        backgroundColor: accountType === 'individual' ? 'var(--surface)' : 'var(--surface-alt)',
+                        cursor: 'pointer',
+                        textAlign: 'left',
+                        transition: 'all 0.15s ease',
+                        boxShadow: accountType === 'individual' ? '0 4px 12px rgba(200, 122, 91, 0.15)' : 'none'
+                      }}
+                    >
+                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%', marginBottom: '0.25rem' }}>
+                        <span style={{ fontSize: '1.25rem' }}>👤</span>
+                        <span style={{
+                          fontSize: '0.68rem',
+                          fontWeight: '700',
+                          backgroundColor: accountType === 'individual' ? 'var(--terracotta)' : 'var(--border)',
+                          color: accountType === 'individual' ? '#fff' : 'var(--text-muted)',
+                          borderRadius: '9999px',
+                          padding: '2px 7px'
+                        }}>
+                          Student
+                        </span>
+                      </div>
+                      <span style={{ fontWeight: '700', fontSize: '0.92rem', color: 'var(--text-main)' }}>
+                        Individual
+                      </span>
+                      <span style={{ fontSize: '0.74rem', color: 'var(--text-muted)', marginTop: '2px', lineHeight: 1.3 }}>
+                        Sell personal gear, books & pre-owned items
+                      </span>
+                    </button>
+
+                    {/* Campus Store Option */}
+                    <button
+                      type="button"
+                      onClick={() => setAccountType('store')}
+                      style={{
+                        display: 'flex',
+                        flexDirection: 'column',
+                        alignItems: 'flex-start',
+                        padding: '0.85rem 0.95rem',
+                        borderRadius: '16px',
+                        border: accountType === 'store' ? '2px solid var(--terracotta)' : '1px solid var(--border)',
+                        backgroundColor: accountType === 'store' ? 'var(--surface)' : 'var(--surface-alt)',
+                        cursor: 'pointer',
+                        textAlign: 'left',
+                        transition: 'all 0.15s ease',
+                        boxShadow: accountType === 'store' ? '0 4px 12px rgba(200, 122, 91, 0.15)' : 'none'
+                      }}
+                    >
+                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%', marginBottom: '0.25rem' }}>
+                        <span style={{ fontSize: '1.25rem' }}>🏬</span>
+                        <span style={{
+                          fontSize: '0.68rem',
+                          fontWeight: '700',
+                          backgroundColor: accountType === 'store' ? 'var(--terracotta)' : 'var(--border)',
+                          color: accountType === 'store' ? '#fff' : 'var(--text-muted)',
+                          borderRadius: '9999px',
+                          padding: '2px 7px'
+                        }}>
+                          Business
+                        </span>
+                      </div>
+                      <span style={{ fontWeight: '700', fontSize: '0.92rem', color: 'var(--text-main)' }}>
+                        Campus Store
+                      </span>
+                      <span style={{ fontSize: '0.74rem', color: 'var(--text-muted)', marginTop: '2px', lineHeight: 1.3 }}>
+                        Student business, thrift brand, tech or snacks
+                      </span>
+                    </button>
+                  </div>
+                </div>
+              )}
+
               <div>
                 <label className="form-label">Email Address</label>
                 <input 
@@ -984,6 +1145,152 @@ function Auth() {
 
               {!isLogin && (
                 <>
+                  {accountType === 'store' ? (
+                    <div style={{
+                      backgroundColor: 'var(--surface-alt)',
+                      padding: '1.1rem',
+                      borderRadius: '18px',
+                      border: '1px solid var(--border)',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      gap: '0.85rem'
+                    }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem' }}>
+                        <span style={{ fontSize: '1.15rem' }}>🏬</span>
+                        <span style={{ fontWeight: '700', fontSize: '0.94rem', color: 'var(--text-main)' }}>
+                          Campus Store Business Profile
+                        </span>
+                      </div>
+
+                      {/* Real Business Name (Required) */}
+                      <div>
+                        <label className="form-label">
+                          Real Business / Store Name <span style={{ color: 'var(--terracotta)' }}>*</span>
+                        </label>
+                        <input
+                          className="form-input"
+                          type="text"
+                          required
+                          value={businessName}
+                          onChange={(e) => {
+                            setBusinessName(e.target.value);
+                            if (!burnerHandle) {
+                              const autoHandle = e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, '_').replace(/_+/g, '_').slice(0, 20);
+                              setBurnerHandle(autoHandle);
+                            }
+                          }}
+                          placeholder="e.g. Kev's Campus Thrifts, Bella Wears, GadgetPlug"
+                        />
+                      </div>
+
+                      {/* Store Owner Real Name (Required) */}
+                      <div>
+                        <label className="form-label">
+                          Owner&apos;s Real Name (Contact Person) <span style={{ color: 'var(--terracotta)' }}>*</span>
+                        </label>
+                        <input
+                          className="form-input"
+                          type="text"
+                          required
+                          value={fullName}
+                          onChange={(e) => setFullName(e.target.value)}
+                          placeholder="e.g. Tope Bayo (Your full name)"
+                        />
+                      </div>
+
+                      {/* Business Category */}
+                      <div>
+                        <label className="form-label">Store Category</label>
+                        <select
+                          className="form-input"
+                          value={businessCategory}
+                          onChange={(e) => setBusinessCategory(e.target.value)}
+                          style={{ cursor: 'pointer' }}
+                        >
+                          {STORE_CATEGORIES.map(cat => (
+                            <option key={cat} value={cat}>{cat}</option>
+                          ))}
+                        </select>
+                      </div>
+
+                      {/* Store Tagline / Description */}
+                      <div>
+                        <label className="form-label">Store Tagline / Description (Optional)</label>
+                        <input
+                          className="form-input"
+                          type="text"
+                          value={businessDescription}
+                          onChange={(e) => setBusinessDescription(e.target.value)}
+                          placeholder="e.g. Premium thrift fits & shoes. Daily hostel delivery."
+                        />
+                      </div>
+
+                      {/* Store Pickup / Hostel Location */}
+                      <div>
+                        <label className="form-label">Store Pickup / Hostel Spot (Optional)</label>
+                        <input
+                          className="form-input"
+                          type="text"
+                          value={businessAddress}
+                          onChange={(e) => setBusinessAddress(e.target.value)}
+                          placeholder="e.g. Achievers Hall Room B12 or Sub Car Park"
+                        />
+                      </div>
+
+                      {/* Business WhatsApp Number */}
+                      <div>
+                        <label className="form-label">Store WhatsApp for Orders (Optional)</label>
+                        <input
+                          className="form-input"
+                          type="tel"
+                          value={businessWhatsapp}
+                          onChange={(e) => setBusinessWhatsapp(e.target.value)}
+                          placeholder="Leave blank to use verification phone"
+                        />
+                      </div>
+
+                      {/* Instagram / Social Handle */}
+                      <div>
+                        <label className="form-label">Instagram / TikTok Handle (Optional)</label>
+                        <input
+                          className="form-input"
+                          type="text"
+                          value={businessInstagram}
+                          onChange={(e) => setBusinessInstagram(e.target.value)}
+                          placeholder="e.g. @kevs_thrifts"
+                        />
+                      </div>
+                    </div>
+                  ) : (
+                    /* Individual Student Account Name */
+                    <div>
+                      <label className="form-label">Full Name (Optional)</label>
+                      <input
+                        className="form-input"
+                        type="text"
+                        value={fullName}
+                        onChange={(e) => setFullName(e.target.value)}
+                        placeholder="e.g. Ayomide Adeleke"
+                      />
+                    </div>
+                  )}
+
+                  {/* Campus / University Selector */}
+                  <div>
+                    <label className="form-label">Campus / Institution</label>
+                    <select
+                      className="form-input"
+                      value={campusId}
+                      onChange={(e) => setCampusId(e.target.value)}
+                      style={{ cursor: 'pointer' }}
+                    >
+                      {campuses.map(c => (
+                        <option key={c.id} value={c.id}>
+                          {c.name} ({c.acronym || c.state})
+                        </option>
+                      ))}
+                    </select>
+                  </div>
                   {/* Phone Verification Section */}
                   <div>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.4rem' }}>
@@ -1238,7 +1545,9 @@ function Auth() {
                   </div>
 
                   <div>
-                    <label className="form-label">Burner Handle (Public Alias)</label>
+                    <label className="form-label">
+                      {accountType === 'store' ? 'Store Handle / Username' : 'Burner Handle (Public Alias)'}
+                    </label>
                     <div style={{ position: 'relative' }}>
                       <span style={{
                         position: 'absolute',
@@ -1255,7 +1564,7 @@ function Auth() {
                         type="text" 
                         value={burnerHandle}
                         onChange={(e) => setBurnerHandle(e.target.value)}
-                        placeholder="e.g. campus_vendor"
+                        placeholder={accountType === 'store' ? 'e.g. kevs_thrifts' : 'e.g. ayo_student'}
                         style={{ paddingLeft: '2.25rem' }}
                       />
                     </div>
@@ -1275,7 +1584,9 @@ function Auth() {
                     Processing...
                   </>
                 ) : (
-                  isLogin ? 'Log In to CampusStash' : 'Complete Verification & Sign Up'
+                  isLogin 
+                    ? 'Log In to CampusStash' 
+                    : (accountType === 'store' ? 'Complete Verification & Launch Store' : 'Complete Verification & Sign Up')
                 )}
               </button>
             </form>

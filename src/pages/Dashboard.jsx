@@ -879,7 +879,10 @@ function Dashboard() {
                   const rawPrice = listing.price_kobo ? (listing.price_kobo / 100) : (listing.price || 0);
                   const priceFormatted = rawPrice.toLocaleString(undefined, { maximumFractionDigits: (rawPrice % 1 === 0 ? 0 : 2) });
                   const isBookmarked = Array.isArray(savedItemIds) && savedItemIds.includes(listing.id);
-                  const sellerName = listing.seller_handle ? listing.seller_handle.split('@').pop() : (listing.seller?.burner_handle ? listing.seller.burner_handle.split('@').pop() : (listing.seller?.name || 'Student'));
+                  const isStore = listing.seller?.account_type === 'store';
+                  const sellerName = isStore && listing.seller?.business_name
+                    ? listing.seller.business_name
+                    : (listing.seller_handle ? listing.seller_handle.split('@').pop() : (listing.seller?.burner_handle ? listing.seller.burner_handle.split('@').pop() : (listing.seller?.name || 'Student')));
 
                   return (
                     <article 
@@ -920,7 +923,7 @@ function Dashboard() {
                         {/* Top-Left: Dedicated Seller Pill -> Click to view Storefront */}
                         <div 
                           className="aesthetic-card-seller-pill" 
-                          title={`View @${sellerName}'s Campus Shop`}
+                          title={isStore ? `View ${sellerName}'s Storefront` : `View @${sellerName}'s Campus Shop`}
                           onClick={(e) => {
                             e.stopPropagation();
                             setStorefrontSeller({
@@ -930,8 +933,8 @@ function Dashboard() {
                             });
                           }}
                         >
-                          <i className="fa-regular fa-user" style={{ fontSize: '0.65rem', opacity: 0.75 }} />
-                          <span>by {sellerName}</span>
+                          <i className={isStore ? "fa-solid fa-store" : "fa-regular fa-user"} style={{ fontSize: '0.65rem', opacity: 0.85 }} />
+                          <span>{isStore ? sellerName : `by ${sellerName}`}</span>
                         </div>
 
                         {/* Bottom-Left: Dedicated Status Pill (Separate from Seller Name) */}

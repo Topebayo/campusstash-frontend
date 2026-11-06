@@ -658,11 +658,13 @@ function ItemDetailModal({
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem', flexWrap: 'wrap' }}>
                     <span style={{ fontWeight: '700', color: 'var(--text-main)', fontSize: '0.98rem' }}>
-                      {sellerDisplayName}
+                      {activeListing.seller?.account_type === 'store' && activeListing.seller?.business_name
+                        ? activeListing.seller.business_name
+                        : sellerDisplayName}
                     </span>
                     <span style={{ 
-                      backgroundColor: 'var(--primary-light)', 
-                      color: 'var(--terracotta)', 
+                      backgroundColor: activeListing.seller?.account_type === 'store' ? 'var(--badge-active-bg)' : 'var(--primary-light)', 
+                      color: activeListing.seller?.account_type === 'store' ? 'var(--badge-active-text)' : 'var(--terracotta)', 
                       fontSize: '0.74rem', 
                       fontWeight: '700',
                       padding: '2px 8px',
@@ -671,9 +673,14 @@ function ItemDetailModal({
                       alignItems: 'center',
                       gap: '4px'
                     }}>
-                      <i className="fa-solid fa-circle-check" style={{ fontSize: '0.7rem' }} /> verified
+                      <i className="fa-solid fa-circle-check" style={{ fontSize: '0.7rem' }} /> {activeListing.seller?.account_type === 'store' ? 'Campus Store' : 'Verified'}
                     </span>
                   </div>
+                  {activeListing.seller?.account_type === 'store' && activeListing.seller?.name && (
+                    <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)', marginTop: '1px' }}>
+                      Owned by {activeListing.seller.name}
+                    </div>
+                  )}
                   <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem', fontSize: '0.82rem', color: 'var(--text-muted)', marginTop: '3px' }}>
                     <span style={{ color: '#F59E0B', fontWeight: '700' }}>★ 4.9</span>
                     <span>(12 campus reviews)</span>
@@ -687,7 +694,7 @@ function ItemDetailModal({
                       onClick={() => onOpenStorefront({
                         seller_id: activeListing.seller_id,
                         seller_handle: activeListing.seller_handle || activeListing.seller?.burner_handle,
-                        seller_name: sellerDisplayName
+                        seller_name: activeListing.seller?.business_name || sellerDisplayName
                       })}
                       style={{
                         background: 'none',
@@ -703,7 +710,7 @@ function ItemDetailModal({
                         marginTop: '6px'
                       }}
                     >
-                      <span>🏪 Browse Seller&apos;s Campus Shop</span>
+                      <span>{activeListing.seller?.account_type === 'store' ? '🏪 Browse Campus Storefront' : '📦 View Seller Catalog'}</span>
                       <i className="fa-solid fa-arrow-right" style={{ fontSize: '0.65rem' }} />
                     </button>
                   )}

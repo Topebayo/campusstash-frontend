@@ -44,7 +44,7 @@ function Messages() {
       return;
     }
     if (Capacitor.isNativePlatform()) {
-      LocalNotifications.removeAllDeliveredNotifications().catch(() => {});
+      LocalNotifications.removeAllDeliveredNotifications().catch(() => { });
     }
     fetchInbox();
 
@@ -67,15 +67,15 @@ function Messages() {
     <div style={{ backgroundColor: 'var(--bg-color)', minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
       <Navbar />
 
-      <main 
-        className="animate-fade-in" 
-        style={{ 
-          maxWidth: '860px', 
-          margin: '0 auto', 
-          padding: '0.5rem 1.15rem 7rem 1.15rem', 
-          width: '100%', 
-          boxSizing: 'border-box', 
-          flex: 1 
+      <main
+        className="animate-fade-in"
+        style={{
+          maxWidth: '860px',
+          margin: '0 auto',
+          padding: '0.5rem 1.15rem 7rem 1.15rem',
+          width: '100%',
+          boxSizing: 'border-box',
+          flex: 1
         }}
       >
         {/* ============================================================== */}
@@ -141,9 +141,9 @@ function Messages() {
             gap: '0.75rem'
           }}>
             <div style={{ color: '#B91C1C', fontWeight: '600', fontSize: '0.88rem' }}>{error}</div>
-            <button 
-              className="btn-primary" 
-              onClick={fetchInbox} 
+            <button
+              className="btn-primary"
+              onClick={fetchInbox}
               style={{ alignSelf: 'flex-start', borderRadius: '9999px', padding: '0.45rem 1rem' }}
             >
               Retry
@@ -179,8 +179,8 @@ function Messages() {
             <p style={{ maxWidth: '340px', margin: '0 auto 1.25rem auto', fontSize: '0.86rem', lineHeight: '1.45' }}>
               When you message a student or someone asks about your item, the conversation will appear here.
             </p>
-            <button 
-              className="btn-primary" 
+            <button
+              className="btn-primary"
               onClick={() => navigate('/dashboard')}
               style={{ borderRadius: '9999px', padding: '0.65rem 1.4rem' }}
             >
@@ -194,7 +194,7 @@ function Messages() {
               const hasListing = Boolean(thread.listing_id);
               const isRequest = Boolean(thread.request_id);
               const isShopChat = !hasListing && !isRequest;
-              const peerName = thread.other_user?.burner_handle 
+              const peerName = thread.other_user?.burner_handle
                 ? `@${thread.other_user.burner_handle}`
                 : (thread.other_user?.email ? thread.other_user.email.split('@')[0] : 'Campus Peer');
               const title = thread.listing_title || thread.title || (isShopChat ? `${peerName}'s Shop` : 'Campus Gear');
@@ -202,8 +202,8 @@ function Messages() {
               const timeStr = thread.last_message_time || thread.updated_at || thread.created_at;
 
               return (
-                <div 
-                  key={convId || thread.listing_id} 
+                <div
+                  key={convId || thread.listing_id}
                   onClick={() => {
                     // Instantly zero out unread count badge in UI
                     setThreads(prev => prev.map(t => {
@@ -214,14 +214,14 @@ function Messages() {
                     if (convId) {
                       clearAppNotifications(convId);
                     }
-                    setActiveChatListing({ 
+                    setActiveChatListing({
                       conversation_id: convId,
-                      id: thread.listing_id || null, 
+                      id: thread.listing_id || null,
                       listing_id: thread.listing_id || null,
                       request_id: thread.request_id || null,
                       is_shop_chat: isShopChat,
                       is_request_chat: isRequest,
-                      title: title, 
+                      title: title,
                       price: thread.listing_price,
                       price_kobo: thread.listing_price_kobo || thread.listing_price,
                       image_url: thread.listing_image_url,
@@ -229,15 +229,15 @@ function Messages() {
                       seller_handle: peerName,
                       other_user: thread.other_user
                     });
-                  }} 
-                  style={{ 
-                    display: 'flex', 
+                  }}
+                  style={{
+                    display: 'flex',
                     alignItems: 'center',
                     gap: '1rem',
-                    padding: '1.1rem', 
-                    backgroundColor: 'var(--surface)', 
-                    border: '1px solid var(--border)', 
-                    borderRadius: '20px', 
+                    padding: '1.1rem',
+                    backgroundColor: 'var(--surface)',
+                    border: '1px solid var(--border)',
+                    borderRadius: '20px',
                     cursor: 'pointer',
                     boxShadow: 'var(--shadow-card)',
                     transition: 'all 0.2s ease',
@@ -334,13 +334,13 @@ function Messages() {
 
       {/* Direct Chat Modal */}
       {activeChatListing && (
-        <ChatModal 
-          isOpen={true} 
-          listing={activeChatListing} 
+        <ChatModal
+          isOpen={true}
+          listing={activeChatListing}
           onClose={() => {
             setActiveChatListing(null);
             fetchInbox();
-          }} 
+          }}
         />
       )}
     </div>

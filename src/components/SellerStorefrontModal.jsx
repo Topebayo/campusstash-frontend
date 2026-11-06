@@ -54,6 +54,18 @@ function SellerStorefrontModal({
   const campusDisplay = storeData?.campus_name || storeData?.campus_acronym || 'Lead City University';
   const items = storeData?.items || [];
 
+  const isStore = storeData?.seller?.account_type === 'store';
+  const storeTitle = isStore && storeData?.seller?.business_name 
+    ? storeData.seller.business_name 
+    : (storeData?.seller?.name ? `${storeData.seller.name}'s Campus Shop` : `${sellerName}'s Campus Shop`);
+
+  const ownerDisplayName = storeData?.seller?.name || sellerName;
+  const storeCategory = storeData?.seller?.business_category;
+  const storeBio = storeData?.seller?.business_description;
+  const pickupLocation = storeData?.seller?.business_address;
+  const whatsappNum = storeData?.seller?.business_whatsapp || storeData?.seller?.phone;
+  const instagramHandle = storeData?.seller?.business_instagram;
+
   return (
     <div className="modal-overlay" onClick={onClose} style={{ zIndex: 1200 }}>
       <div 
@@ -107,8 +119,8 @@ function SellerStorefrontModal({
           </button>
 
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', fontWeight: '700', fontSize: '1rem', color: 'var(--text-main)' }}>
-            <span>🏪</span>
-            <span>Campus Storefront</span>
+            <span>{isStore ? '🏬' : '🎓'}</span>
+            <span>{isStore ? 'Campus Storefront' : 'Student Closet'}</span>
           </div>
 
           <div style={{ width: '36px' }} />
@@ -145,11 +157,11 @@ function SellerStorefrontModal({
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                fontSize: '1.4rem',
+                fontSize: isStore ? '1.5rem' : '1.4rem',
                 fontWeight: '800',
                 flexShrink: 0
               }}>
-                {sellerName.charAt(0).toUpperCase()}
+                {isStore ? '🏬' : sellerName.charAt(0).toUpperCase()}
               </div>
 
               {/* Vendor Info */}
@@ -164,26 +176,59 @@ function SellerStorefrontModal({
                     textOverflow: 'ellipsis',
                     whiteSpace: 'nowrap'
                   }}>
-                    {sellerName}&apos;s Campus Shop
+                    {isStore ? storeTitle : `@${sellerName}'s Closet`}
                   </h2>
                   <span style={{
-                    backgroundColor: 'var(--badge-active-bg)',
-                    color: 'var(--badge-active-text)',
+                    backgroundColor: isStore ? 'var(--badge-active-bg)' : 'var(--primary-light)',
+                    color: isStore ? 'var(--badge-active-text)' : 'var(--terracotta)',
                     fontSize: '0.68rem',
                     fontWeight: '700',
                     borderRadius: '9999px',
                     padding: '2px 8px'
                   }}>
-                    Verified Student Vendor
+                    {isStore ? 'Verified Campus Store' : 'Student Peer'}
                   </span>
+                  {isStore && storeCategory && (
+                    <span style={{
+                      backgroundColor: 'var(--surface)',
+                      border: '1px solid var(--border)',
+                      color: 'var(--text-muted)',
+                      fontSize: '0.68rem',
+                      fontWeight: '700',
+                      borderRadius: '9999px',
+                      padding: '2px 8px'
+                    }}>
+                      {storeCategory}
+                    </span>
+                  )}
                 </div>
                 <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginTop: '3px' }}>
-                  <span>📍 {campusDisplay}</span>
+                  {isStore && (
+                    <span style={{ fontWeight: '600', color: 'var(--text-main)' }}>
+                      Owned by {ownerDisplayName} • 
+                    </span>
+                  )}
+                  <span> 📍 {pickupLocation ? `${pickupLocation} (${campusDisplay})` : campusDisplay}</span>
                   <span style={{ margin: '0 5px' }}>•</span>
                   <span>{items.length} item{items.length === 1 ? '' : 's'} in stock</span>
                 </div>
               </div>
             </div>
+
+            {/* Store Bio / Tagline */}
+            {storeBio && (
+              <div style={{
+                fontSize: '0.84rem',
+                color: 'var(--text-main)',
+                backgroundColor: 'var(--surface)',
+                borderRadius: '12px',
+                padding: '0.65rem 0.85rem',
+                border: '1px solid var(--border)',
+                lineHeight: 1.45
+              }}>
+                &ldquo;{storeBio}&rdquo;
+              </div>
+            )}
 
             {/* Vendor Action Bar */}
             <div style={{ display: 'flex', gap: '0.6rem', marginTop: '0.25rem', flexWrap: 'wrap' }}>
@@ -198,10 +243,10 @@ function SellerStorefrontModal({
                     onMessageSeller({ 
                       seller_id: vendorId, 
                       recipient_id: vendorId, 
-                      seller_name: sellerName,
+                      seller_name: isStore ? storeTitle : sellerName,
                       seller_handle: vendorHandle,
                       is_shop_chat: true,
-                      title: `${vendorHandle ? (vendorHandle.startsWith('@') ? vendorHandle : `@${vendorHandle}`) : sellerName}'s Campus Shop`
+                      title: isStore ? storeTitle : `${sellerName}'s Closet`
                     });
                   }}
                   style={{
@@ -217,18 +262,18 @@ function SellerStorefrontModal({
                   }}
                 >
                   <i className="fa-regular fa-comment" />
-                  <span>Chat with Shop</span>
+                  <span>{isStore ? 'Chat with Store' : 'Message Seller'}</span>
                 </button>
               )}
 
-              {storeData?.seller?.phone && (
+              {whatsappNum && (
                 <button
                   type="button"
                   className="btn-secondary"
                   onClick={() => {
-                    const cleanPhone = String(storeData.seller.phone).replace(/[^0-9]/g, '');
+                    const cleanPhone = String(whatsappNum).replace(/[^0-9]/g, '');
                     const formatted = cleanPhone.startsWith('0') ? `234${cleanPhone.slice(1)}` : cleanPhone;
-                    const msg = encodeURIComponent(`Hi ${sellerName}! I saw your shop on CampusStash and wanted to ask about your items.`);
+                    const msg = encodeURIComponent(`Hi ${ownerDisplayName}! I saw ${storeTitle} on CampusStash and wanted to ask about your items.`);
                     window.open(`https://wa.me/${formatted}?text=${msg}`, '_blank');
                   }}
                   style={{
@@ -246,6 +291,32 @@ function SellerStorefrontModal({
                 >
                   <i className="fa-brands fa-whatsapp" />
                   <span>WhatsApp</span>
+                </button>
+              )}
+
+              {instagramHandle && (
+                <button
+                  type="button"
+                  className="btn-secondary"
+                  onClick={() => {
+                    const cleanIg = instagramHandle.replace(/^@/, '');
+                    window.open(`https://instagram.com/${cleanIg}`, '_blank');
+                  }}
+                  style={{
+                    borderRadius: '9999px',
+                    padding: '0.65rem 1rem',
+                    fontSize: '0.86rem',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '0.4rem',
+                    color: '#E1306C',
+                    borderColor: 'rgba(225, 48, 108, 0.3)'
+                  }}
+                  title="Visit Instagram"
+                >
+                  <i className="fa-brands fa-instagram" />
+                  <span>Instagram</span>
                 </button>
               )}
 
