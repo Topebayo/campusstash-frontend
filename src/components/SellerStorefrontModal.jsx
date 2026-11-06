@@ -186,17 +186,25 @@ function SellerStorefrontModal({
             </div>
 
             {/* Vendor Action Bar */}
-            <div style={{ display: 'flex', gap: '0.6rem', marginTop: '0.25rem' }}>
+            <div style={{ display: 'flex', gap: '0.6rem', marginTop: '0.25rem', flexWrap: 'wrap' }}>
               {onMessageSeller && (
                 <button
                   type="button"
                   className="btn-primary"
                   onClick={() => {
+                    const vendorId = storeData?.seller?.id || sellerId;
+                    const vendorHandle = storeData?.seller?.burner_handle || sellerHandle;
                     onClose();
-                    onMessageSeller({ seller_id: sellerId, seller_name: sellerName });
+                    onMessageSeller({ 
+                      seller_id: vendorId, 
+                      recipient_id: vendorId, 
+                      seller_name: sellerName,
+                      seller_handle: vendorHandle
+                    });
                   }}
                   style={{
                     flex: 1,
+                    minWidth: '130px',
                     borderRadius: '9999px',
                     padding: '0.65rem 1rem',
                     fontSize: '0.86rem',
@@ -211,17 +219,47 @@ function SellerStorefrontModal({
                 </button>
               )}
 
+              {storeData?.seller?.phone && (
+                <button
+                  type="button"
+                  className="btn-secondary"
+                  onClick={() => {
+                    const cleanPhone = String(storeData.seller.phone).replace(/[^0-9]/g, '');
+                    const formatted = cleanPhone.startsWith('0') ? `234${cleanPhone.slice(1)}` : cleanPhone;
+                    const msg = encodeURIComponent(`Hi ${sellerName}! I saw your shop on CampusStash and wanted to ask about your items.`);
+                    window.open(`https://wa.me/${formatted}?text=${msg}`, '_blank');
+                  }}
+                  style={{
+                    borderRadius: '9999px',
+                    padding: '0.65rem 1rem',
+                    fontSize: '0.86rem',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '0.4rem',
+                    color: '#22c55e',
+                    borderColor: 'rgba(34, 197, 94, 0.3)'
+                  }}
+                  title="Chat on WhatsApp"
+                >
+                  <i className="fa-brands fa-whatsapp" />
+                  <span>WhatsApp</span>
+                </button>
+              )}
+
               <button
                 type="button"
                 className="btn-secondary"
                 onClick={() => {
-                  const shareUrl = `${window.location.origin}/shop/${encodeURIComponent(sellerHandle || sellerId || '')}`;
-                  navigator.clipboard.writeText(shareUrl);
+                  const shareUrl = `${window.location.origin}/dashboard?vendor=${encodeURIComponent(sellerHandle || sellerId || '')}`;
+                  if (navigator.clipboard) {
+                    navigator.clipboard.writeText(shareUrl).catch(() => {});
+                  }
                   alert('Storefront link copied to clipboard!');
                 }}
                 style={{
                   borderRadius: '9999px',
-                  padding: '0.65rem 1.15rem',
+                  padding: '0.65rem 1rem',
                   fontSize: '0.86rem',
                   display: 'flex',
                   alignItems: 'center',
