@@ -608,9 +608,14 @@ function Profile() {
       {isCreateOpen && (
         <CreateListingModal 
           isOpen={isCreateOpen}
-          onClose={() => setIsCreateOpen(false)}
-          onSuccess={() => {
+          onClose={() => {
             setIsCreateOpen(false);
+            fetchMyListings();
+          }}
+          onSuccess={() => {
+            fetchMyListings();
+          }}
+          onCreated={() => {
             fetchMyListings();
           }}
         />

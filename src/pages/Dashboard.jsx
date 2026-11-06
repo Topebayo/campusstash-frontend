@@ -1092,9 +1092,14 @@ function Dashboard() {
       {isCreateOpen && (
         <CreateListingModal 
           isOpen={isCreateOpen}
-          onClose={() => setIsCreateOpen(false)}
-          onSuccess={() => {
+          onClose={() => {
             setIsCreateOpen(false);
+            fetchListings();
+          }}
+          onSuccess={() => {
+            fetchListings();
+          }}
+          onCreated={() => {
             fetchListings();
           }}
         />

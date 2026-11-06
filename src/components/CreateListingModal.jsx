@@ -44,7 +44,7 @@ const CATEGORIES = [
   'Other'
 ];
 
-function CreateListingModal({ isOpen, onClose, onCreated }) {
+function CreateListingModal({ isOpen, onClose, onCreated, onSuccess }) {
   useEffect(() => {
     if (!isOpen) return;
     const handleKeyDown = (e) => {
@@ -216,7 +216,12 @@ function CreateListingModal({ isOpen, onClose, onCreated }) {
         body: formData
       });
 
-      onCreated();
+      if (typeof onCreated === 'function') {
+        try { onCreated(createdData); } catch (e) {}
+      }
+      if (typeof onSuccess === 'function') {
+        try { onSuccess(createdData); } catch (e) {}
+      }
       setCreatedItem(createdData);
     } catch (err) {
       setError(err.message || 'Failed to create listing');
