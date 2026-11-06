@@ -1329,6 +1329,11 @@ select option {
   }
 }
 
+.footer-nav-pill:hover {
+  border-color: var(--terracotta) !important;
+  color: var(--terracotta) !important;
+}
+
 
 /* ==========================================================================
    AESTHETIC MINIMAL DESIGN SYSTEM (Warm Linen & Terracotta Clay)

@@ -34,277 +34,170 @@ function Footer() {
           style={{
             maxWidth: '1120px',
             margin: '0 auto',
-            padding: '3rem 1.5rem 2rem 1.5rem',
+            padding: '2.5rem 1.5rem 1.75rem 1.5rem',
             boxSizing: 'border-box'
           }}
         >
-          {/* Top Grid: 4 Columns on Desktop */}
+          {/* Main Row: Brand identity on left, clean interactive pills on right */}
           <div 
             style={{
-              display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
-              gap: '2.5rem',
-              marginBottom: '2.5rem'
+              display: 'flex',
+              flexWrap: 'wrap',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              gap: '1.5rem',
+              paddingBottom: '1.75rem',
+              borderBottom: '1px solid var(--border)'
             }}
           >
-            {/* Column 1: Brand & Mission */}
-            <div style={{ maxWidth: '320px' }}>
-              <div 
-                onClick={() => { navigate('/dashboard'); scrollToTop(); }}
-                style={{ 
-                  display: 'inline-flex', 
-                  alignItems: 'center', 
-                  gap: '0.55rem', 
-                  cursor: 'pointer',
-                  marginBottom: '0.85rem'
-                }}
-              >
-                <div style={{
-                  width: '34px',
-                  height: '34px',
-                  borderRadius: '10px',
-                  backgroundColor: 'var(--terracotta)',
-                  color: '#FFFFFF',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  fontSize: '1.1rem',
-                  fontWeight: '700'
-                }}>
-                  🎓
-                </div>
+            {/* Brand identity */}
+            <div 
+              onClick={() => { navigate('/dashboard'); scrollToTop(); }}
+              style={{ display: 'flex', alignItems: 'center', gap: '0.65rem', cursor: 'pointer' }}
+            >
+              <div style={{
+                width: '36px',
+                height: '36px',
+                borderRadius: '11px',
+                backgroundColor: 'var(--terracotta)',
+                color: '#FFFFFF',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                fontSize: '1.15rem'
+              }}>
+                🎓
+              </div>
+              <div>
                 <span style={{
                   fontFamily: 'var(--font-serif)',
                   fontSize: '1.35rem',
                   fontWeight: '700',
                   color: 'var(--text-main)',
-                  letterSpacing: '-0.02em'
+                  letterSpacing: '-0.02em',
+                  display: 'block',
+                  lineHeight: 1.15
                 }}>
                   CampusStash
                 </span>
-              </div>
-
-              <p style={{
-                fontSize: '0.88rem',
-                lineHeight: 1.55,
-                color: 'var(--text-muted)',
-                margin: '0 0 1rem 0'
-              }}>
-                The aesthetic peer-to-peer marketplace & campus store hub for Nigerian universities. Buy, sell, and connect safely across campus.
-              </p>
-
-              <div style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: '0.45rem',
-                backgroundColor: 'var(--surface-alt)',
-                border: '1px solid var(--border)',
-                borderRadius: '9999px',
-                padding: '0.35rem 0.85rem',
-                fontSize: '0.75rem',
-                fontWeight: '600',
-                color: '#15803D'
-              }}>
-                <span style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: '#22C55E' }} />
-                <span>Active across Nigerian Campuses</span>
+                <span style={{
+                  fontSize: '0.78rem',
+                  color: 'var(--text-muted)',
+                  display: 'block',
+                  marginTop: '0.2rem'
+                }}>
+                  Peer-to-peer campus marketplace & verified student stores
+                </span>
               </div>
             </div>
 
-            {/* Column 2: Marketplace Categories */}
-            <div>
-              <h4 style={{
-                fontSize: '0.92rem',
-                fontWeight: '700',
-                color: 'var(--text-main)',
-                textTransform: 'uppercase',
-                letterSpacing: '0.05em',
-                marginBottom: '1rem'
-              }}>
-                Marketplace
-              </h4>
-              <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: '0.65rem', fontSize: '0.88rem' }}>
-                <li>
-                  <button 
-                    onClick={() => { navigate('/dashboard'); scrollToTop(); }}
-                    style={{ background: 'none', border: 'none', padding: 0, color: 'var(--text-muted)', cursor: 'pointer', textAlign: 'left', font: 'inherit' }}
-                  >
-                    📚 Textbooks & Academics
-                  </button>
-                </li>
-                <li>
-                  <button 
-                    onClick={() => { navigate('/dashboard'); scrollToTop(); }}
-                    style={{ background: 'none', border: 'none', padding: 0, color: 'var(--text-muted)', cursor: 'pointer', textAlign: 'left', font: 'inherit' }}
-                  >
-                    📱 Tech, Gadgets & Laptops
-                  </button>
-                </li>
-                <li>
-                  <button 
-                    onClick={() => { navigate('/dashboard'); scrollToTop(); }}
-                    style={{ background: 'none', border: 'none', padding: 0, color: 'var(--text-muted)', cursor: 'pointer', textAlign: 'left', font: 'inherit' }}
-                  >
-                    👕 Campus Fits & Thrift
-                  </button>
-                </li>
-                <li>
-                  <button 
-                    onClick={() => { navigate('/dashboard'); scrollToTop(); }}
-                    style={{ background: 'none', border: 'none', padding: 0, color: 'var(--text-muted)', cursor: 'pointer', textAlign: 'left', font: 'inherit' }}
-                  >
-                    🛋️ Hostel & Dorm Essentials
-                  </button>
-                </li>
-                <li>
-                  <button 
-                    onClick={() => { navigate('/dashboard'); scrollToTop(); }}
-                    style={{ background: 'none', border: 'none', padding: 0, color: 'var(--text-muted)', cursor: 'pointer', textAlign: 'left', font: 'inherit' }}
-                  >
-                    📢 Daily Student Requests
-                  </button>
-                </li>
-              </ul>
-            </div>
+            {/* Clean Pill Links with spacious layout */}
+            <div style={{
+              display: 'flex',
+              alignItems: 'center',
+              flexWrap: 'wrap',
+              gap: '0.65rem'
+            }}>
+              <button
+                type="button"
+                onClick={() => { navigate('/dashboard'); scrollToTop(); }}
+                className="footer-nav-pill"
+                style={{
+                  background: 'var(--surface-alt)',
+                  border: '1px solid var(--border)',
+                  borderRadius: '9999px',
+                  padding: '0.45rem 0.95rem',
+                  color: 'var(--text-main)',
+                  fontSize: '0.82rem',
+                  fontWeight: '600',
+                  cursor: 'pointer',
+                  transition: 'all 0.2s ease'
+                }}
+              >
+                Browse Items
+              </button>
 
-            {/* Column 3: Student Stores & Businesses */}
-            <div>
-              <h4 style={{
-                fontSize: '0.92rem',
-                fontWeight: '700',
-                color: 'var(--text-main)',
-                textTransform: 'uppercase',
-                letterSpacing: '0.05em',
-                marginBottom: '1rem'
-              }}>
-                Student Stores
-              </h4>
-              <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: '0.65rem', fontSize: '0.88rem' }}>
-                <li>
-                  <button 
-                    onClick={() => { navigate('/profile'); scrollToTop(); }}
-                    style={{ background: 'none', border: 'none', padding: 0, color: 'var(--text-muted)', cursor: 'pointer', textAlign: 'left', font: 'inherit' }}
-                  >
-                    🏬 Launch a Campus Store
-                  </button>
-                </li>
-                <li>
-                  <button 
-                    onClick={() => { navigate('/profile'); scrollToTop(); }}
-                    style={{ background: 'none', border: 'none', padding: 0, color: 'var(--text-muted)', cursor: 'pointer', textAlign: 'left', font: 'inherit' }}
-                  >
-                    📦 Bulk Inventory Drops
-                  </button>
-                </li>
-                <li>
-                  <button 
-                    onClick={() => { navigate('/messages'); scrollToTop(); }}
-                    style={{ background: 'none', border: 'none', padding: 0, color: 'var(--text-muted)', cursor: 'pointer', textAlign: 'left', font: 'inherit' }}
-                  >
-                    💬 Direct In-App Chat
-                  </button>
-                </li>
-                <li>
-                  <button 
-                    onClick={() => setShowSafetyModal(true)}
-                    style={{ background: 'none', border: 'none', padding: 0, color: 'var(--text-muted)', cursor: 'pointer', textAlign: 'left', font: 'inherit' }}
-                  >
-                    🛡️ Verified Seller Badges
-                  </button>
-                </li>
-              </ul>
-            </div>
+              <button
+                type="button"
+                onClick={() => { navigate('/profile'); scrollToTop(); }}
+                className="footer-nav-pill"
+                style={{
+                  background: 'var(--surface-alt)',
+                  border: '1px solid var(--border)',
+                  borderRadius: '9999px',
+                  padding: '0.45rem 0.95rem',
+                  color: 'var(--text-main)',
+                  fontSize: '0.82rem',
+                  fontWeight: '600',
+                  cursor: 'pointer',
+                  transition: 'all 0.2s ease'
+                }}
+              >
+                🏬 Campus Stores
+              </button>
 
-            {/* Column 4: Trust, Safety & Campuses */}
-            <div>
-              <h4 style={{
-                fontSize: '0.92rem',
-                fontWeight: '700',
-                color: 'var(--text-main)',
-                textTransform: 'uppercase',
-                letterSpacing: '0.05em',
-                marginBottom: '1rem'
-              }}>
-                Campus Safety
-              </h4>
-              <p style={{ fontSize: '0.86rem', lineHeight: 1.5, margin: '0 0 0.85rem 0' }}>
-                Trades happen directly on campus. Always meet in public student areas like student union buildings, library halls, or main gates.
-              </p>
               <button
                 type="button"
                 onClick={() => setShowSafetyModal(true)}
+                className="footer-nav-pill"
                 style={{
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: '0.4rem',
-                  padding: '0.45rem 0.95rem',
+                  background: 'rgba(200, 122, 91, 0.1)',
+                  border: '1px solid rgba(200, 122, 91, 0.25)',
                   borderRadius: '9999px',
-                  backgroundColor: 'var(--surface-alt)',
-                  border: '1px solid var(--border)',
-                  color: 'var(--text-main)',
-                  fontSize: '0.8rem',
-                  fontWeight: '600',
-                  cursor: 'pointer'
-                }}
-              >
-                <i className="fa-solid fa-shield-halved" style={{ color: 'var(--terracotta)' }} />
-                <span>Read Campus Safety Guide</span>
-              </button>
-            </div>
-          </div>
-
-          {/* Bottom Bar: Copyright & Quick Links */}
-          <div 
-            style={{
-              borderTop: '1px solid var(--border)',
-              paddingTop: '1.5rem',
-              display: 'flex',
-              flexWrap: 'wrap',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              gap: '1rem',
-              fontSize: '0.82rem'
-            }}
-          >
-            <div>
-              &copy; {new Date().getFullYear()} CampusStash. Built by Nigerian students, for students.
-            </div>
-
-            <div style={{ display: 'flex', alignItems: 'center', gap: '1.25rem', flexWrap: 'wrap' }}>
-              <span 
-                onClick={() => setShowSafetyModal(true)} 
-                style={{ cursor: 'pointer' }}
-              >
-                Safety Guidelines
-              </span>
-              <span>•</span>
-              <span 
-                onClick={() => { navigate('/dashboard'); scrollToTop(); }} 
-                style={{ cursor: 'pointer' }}
-              >
-                Lead City • UI • Poly Ibadan • Unilag • OAU
-              </span>
-              <span>•</span>
-              <button
-                type="button"
-                onClick={scrollToTop}
-                style={{
-                  background: 'none',
-                  border: 'none',
+                  padding: '0.45rem 0.95rem',
                   color: 'var(--terracotta)',
+                  fontSize: '0.82rem',
                   fontWeight: '700',
                   cursor: 'pointer',
                   display: 'inline-flex',
                   alignItems: 'center',
                   gap: '0.35rem',
-                  padding: 0,
-                  fontSize: '0.82rem'
+                  transition: 'all 0.2s ease'
                 }}
-                title="Scroll back to top"
               >
-                <span>Back to Top</span>
-                <i className="fa-solid fa-arrow-up" style={{ fontSize: '0.72rem' }} />
+                <i className="fa-solid fa-shield-halved" />
+                <span>Safety Guidelines</span>
               </button>
             </div>
+          </div>
+
+          {/* Sub Row: Copyright and Back to top */}
+          <div 
+            style={{
+              paddingTop: '1.25rem',
+              display: 'flex',
+              flexWrap: 'wrap',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              gap: '1rem',
+              fontSize: '0.8rem',
+              color: 'var(--text-muted)'
+            }}
+          >
+            <div>
+              &copy; {new Date().getFullYear()} CampusStash • Built for Lead City University & Nigerian Campuses
+            </div>
+
+            <button
+              type="button"
+              onClick={scrollToTop}
+              style={{
+                background: 'none',
+                border: 'none',
+                color: 'var(--terracotta)',
+                fontWeight: '700',
+                cursor: 'pointer',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '0.35rem',
+                padding: 0,
+                fontSize: '0.82rem'
+              }}
+              title="Scroll back to top"
+            >
+              <span>Back to Top</span>
+              <i className="fa-solid fa-arrow-up" style={{ fontSize: '0.72rem' }} />
+            </button>
           </div>
         </div>
       </footer>
@@ -321,7 +214,9 @@ function Footer() {
               maxHeight: '90vh',
               overflowY: 'auto',
               borderRadius: '24px',
-              padding: '1.75rem'
+              padding: '1.75rem',
+              backgroundColor: 'var(--surface)',
+              border: '1px solid var(--border)'
             }}
           >
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem' }}>

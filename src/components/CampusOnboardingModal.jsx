@@ -12,6 +12,16 @@ function CampusOnboardingModal({
   const [locationError, setLocationError] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
 
+  const filteredCampuses = useMemo(() => {
+    const q = searchQuery.trim().toLowerCase();
+    if (!q) return campuses;
+    return campuses.filter(c => 
+      c.name?.toLowerCase().includes(q) ||
+      c.acronym?.toLowerCase().includes(q) ||
+      c.state?.toLowerCase().includes(q)
+    );
+  }, [campuses, searchQuery]);
+
   if (!isOpen) {
     return null;
   }
@@ -48,16 +58,6 @@ function CampusOnboardingModal({
       { enableHighAccuracy: true, timeout: 10000, maximumAge: 60000 }
     );
   };
-
-  const filteredCampuses = useMemo(() => {
-    const q = searchQuery.trim().toLowerCase();
-    if (!q) return campuses;
-    return campuses.filter(c => 
-      c.name?.toLowerCase().includes(q) ||
-      c.acronym?.toLowerCase().includes(q) ||
-      c.state?.toLowerCase().includes(q)
-    );
-  }, [campuses, searchQuery]);
 
   return (
     <div 
