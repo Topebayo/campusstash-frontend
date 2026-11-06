@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { apiFetch, getWebSocketUrl, getImageUrl, clearAppNotifications } from '../api';
 import { Capacitor } from '@capacitor/core';
 import ItemDetailModal from './ItemDetailModal';
+import SellerStorefrontModal from './SellerStorefrontModal';
 
 function decodeJwt(token) {
   try {
@@ -32,17 +33,25 @@ function ChatModal({ isOpen = true, onClose, listing }) {
   const activeItem = modalListing || listing;
   const [showItemDetail, setShowItemDetail] = useState(false);
   const [detailItem, setDetailItem] = useState(null);
+  const [showStorefront, setShowStorefront] = useState(false);
+
+  // Chat mode identification: Item chat vs Shop chat vs Request chat
+  const isRequestChat = Boolean(activeItem?.request_id || activeItem?.is_request_chat);
+  const isListingChat = Boolean(
+    activeItem?.listing_id || 
+    (activeItem?.id && activeItem.id !== activeItem.conversation_id && !activeItem.is_shop_chat && !isRequestChat)
+  );
+  const targetListingId = activeItem?.listing_id || (isListingChat ? activeItem?.id : null) || listing?.listing_id || (listing?.id && listing.id !== listing.conversation_id && !listing.is_shop_chat && !isRequestChat ? listing.id : null);
+  const isShopChat = !isRequestChat && !isListingChat;
 
   const handleOpenItemDetail = async () => {
-    if (activeItem?.is_request_chat) return;
-    const targetId = activeItem?.id || activeItem?.listing_id || listing?.id || listing?.listing_id;
-    if (!targetId) return;
+    if (isRequestChat || isShopChat || !targetListingId) return;
 
     setDetailItem(activeItem);
     setShowItemDetail(true);
 
     try {
-      const fullData = await apiFetch(`/listings/${targetId}`);
+      const fullData = await apiFetch(`/listings/${targetListingId}`);
       if (fullData && fullData.id) {
         setDetailItem(fullData);
         setModalListing((prev) => ({ ...prev, ...fullData }));
@@ -67,9 +76,9 @@ function ChatModal({ isOpen = true, onClose, listing }) {
 
   useEffect(() => {
     setModalListing(listing);
-    const targetListingId = listing?.id || listing?.listing_id;
-    if (targetListingId && listing?.price_kobo === undefined && listing?.price === undefined) {
-      apiFetch(`/listings/${targetListingId}`)
+    const validListingId = listing?.listing_id || (listing?.id && listing.id !== listing.conversation_id && !listing.is_shop_chat && !listing.is_request_chat ? listing.id : null);
+    if (validListingId && listing?.price_kobo === undefined && listing?.price === undefined) {
+      apiFetch(`/listings/${validListingId}`)
         .then((data) => {
           if (data && data.id) {
             setModalListing((prev) => ({ ...prev, ...data }));
@@ -109,12 +118,12 @@ function ChatModal({ isOpen = true, onClose, listing }) {
 
         let convId = listing.conversation_id;
         if (!convId) {
-          const targetListingId = listing.id || listing.listing_id;
+          const validListingId = listing.listing_id || (listing.id && listing.id !== listing.conversation_id && !listing.is_shop_chat && !listing.is_request_chat ? listing.id : null);
           const targetRecipientId = listing.seller_id || listing.recipient_id;
           const bodyPayload = listing.request_id 
             ? { request_id: listing.request_id }
-            : targetListingId 
-              ? { listing_id: targetListingId, recipient_id: targetRecipientId }
+            : validListingId 
+              ? { listing_id: validListingId, recipient_id: targetRecipientId }
               : { recipient_id: targetRecipientId };
 
           const conv = await apiFetch('/conversations/', {
@@ -122,6 +131,9 @@ function ChatModal({ isOpen = true, onClose, listing }) {
             body: JSON.stringify(bodyPayload)
           });
           convId = conv.id;
+          if (conv.seller_id && !modalListing?.seller_id) {
+            setModalListing(prev => ({ ...prev, seller_id: conv.seller_id }));
+          }
         }
 
         if (!isMounted) return;
@@ -338,6 +350,21 @@ function ChatModal({ isOpen = true, onClose, listing }) {
 
   const priceFormatted = getFormattedPrice();
 
+  const isCurrentUserSeller = Boolean(
+    currentUserId && (
+      (activeItem?.seller_id && String(activeItem.seller_id) === String(currentUserId)) ||
+      (listing?.seller_id && String(listing.seller_id) === String(currentUserId))
+    )
+  );
+
+  const shopOwnerId = activeItem?.seller_id || listing?.seller_id || (
+    isCurrentUserSeller ? currentUserId : (activeItem?.other_user?.id || listing?.other_user?.id)
+  );
+
+  const shopOwnerHandle = isCurrentUserSeller 
+    ? (activeItem?.seller_handle || 'Your')
+    : (activeItem?.seller_handle || listing?.seller_handle || peerName);
+
   return (
     <div className="modal-overlay" onClick={onClose} style={{ zIndex: 1100 }}>
       <div 
@@ -434,81 +461,189 @@ function ChatModal({ isOpen = true, onClose, listing }) {
         </div>
 
         {/* ============================================================== */}
-        {/* CONTEXT ITEM CARD (Click to View Item Details)                 */}
+        {/* CONTEXT CARD: LISTING ITEM vs VENDOR SHOP vs WANTED REQUEST     */}
         {/* ============================================================== */}
-        <div 
-          onClick={handleOpenItemDetail}
-          style={{
-            padding: '0.65rem 1.15rem',
-            backgroundColor: 'var(--surface-alt)',
-            borderBottom: '1px solid var(--border)',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '0.75rem',
-            flexShrink: 0,
-            cursor: activeItem?.is_request_chat ? 'default' : 'pointer',
-            transition: 'background-color 0.15s ease'
-          }}
-          title={activeItem?.is_request_chat ? 'Wanted Request' : 'Click to inspect item details'}
-          className="chat-context-item-card"
-        >
-          {/* Item thumbnail */}
-          <div style={{
-            width: '46px',
-            height: '46px',
-            borderRadius: '12px',
-            backgroundColor: 'var(--surface)',
-            border: '1px solid var(--border)',
-            overflow: 'hidden',
-            flexShrink: 0,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            color: 'var(--text-light)',
-            boxShadow: 'var(--shadow-sm)'
-          }}>
-            {(activeItem?.image_url || listing?.image_url) ? (
-              <img 
-                src={getImageUrl(activeItem?.image_url || listing?.image_url)} 
-                alt={activeItem?.title || listing?.title} 
-                style={{ width: '100%', height: '100%', objectFit: 'cover' }} 
-              />
-            ) : (
-              <i className="fa-regular fa-image" />
-            )}
-          </div>
-
-          <div style={{ flex: 1, minWidth: 0 }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
-              <span style={{
-                fontWeight: '700',
-                fontSize: '0.92rem',
-                color: 'var(--text-main)',
-                whiteSpace: 'nowrap',
-                overflow: 'hidden',
-                textOverflow: 'ellipsis'
-              }}>
-                {activeItem?.title || listing?.title}
-              </span>
-              {priceFormatted ? (
-                <span style={{ fontWeight: '800', fontSize: '0.95rem', color: 'var(--terracotta)', marginLeft: '0.5rem', flexShrink: 0 }}>
-                  ₦{priceFormatted}
-                </span>
-              ) : null}
+        {isShopChat ? (
+          <div 
+            onClick={() => setShowStorefront(true)}
+            style={{
+              padding: '0.65rem 1.15rem',
+              backgroundColor: 'var(--surface-alt)',
+              borderBottom: '1px solid var(--border)',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.75rem',
+              flexShrink: 0,
+              cursor: 'pointer',
+              transition: 'background-color 0.15s ease'
+            }}
+            title="Click to browse vendor catalog"
+            className="chat-context-item-card"
+          >
+            {/* Storefront Icon */}
+            <div style={{
+              width: '46px',
+              height: '46px',
+              borderRadius: '12px',
+              backgroundColor: 'var(--surface)',
+              border: '1px solid var(--border)',
+              overflow: 'hidden',
+              flexShrink: 0,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              fontSize: '1.35rem',
+              boxShadow: 'var(--shadow-sm)'
+            }}>
+              🛍️
             </div>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: '2px' }}>
-              <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
-                {activeItem?.is_request_chat ? 'Wanted Request' : 'Tap to inspect item'}
-              </span>
-              {!activeItem?.is_request_chat && (
+
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
+                <span style={{
+                  fontWeight: '700',
+                  fontSize: '0.92rem',
+                  color: 'var(--text-main)',
+                  whiteSpace: 'nowrap',
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis'
+                }}>
+                  {isCurrentUserSeller ? 'Your Campus Shop' : `${peerName}'s Campus Shop`}
+                </span>
+                <span style={{
+                  fontSize: '0.72rem',
+                  fontWeight: '700',
+                  color: 'var(--badge-active-text)',
+                  backgroundColor: 'var(--badge-active-bg)',
+                  padding: '2px 7px',
+                  borderRadius: '9999px',
+                  marginLeft: '0.4rem',
+                  flexShrink: 0
+                }}>
+                  Shop
+                </span>
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: '2px' }}>
+                <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                  {isCurrentUserSeller ? 'Tap to view your shop inventory' : 'Direct vendor chat • Tap to browse shop'}
+                </span>
+                <span style={{ fontSize: '0.74rem', color: 'var(--terracotta)', fontWeight: '600', display: 'inline-flex', alignItems: 'center', gap: '3px', flexShrink: 0, marginLeft: '0.4rem' }}>
+                  <span>Browse Shop</span>
+                  <i className="fa-solid fa-chevron-right" style={{ fontSize: '0.65rem' }} />
+                </span>
+              </div>
+            </div>
+          </div>
+        ) : isListingChat ? (
+          <div 
+            onClick={handleOpenItemDetail}
+            style={{
+              padding: '0.65rem 1.15rem',
+              backgroundColor: 'var(--surface-alt)',
+              borderBottom: '1px solid var(--border)',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.75rem',
+              flexShrink: 0,
+              cursor: 'pointer',
+              transition: 'background-color 0.15s ease'
+            }}
+            title="Click to inspect item details"
+            className="chat-context-item-card"
+          >
+            {/* Item thumbnail */}
+            <div style={{
+              width: '46px',
+              height: '46px',
+              borderRadius: '12px',
+              backgroundColor: 'var(--surface)',
+              border: '1px solid var(--border)',
+              overflow: 'hidden',
+              flexShrink: 0,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              color: 'var(--text-light)',
+              boxShadow: 'var(--shadow-sm)'
+            }}>
+              {(activeItem?.image_url || listing?.image_url) ? (
+                <img 
+                  src={getImageUrl(activeItem?.image_url || listing?.image_url)} 
+                  alt={activeItem?.title || listing?.title} 
+                  style={{ width: '100%', height: '100%', objectFit: 'cover' }} 
+                />
+              ) : (
+                <i className="fa-regular fa-image" />
+              )}
+            </div>
+
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
+                <span style={{
+                  fontWeight: '700',
+                  fontSize: '0.92rem',
+                  color: 'var(--text-main)',
+                  whiteSpace: 'nowrap',
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis'
+                }}>
+                  {activeItem?.title || listing?.title}
+                </span>
+                {priceFormatted ? (
+                  <span style={{ fontWeight: '800', fontSize: '0.95rem', color: 'var(--terracotta)', marginLeft: '0.5rem', flexShrink: 0 }}>
+                    ₦{priceFormatted}
+                  </span>
+                ) : null}
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: '2px' }}>
+                <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                  Tap to inspect item
+                </span>
                 <span style={{ fontSize: '0.74rem', color: 'var(--terracotta)', fontWeight: '600', display: 'inline-flex', alignItems: 'center', gap: '3px' }}>
                   <span>View</span>
                   <i className="fa-solid fa-chevron-right" style={{ fontSize: '0.65rem' }} />
                 </span>
-              )}
+              </div>
             </div>
           </div>
-        </div>
+        ) : (
+          /* Request chat */
+          <div 
+            style={{
+              padding: '0.65rem 1.15rem',
+              backgroundColor: 'var(--surface-alt)',
+              borderBottom: '1px solid var(--border)',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.75rem',
+              flexShrink: 0
+            }}
+          >
+            <div style={{
+              width: '46px',
+              height: '46px',
+              borderRadius: '12px',
+              backgroundColor: 'var(--surface)',
+              border: '1px solid var(--border)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              color: 'var(--terracotta)',
+              fontSize: '1.2rem',
+              flexShrink: 0
+            }}>
+              <i className="fa-solid fa-bullhorn" />
+            </div>
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <span style={{ fontWeight: '700', fontSize: '0.92rem', color: 'var(--text-main)' }}>
+                {activeItem?.title || listing?.title || 'Wanted Item Request'}
+              </span>
+              <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '2px' }}>
+                Wanted Request • Student Inquiry
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* ============================================================== */}
         {/* SAFETY NOTICE CARD                                             */}
@@ -688,13 +823,15 @@ function ChatModal({ isOpen = true, onClose, listing }) {
         <form 
           onSubmit={handleSend}
           style={{
-            padding: '0.75rem 1.15rem 1.15rem 1.15rem',
+            padding: '0.65rem 0.85rem calc(env(safe-area-inset-bottom, 0px) + 0.65rem) 0.85rem',
             backgroundColor: 'var(--surface)',
             borderTop: '1px solid var(--border)',
             display: 'flex',
             alignItems: 'center',
-            gap: '0.55rem',
-            flexShrink: 0
+            gap: '0.5rem',
+            flexShrink: 0,
+            width: '100%',
+            boxSizing: 'border-box'
           }}
         >
           {/* Plus button for meetup dropzones */}
@@ -727,11 +864,14 @@ function ChatModal({ isOpen = true, onClose, listing }) {
             onChange={(e) => setInputValue(e.target.value)}
             placeholder="Message..."
             style={{
-              flex: 1,
+              flex: '1 1 0%',
+              minWidth: 0,
+              width: 0,
+              boxSizing: 'border-box',
               backgroundColor: 'var(--surface-alt)',
               border: '1px solid var(--border)',
               borderRadius: '9999px',
-              padding: '0.65rem 1.15rem',
+              padding: '0.65rem 0.95rem',
               fontSize: '0.92rem',
               fontFamily: 'var(--font-sans)',
               color: 'var(--text-main)',
@@ -756,6 +896,7 @@ function ChatModal({ isOpen = true, onClose, listing }) {
               cursor: inputValue.trim() ? 'pointer' : 'default',
               fontSize: '0.9rem',
               flexShrink: 0,
+              marginRight: 0,
               boxShadow: inputValue.trim() ? '0 2px 8px rgba(200, 122, 91, 0.35)' : 'none',
               transition: 'all 0.15s ease'
             }}
@@ -766,6 +907,25 @@ function ChatModal({ isOpen = true, onClose, listing }) {
 
       </div>
 
+      {/* Seller Storefront Modal overlay inside Chat */}
+      {showStorefront && (
+        <SellerStorefrontModal
+          isOpen={true}
+          sellerId={shopOwnerId}
+          sellerHandle={shopOwnerHandle}
+          initialSellerName={peerName}
+          onClose={() => setShowStorefront(false)}
+          onSelectItem={(selectedItem) => {
+            setShowStorefront(false);
+            setDetailItem(selectedItem);
+            setShowItemDetail(true);
+          }}
+          onMessageSeller={() => {
+            setShowStorefront(false);
+          }}
+        />
+      )}
+
       {/* Item Detail Modal overlay inside Chat */}
       {showItemDetail && detailItem && (
         <ItemDetailModal
@@ -773,6 +933,10 @@ function ChatModal({ isOpen = true, onClose, listing }) {
           listing={detailItem}
           onClose={() => setShowItemDetail(false)}
           onMessageSeller={() => setShowItemDetail(false)}
+          onOpenStorefront={() => {
+            setShowItemDetail(false);
+            setShowStorefront(true);
+          }}
           currentUserId={currentUserId}
           zIndex={1300}
         />

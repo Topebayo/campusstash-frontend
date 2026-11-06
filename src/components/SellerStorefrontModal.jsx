@@ -199,7 +199,9 @@ function SellerStorefrontModal({
                       seller_id: vendorId, 
                       recipient_id: vendorId, 
                       seller_name: sellerName,
-                      seller_handle: vendorHandle
+                      seller_handle: vendorHandle,
+                      is_shop_chat: true,
+                      title: `${vendorHandle ? (vendorHandle.startsWith('@') ? vendorHandle : `@${vendorHandle}`) : sellerName}'s Campus Shop`
                     });
                   }}
                   style={{

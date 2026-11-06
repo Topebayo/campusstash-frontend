@@ -191,10 +191,13 @@ function Messages() {
           <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
             {threads.map(thread => {
               const convId = thread.id || thread.conversation_id;
-              const title = thread.listing_title || thread.title || 'Campus Gear Chat';
+              const hasListing = Boolean(thread.listing_id);
+              const isRequest = Boolean(thread.request_id);
+              const isShopChat = !hasListing && !isRequest;
               const peerName = thread.other_user?.burner_handle 
                 ? `@${thread.other_user.burner_handle}`
                 : (thread.other_user?.email ? thread.other_user.email.split('@')[0] : 'Campus Peer');
+              const title = thread.listing_title || thread.title || (isShopChat ? `${peerName}'s Shop` : 'Campus Gear');
               const unread = thread.unread_count || 0;
               const timeStr = thread.last_message_time || thread.updated_at || thread.created_at;
 
@@ -213,14 +216,18 @@ function Messages() {
                     }
                     setActiveChatListing({ 
                       conversation_id: convId,
-                      id: thread.listing_id || convId, 
-                      listing_id: thread.listing_id,
+                      id: thread.listing_id || null, 
+                      listing_id: thread.listing_id || null,
+                      request_id: thread.request_id || null,
+                      is_shop_chat: isShopChat,
+                      is_request_chat: isRequest,
                       title: title, 
                       price: thread.listing_price,
                       price_kobo: thread.listing_price_kobo || thread.listing_price,
                       image_url: thread.listing_image_url,
-                      seller_id: thread.other_user?.id || thread.other_user_id,
-                      seller_handle: peerName
+                      seller_id: thread.seller_id || thread.other_user?.id || thread.other_user_id,
+                      seller_handle: peerName,
+                      other_user: thread.other_user
                     });
                   }} 
                   style={{ 
@@ -283,9 +290,24 @@ function Messages() {
                         margin: 0,
                         whiteSpace: 'nowrap',
                         overflow: 'hidden',
-                        textOverflow: 'ellipsis'
+                        textOverflow: 'ellipsis',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '4px'
                       }}>
-                        Regarding: {title}
+                        {isShopChat ? (
+                          <>
+                            <span>🛍️</span>
+                            <span>{title}</span>
+                          </>
+                        ) : isRequest ? (
+                          <>
+                            <span>📢</span>
+                            <span>{title}</span>
+                          </>
+                        ) : (
+                          <span>Regarding: {title}</span>
+                        )}
                       </p>
 
                       {unread > 0 && (
