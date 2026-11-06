@@ -7,6 +7,7 @@ function ItemDetailModal({
   onClose, 
   listing, 
   onMessageSeller, 
+  onOpenStorefront,
   onRequireAuth, 
   currentUserId,
   onEditListing,
@@ -661,6 +662,33 @@ function ItemDetailModal({
                     <span>•</span>
                     <span>{campusName}</span>
                   </div>
+
+                  {onOpenStorefront && (
+                    <button
+                      type="button"
+                      onClick={() => onOpenStorefront({
+                        seller_id: activeListing.seller_id,
+                        seller_handle: activeListing.seller_handle || activeListing.seller?.burner_handle,
+                        seller_name: sellerDisplayName
+                      })}
+                      style={{
+                        background: 'none',
+                        border: 'none',
+                        padding: 0,
+                        fontSize: '0.8rem',
+                        fontWeight: '700',
+                        color: 'var(--terracotta)',
+                        cursor: 'pointer',
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '0.3rem',
+                        marginTop: '6px'
+                      }}
+                    >
+                      <span>🏪 Browse Seller&apos;s Campus Shop</span>
+                      <i className="fa-solid fa-arrow-right" style={{ fontSize: '0.65rem' }} />
+                    </button>
+                  )}
                 </div>
               </div>
 

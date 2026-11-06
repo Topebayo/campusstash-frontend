@@ -21,6 +21,7 @@ import CreateListingModal from '../components/CreateListingModal';
 import EditListingModal from '../components/EditListingModal';
 import CreateRequestModal from '../components/CreateRequestModal';
 import ThemeToggleBtn from '../components/ThemeToggleBtn';
+import SellerStorefrontModal from '../components/SellerStorefrontModal';
 
 function decodeJwt(token) {
   try {
@@ -179,6 +180,7 @@ function Dashboard() {
   const [authPromptMessage, setAuthPromptMessage] = useState('Join CampusStash');
   const [currentUserId, setCurrentUserId] = useState(null);
   const [editingListing, setEditingListing] = useState(null);
+  const [storefrontSeller, setStorefrontSeller] = useState(null);
 
   // Bookmarked item IDs saved in localStorage
   const [savedItemIds, setSavedItemIds] = useState(() => {
@@ -915,8 +917,19 @@ function Dashboard() {
                           <i className="fa-regular fa-image" />
                         </div>
 
-                        {/* Top-Left: Dedicated Seller Pill */}
-                        <div className="aesthetic-card-seller-pill" title={`Listed by ${sellerName}`}>
+                        {/* Top-Left: Dedicated Seller Pill -> Click to view Storefront */}
+                        <div 
+                          className="aesthetic-card-seller-pill" 
+                          title={`View @${sellerName}'s Campus Shop`}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setStorefrontSeller({
+                              seller_id: listing.seller_id,
+                              seller_handle: listing.seller_handle || listing.seller?.burner_handle,
+                              seller_name: sellerName
+                            });
+                          }}
+                        >
                           <i className="fa-regular fa-user" style={{ fontSize: '0.65rem', opacity: 0.75 }} />
                           <span>by {sellerName}</span>
                         </div>
@@ -1066,6 +1079,10 @@ function Dashboard() {
           listing={selectedListing}
           onClose={() => setSelectedListing(null)}
           onMessageSeller={(item) => handleOpenChat(item)}
+          onOpenStorefront={(vendor) => {
+            setSelectedListing(null);
+            setStorefrontSeller(vendor);
+          }}
           onRequireAuth={() => {
             setAuthPromptMessage('Message Student Sellers');
             setShowAuthPrompt(true);
@@ -1114,6 +1131,25 @@ function Dashboard() {
           onSuccess={() => {
             setEditingListing(null);
             fetchListings();
+          }}
+        />
+      )}
+
+      {/* Seller Campus Storefront Modal */}
+      {storefrontSeller && (
+        <SellerStorefrontModal
+          isOpen={true}
+          sellerId={storefrontSeller.seller_id}
+          sellerHandle={storefrontSeller.seller_handle}
+          initialSellerName={storefrontSeller.seller_name}
+          onClose={() => setStorefrontSeller(null)}
+          onSelectItem={(item) => {
+            setStorefrontSeller(null);
+            setSelectedListing(item);
+          }}
+          onMessageSeller={(vendor) => {
+            setStorefrontSeller(null);
+            handleOpenChat(vendor);
           }}
         />
       )}

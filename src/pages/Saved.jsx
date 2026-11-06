@@ -5,6 +5,7 @@ import Navbar from '../components/Navbar';
 import ItemDetailModal from '../components/ItemDetailModal';
 import ThemeToggleBtn from '../components/ThemeToggleBtn';
 import ChatModal from '../components/ChatModal';
+import SellerStorefrontModal from '../components/SellerStorefrontModal';
 
 function Saved() {
   const navigate = useNavigate();
@@ -14,6 +15,7 @@ function Saved() {
   const [isLoading, setIsLoading] = useState(true);
   const [selectedDetailListing, setSelectedDetailListing] = useState(null);
   const [chatListing, setChatListing] = useState(null);
+  const [storefrontSeller, setStorefrontSeller] = useState(null);
 
   useEffect(() => {
     if (!token) {
@@ -213,8 +215,19 @@ function Saved() {
                       <i className="fa-regular fa-image" />
                     </div>
 
-                    {/* Top-Left: Dedicated Seller Pill */}
-                    <div className="aesthetic-card-seller-pill" title={`Listed by ${sellerName}`}>
+                    {/* Top-Left: Dedicated Seller Pill -> Click to view Storefront */}
+                    <div 
+                      className="aesthetic-card-seller-pill" 
+                      title={`View @${sellerName}'s Campus Shop`}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setStorefrontSeller({
+                          seller_id: listing.seller_id,
+                          seller_handle: listing.seller_handle || listing.seller?.burner_handle,
+                          seller_name: sellerName
+                        });
+                      }}
+                    >
                       <i className="fa-regular fa-user" style={{ fontSize: '0.65rem', opacity: 0.75 }} />
                       <span>by {sellerName}</span>
                     </div>
@@ -262,6 +275,10 @@ function Saved() {
             setSelectedDetailListing(null);
             setChatListing(item);
           }}
+          onOpenStorefront={(vendor) => {
+            setSelectedDetailListing(null);
+            setStorefrontSeller(vendor);
+          }}
           allListings={savedListings}
         />
       )}
@@ -272,6 +289,25 @@ function Saved() {
           isOpen={true} 
           listing={chatListing} 
           onClose={() => setChatListing(null)} 
+        />
+      )}
+
+      {/* Seller Campus Storefront Modal */}
+      {storefrontSeller && (
+        <SellerStorefrontModal
+          isOpen={true}
+          sellerId={storefrontSeller.seller_id}
+          sellerHandle={storefrontSeller.seller_handle}
+          initialSellerName={storefrontSeller.seller_name}
+          onClose={() => setStorefrontSeller(null)}
+          onSelectItem={(item) => {
+            setStorefrontSeller(null);
+            setSelectedDetailListing(item);
+          }}
+          onMessageSeller={(vendor) => {
+            setStorefrontSeller(null);
+            setChatListing(vendor);
+          }}
         />
       )}
     </div>

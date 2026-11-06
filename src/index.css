@@ -1745,18 +1745,6 @@ select option {
   margin-top: auto;
 }
 
-.aesthetic-card-status-pill {
-  display: inline-flex;
-  align-items: center;
-  padding: 2px 7px;
-  border-radius: 9999px;
-  font-size: 0.68rem;
-  font-weight: 700;
-  background-color: var(--badge-active-bg);
-  color: var(--badge-active-text);
-  width: fit-content;
-}
-
 /* Floating Frosted Bottom Navigation Dock */
 .aesthetic-bottom-dock {
   position: fixed;
@@ -1841,10 +1829,10 @@ select option {
   .main-navbar-header {
     display: none !important;
   }
-  
-  body {
-    padding-bottom: 85px !important;
-  }
+}
+
+body {
+  padding-bottom: 96px !important;
 }
 
 @media (min-width: 768px) {
@@ -1852,8 +1840,12 @@ select option {
     display: block;
   }
   
+  body {
+    padding-bottom: 110px !important;
+  }
+
   .aesthetic-bottom-dock {
-    max-width: 420px;
+    max-width: 440px;
   }
 }
 
@@ -1871,7 +1863,7 @@ button {
    AESTHETIC MINIMAL DEVICE SHELL (Centered on PC, Native on Mobile)
    ========================================================================== */
 html, body {
-  background-color: var(--surface-alt);
+  background-color: var(--bg-color);
   margin: 0;
   padding: 0;
   min-height: 100vh;
