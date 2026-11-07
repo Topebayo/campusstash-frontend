@@ -24,6 +24,7 @@ function Footer() {
           borderTop: '1px solid var(--border)',
           color: 'var(--text-muted)',
           marginTop: 'auto',
+          marginBottom: 0,
           width: '100%',
           boxSizing: 'border-box',
           position: 'relative',
@@ -34,7 +35,7 @@ function Footer() {
           style={{
             maxWidth: '1120px',
             margin: '0 auto',
-            padding: '2.5rem 1.5rem 1.75rem 1.5rem',
+            padding: '2.5rem 1.5rem 0.75rem 1.5rem',
             boxSizing: 'border-box'
           }}
         >

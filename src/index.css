@@ -1052,7 +1052,7 @@ select option {
   }
 
   body {
-    padding-bottom: 75px;
+    padding-bottom: 0 !important;
   }
 
   .mobile-bottom-dock {
@@ -1308,10 +1308,11 @@ select option {
     flex: 1;
   }
 
-  /* Ensure web footer is visible on mobile web with bottom clearance for the floating dock */
+  /* Ensure web footer is flush with bottom edge with dock clearance */
   .web-only-footer {
     display: block !important;
-    padding-bottom: 7.5rem !important;
+    padding-bottom: calc(5rem + env(safe-area-inset-bottom, 0px)) !important;
+    margin-bottom: 0 !important;
   }
 }
 
@@ -1320,12 +1321,15 @@ select option {
   display: block !important;
   width: 100%;
   margin-top: auto;
+  margin-bottom: 0 !important;
   box-sizing: border-box;
+  padding-bottom: calc(5rem + env(safe-area-inset-bottom, 0px)) !important;
 }
 
 @media (min-width: 768px) {
   .web-only-footer {
-    padding-bottom: 5.5rem !important;
+    padding-bottom: calc(5rem + env(safe-area-inset-bottom, 0px)) !important;
+    margin-bottom: 0 !important;
   }
 }
 
@@ -1889,7 +1893,7 @@ select option {
 }
 
 body {
-  padding-bottom: 96px !important;
+  padding-bottom: 0 !important;
 }
 
 @media (min-width: 768px) {
@@ -1898,7 +1902,7 @@ body {
   }
   
   body {
-    padding-bottom: 110px !important;
+    padding-bottom: 0 !important;
   }
 
   .aesthetic-bottom-dock {
