@@ -154,14 +154,31 @@ export const apiFetch = async (endpoint, options = {}) => {
     headers['Content-Type'] = 'application/json';
   }
 
-  const response = await fetch(`${baseUrl}${endpoint}`, {
-    ...options,
-    headers,
-  });
+  let response;
+  try {
+    response = await fetch(`${baseUrl}${endpoint}`, {
+      ...options,
+      headers,
+    });
+  } catch (netErr) {
+    const isSafariLoadFailed = netErr?.message === 'Load failed';
+    const isFailedToFetch = netErr?.message?.includes('Failed to fetch') || netErr?.message?.includes('NetworkError');
+    if (isSafariLoadFailed || isFailedToFetch) {
+      throw new Error("Unable to reach CampusStash server. Please check your connection or wait a moment while the server wakes up.");
+    }
+    throw netErr;
+  }
 
   if (!response.ok) {
     const errorData = await response.json().catch(() => ({}));
-    const message = errorData.detail || `Request failed with status ${response.status}`;
+    let message = errorData.detail;
+    if (Array.isArray(message)) {
+      message = message.map(m => m.msg || m.message || JSON.stringify(m)).join(', ');
+    } else if (typeof message === 'object' && message !== null) {
+      message = JSON.stringify(message);
+    }
+    message = message || `Request failed with status ${response.status}`;
+
     // Clear stale token on auth failures
     if (response.status === 401 || response.status === 403) {
       if (
