@@ -55,6 +55,15 @@ function Profile() {
     return params.get('tab') === 'saved' ? 'saved' : 'listings';
   });
 
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    if (params.get('tab') === 'saved') {
+      setActiveTab('saved');
+    } else if (params.get('tab') === 'listings') {
+      setActiveTab('listings');
+    }
+  }, [location.search]);
+
   // Modals
   const [editingListing, setEditingListing] = useState(null);
   const [selectedDetailListing, setSelectedDetailListing] = useState(null);
@@ -130,18 +139,32 @@ function Profile() {
   };
 
   const fetchSavedListings = async () => {
+    const savedIds = JSON.parse(localStorage.getItem('saved_listings') || '[]');
+    if (savedIds.length === 0) {
+      setSavedListings([]);
+      return;
+    }
+
+    // INSTANT DISPLAY: Load from session cache
+    const cached = sessionStorage.getItem('cs_cached_saved_items');
+    if (cached) {
+      try {
+        const parsed = JSON.parse(cached);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          setSavedListings(parsed);
+        }
+      } catch (e) {}
+    }
+
     try {
-      const savedIds = JSON.parse(localStorage.getItem('saved_listings') || '[]');
-      if (savedIds.length === 0) {
-        setSavedListings([]);
-        return;
-      }
-      const data = await apiFetch('/listings/');
-      const allItems = Array.isArray(data) ? data : (data?.items || []);
-      const matched = allItems.filter(item => savedIds.includes(item.id));
-      setSavedListings(matched);
+      const data = await apiFetch(`/listings/?ids=${savedIds.join(',')}&limit=100`);
+      const allItems = data?.items || (Array.isArray(data) ? data : []);
+      setSavedListings(allItems);
+      try {
+        sessionStorage.setItem('cs_cached_saved_items', JSON.stringify(allItems));
+      } catch (e) {}
     } catch (err) {
-      console.warn("Failed to fetch saved listings:", err);
+      console.warn("Failed to fetch saved listings in profile:", err);
     }
   };
 

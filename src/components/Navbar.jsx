@@ -66,7 +66,7 @@ function Navbar({ onPrimaryAction, primaryActionText }) {
   const isHome = location.pathname === '/dashboard' || location.pathname === '/';
   const isProfile = location.pathname === '/profile';
   const isMessages = location.pathname === '/messages';
-  const isSaved = location.pathname === '/saved';
+  const isDiscover = location.pathname === '/discover' || location.pathname === '/stores';
 
   useEffect(() => {
     setToken(localStorage.getItem('token'));
@@ -200,20 +200,14 @@ function Navbar({ onPrimaryAction, primaryActionText }) {
           <i className="fa-solid fa-plus" />
         </button>
 
-        {/* 4. Dedicated Saved Items Page */}
+        {/* 4. Discover Campus Stores & Student Brands */}
         <button
-          onClick={() => {
-            if (!token) {
-              navigate('/auth');
-            } else {
-              navigate('/saved');
-            }
-          }}
-          className={`aesthetic-dock-btn ${isSaved ? 'active' : ''}`}
-          title="Saved Items"
+          onClick={() => navigate('/discover')}
+          className={`aesthetic-dock-btn ${isDiscover ? 'active' : ''}`}
+          title="Discover Stores"
         >
-          <i className={isSaved ? "fa-solid fa-bookmark" : "fa-regular fa-bookmark"} />
-          {isSaved && <span className="aesthetic-dock-dot" />}
+          <i className="fa-solid fa-store" />
+          {isDiscover && <span className="aesthetic-dock-dot" />}
         </button>
 
         {/* 5. My Profile Page */}

@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { Routes, Route } from 'react-router-dom';
+import { Routes, Route, Navigate } from 'react-router-dom';
 import { Capacitor } from '@capacitor/core';
 import { App as CapacitorApp } from '@capacitor/app';
 
@@ -8,6 +8,7 @@ import Dashboard from './pages/Dashboard';
 import Profile from './pages/Profile';
 import Messages from './pages/Messages';
 import Saved from './pages/Saved';
+import Discover from './pages/Discover';
 
 class ErrorBoundary extends React.Component {
   constructor(props) {
@@ -146,7 +147,9 @@ function App() {
         <Route path="/l/:id" element={<Dashboard />} />
         <Route path="/profile" element={<Profile />} />
         <Route path="/messages" element={<Messages />} />
-        <Route path="/saved" element={<Saved />} />
+        <Route path="/discover" element={<Discover />} />
+        <Route path="/stores" element={<Discover />} />
+        <Route path="/saved" element={<Navigate to="/profile?tab=saved" replace />} />
         <Route path="*" element={<Dashboard />} />
       </Routes>
       </div>
