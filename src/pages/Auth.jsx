@@ -1051,14 +1051,17 @@ function Auth() {
               )}
 
               <div>
-                <label className="form-label">Email Address</label>
+                <label className="form-label">
+                  {isLogin ? "Email or Phone Number" : "Email Address"}
+                </label>
                 <input 
                   className="form-input"
-                  type="email" 
+                  type={isLogin ? "text" : "email"} 
                   required
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  placeholder="e.g. student@university.edu.ng"
+                  placeholder={isLogin ? "e.g. 08012345678 or student@domain.com" : "e.g. student@university.edu.ng"}
+                  autoComplete={isLogin ? "username" : "email"}
                 />
               </div>
 
