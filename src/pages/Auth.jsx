@@ -61,7 +61,6 @@ function Auth() {
   const [isSendingOtp, setIsSendingOtp] = useState(false);
   const [isVerifyingOtp, setIsVerifyingOtp] = useState(false);
   const [otpMessage, setOtpMessage] = useState('');
-  const [devCodeHint, setDevCodeHint] = useState('');
   const [resendCooldown, setResendCooldown] = useState(0);
 
   // Forgot Password State
@@ -74,7 +73,6 @@ function Auth() {
   const [isForgotSending, setIsForgotSending] = useState(false);
   const [isForgotResetting, setIsForgotResetting] = useState(false);
   const [forgotCooldown, setForgotCooldown] = useState(0);
-  const [forgotDevCode, setForgotDevCode] = useState('');
 
   const isAirtelNumber = (num) => {
     if (!num) return false;
@@ -118,7 +116,6 @@ function Auth() {
     setError('');
     setOtpMessage('');
     setIsSendingOtp(true);
-    setDevCodeHint('');
 
     try {
       const res = await apiFetch('/auth/phone/send-otp', {
@@ -128,9 +125,6 @@ function Auth() {
       setIsOtpSent(true);
       const chName = channel === 'whatsapp' ? 'WhatsApp' : (channel === 'voice' ? 'Voice Call' : 'SMS');
       setOtpMessage(res.message || `Verification code sent to your phone via ${chName}.`);
-      if (res.dev_code) {
-        setDevCodeHint(res.dev_code);
-      }
       setResendCooldown(60);
       return true;
     } catch (err) {
@@ -172,7 +166,6 @@ function Auth() {
     setIsPhoneVerified(false);
     setIsOtpSent(false);
     setOtpCode('');
-    setDevCodeHint('');
     setOtpMessage('');
     setResendCooldown(0);
   };
@@ -187,7 +180,6 @@ function Auth() {
     setError('');
     setOtpMessage('');
     setIsForgotSending(true);
-    setForgotDevCode('');
 
     try {
       const res = await apiFetch('/auth/forgot-password/send-otp', {
@@ -197,9 +189,6 @@ function Auth() {
       setIsForgotOtpSent(true);
       const chName = activeChannel === 'whatsapp' ? 'WhatsApp' : (activeChannel === 'voice' ? 'Voice Call' : 'SMS');
       setOtpMessage(res.message || `Password reset code sent via ${chName}!`);
-      if (res.dev_code) {
-        setForgotDevCode(res.dev_code);
-      }
       setForgotCooldown(60);
     } catch (err) {
       setError(err.message || 'Failed to send password reset code.');
@@ -714,41 +703,6 @@ function Auth() {
                       <label className="form-label" style={{ marginBottom: 0 }}>
                         Enter 6-Digit Recovery Code
                       </label>
-                      <div>
-                        {forgotDevCode ? (
-                          <button
-                            type="button"
-                            onClick={() => setForgotOtp(forgotDevCode)}
-                            style={{
-                              background: 'none',
-                              border: 'none',
-                              padding: 0,
-                              color: 'var(--brandblue)',
-                              fontSize: '0.75rem',
-                              fontWeight: '700',
-                              cursor: 'pointer'
-                            }}
-                          >
-                            Auto-fill ({forgotDevCode})
-                          </button>
-                        ) : (
-                          <button
-                            type="button"
-                            onClick={() => setForgotOtp('123456')}
-                            style={{
-                              background: 'none',
-                              border: 'none',
-                              padding: 0,
-                              color: 'var(--brandblue)',
-                              fontSize: '0.75rem',
-                              fontWeight: '600',
-                              cursor: 'pointer'
-                            }}
-                          >
-                            Auto-fill (123456)
-                          </button>
-                        )}
-                      </div>
                     </div>
                     <input
                       className="form-input"
@@ -1462,23 +1416,6 @@ function Auth() {
                           <span style={{ fontSize: '0.78rem', fontWeight: '700', color: 'var(--text-main)' }}>
                             Enter 6-Digit {otpChannel === 'whatsapp' ? 'WhatsApp' : 'SMS'} Code
                           </span>
-                          {devCodeHint && (
-                            <button
-                              type="button"
-                              onClick={() => setOtpCode(devCodeHint)}
-                              style={{
-                                background: 'none',
-                                border: 'none',
-                                padding: 0,
-                                color: 'var(--brandblue)',
-                                fontSize: '0.75rem',
-                                fontWeight: '700',
-                                cursor: 'pointer'
-                              }}
-                            >
-                              Auto-fill Code ({devCodeHint})
-                            </button>
-                          )}
                         </div>
 
                         <div style={{ display: 'flex', gap: '0.5rem' }}>
