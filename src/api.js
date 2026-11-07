@@ -1,10 +1,10 @@
 import { Capacitor } from '@capacitor/core';
 import { LocalNotifications } from '@capacitor/local-notifications';
 
-// Production Cloud Backend on Render
-export const CLOUD_API_BASE = 'https://campusstash-backend.onrender.com/api/v1';
-export const CLOUD_WS_BASE = 'wss://campusstash-backend.onrender.com/api/v1/chat/ws';
-export const CLOUD_HOST = 'https://campusstash-backend.onrender.com';
+// High-Speed Production Backend on Railway (Zero Cold Starts)
+export const CLOUD_API_BASE = 'https://web-production-85cbf.up.railway.app/api/v1';
+export const CLOUD_WS_BASE = 'wss://web-production-85cbf.up.railway.app/api/v1/chat/ws';
+export const CLOUD_HOST = 'https://web-production-85cbf.up.railway.app';
 
 // Standard Nigerian Tertiary Institutions (Ibadan Cluster & Launch Hubs)
 export const DEFAULT_CAMPUSES = [
@@ -224,8 +224,8 @@ export const clearAppNotifications = async (conversationId = null) => {
   }
 };
 
-// ─── Render Keep-Alive System ───────────────────────────────────────────────
-const KEEPALIVE_URL = 'https://campusstash-backend.onrender.com/health';
+// ─── Railway Keep-Alive System ──────────────────────────────────────────────
+const KEEPALIVE_URL = 'https://web-production-85cbf.up.railway.app/health';
 const KEEPALIVE_INTERVAL_MS = 13 * 60 * 1000; // 13 minutes
 
 function pingBackend() {
