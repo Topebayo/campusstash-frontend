@@ -9,7 +9,6 @@ import SettingsModal from '../components/SettingsModal';
 import ThemeToggleBtn from '../components/ThemeToggleBtn';
 import ItemDetailModal from '../components/ItemDetailModal';
 import SellerStorefrontModal from '../components/SellerStorefrontModal';
-import Footer from '../components/Footer';
 
 const STORE_CATEGORIES = [
   'Fashion & Thrift',
@@ -803,7 +802,6 @@ function Profile() {
 
       </main>
 
-      <Footer />
 
       {/* Item Detail Modal */}
       {selectedDetailListing && (

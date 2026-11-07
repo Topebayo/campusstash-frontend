@@ -1,6 +1,5 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import Footer from '../components/Footer';
 
 function Landing() {
   const navigate = useNavigate();
@@ -267,9 +266,7 @@ function Landing() {
         </div>
       </main>
       
-      {/* Global Modern Web Footer */}
-      <Footer />
-    </div>
+          </div>
   );
 }
 
