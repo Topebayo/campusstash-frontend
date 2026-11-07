@@ -93,17 +93,20 @@ function Navbar({ onPrimaryAction, primaryActionText }) {
     let isMounted = true;
     const checkUnread = async () => {
       try {
-        let convs = [];
+        let total = 0;
         try {
-          convs = await apiFetch('/conversations');
+          const res = await apiFetch('/conversations/unread-count');
+          total = res?.total_unread || 0;
         } catch (e) {
-          convs = await apiFetch('/chat/inbox/me');
+          const convs = await apiFetch('/conversations').catch(() => []);
+          if (Array.isArray(convs)) {
+            total = convs.reduce((sum, c) => sum + (c.unread_count || 0), 0);
+          }
         }
 
-        if (isMounted && Array.isArray(convs)) {
-          const total = convs.reduce((sum, c) => sum + (c.unread_count || 0), 0);
+        if (isMounted) {
           setUnreadCount(prev => {
-            if (total > prev) {
+            if (total > prev && prev > 0) {
               triggerNotification(
                 'CampusStash: New Message',
                 `You have ${total} unread message(s)`
@@ -116,7 +119,7 @@ function Navbar({ onPrimaryAction, primaryActionText }) {
     };
 
     checkUnread();
-    const interval = setInterval(checkUnread, 10000);
+    const interval = setInterval(checkUnread, 15000);
 
     const handleMessagesRead = () => {
       if (Capacitor.isNativePlatform()) {

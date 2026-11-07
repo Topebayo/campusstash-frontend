@@ -14,8 +14,21 @@ function Messages() {
   const [error, setError] = useState('');
   const [activeChatListing, setActiveChatListing] = useState(null);
 
-  const fetchInbox = async () => {
-    setIsLoading(true);
+  const fetchInbox = async (showLoading = true) => {
+    // Check session cache for INSTANT render (0ms)
+    const cached = sessionStorage.getItem('cs_cached_inbox');
+    if (cached) {
+      try {
+        const parsed = JSON.parse(cached);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          setThreads(parsed);
+          setIsLoading(false);
+          showLoading = false;
+        }
+      } catch (e) {}
+    }
+
+    if (showLoading) setIsLoading(true);
     setError('');
     try {
       let data;
@@ -24,7 +37,11 @@ function Messages() {
       } catch (e) {
         data = await apiFetch('/chat/inbox/me');
       }
-      setThreads(data || []);
+      const list = Array.isArray(data) ? data : (data?.items || []);
+      setThreads(list);
+      try {
+        sessionStorage.setItem('cs_cached_inbox', JSON.stringify(list));
+      } catch (e) {}
     } catch (err) {
       console.error("Failed to fetch inbox:", err);
       setError(err.message || 'Failed to load messages.');

@@ -25,19 +25,35 @@ function Saved() {
   }, [token, navigate]);
 
   const fetchSavedListings = async () => {
-    setIsLoading(true);
-    try {
-      const savedIds = JSON.parse(localStorage.getItem('saved_listings') || '[]');
-      if (savedIds.length === 0) {
-        setSavedListings([]);
-        setIsLoading(false);
-        return;
-      }
+    const savedIds = JSON.parse(localStorage.getItem('saved_listings') || '[]');
+    if (savedIds.length === 0) {
+      setSavedListings([]);
+      setIsLoading(false);
+      return;
+    }
 
-      const data = await apiFetch('/listings/');
+    // INSTANT DISPLAY: Render from session cache if available
+    const cached = sessionStorage.getItem('cs_cached_saved_items');
+    if (cached) {
+      try {
+        const parsed = JSON.parse(cached);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          setSavedListings(parsed);
+          setIsLoading(false);
+        }
+      } catch (e) {}
+    } else {
+      setIsLoading(true);
+    }
+
+    try {
+      // High-speed targeted fetch by specific IDs
+      const data = await apiFetch(`/listings/?ids=${savedIds.join(',')}&limit=100`);
       const allItems = data.items || (Array.isArray(data) ? data : []);
-      const matched = allItems.filter(item => savedIds.includes(item.id));
-      setSavedListings(matched);
+      setSavedListings(allItems);
+      try {
+        sessionStorage.setItem('cs_cached_saved_items', JSON.stringify(allItems));
+      } catch (e) {}
     } catch (err) {
       console.warn("Failed to fetch saved listings:", err);
     } finally {

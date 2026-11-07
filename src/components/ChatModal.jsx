@@ -169,6 +169,13 @@ function ChatModal({ isOpen = true, onClose, listing }) {
                 if (newMsg.id && prev.some(m => m.id === newMsg.id)) {
                   return prev;
                 }
+                // Seamlessly resolve matching optimistic message
+                const optIdx = prev.findIndex(m => m.is_optimistic && m.text === newMsg.text);
+                if (optIdx !== -1) {
+                  const updated = [...prev];
+                  updated[optIdx] = newMsg;
+                  return updated;
+                }
                 return [...prev, newMsg];
               });
               if (convId) {
@@ -235,6 +242,18 @@ function ChatModal({ isOpen = true, onClose, listing }) {
     const targetRecipientId = listing.seller_id || listing.recipient_id;
     setInputValue('');
 
+    // INSTANT OPTIMISTIC RENDERING (0ms delay)
+    const tempId = 'opt-' + Date.now() + '-' + Math.random().toString(36).substring(2, 6);
+    const optimisticMsg = {
+      id: tempId,
+      conversation_id: activeConvId,
+      sender_id: currentUserId,
+      text: textToSend,
+      timestamp: new Date().toISOString(),
+      is_optimistic: true
+    };
+    setMessages((prev) => [...prev, optimisticMsg]);
+
     let sentViaWs = false;
     if (ws.current && ws.current.readyState === WebSocket.OPEN) {
       try {
@@ -257,6 +276,12 @@ function ChatModal({ isOpen = true, onClose, listing }) {
         });
         if (savedMsg) {
           setMessages((prev) => {
+            const optIdx = prev.findIndex(m => m.id === tempId || (m.is_optimistic && m.text === textToSend));
+            if (optIdx !== -1) {
+              const updated = [...prev];
+              updated[optIdx] = savedMsg;
+              return updated;
+            }
             if (prev.some(m => m.id === savedMsg.id)) return prev;
             return [...prev, savedMsg];
           });
@@ -264,6 +289,7 @@ function ChatModal({ isOpen = true, onClose, listing }) {
       } catch (postErr) {
         console.error("HTTP send message failed:", postErr);
         setError("Failed to send: " + (postErr.message || 'Network error'));
+        setMessages((prev) => prev.filter(m => m.id !== tempId));
       }
     }
 
@@ -806,9 +832,16 @@ function ChatModal({ isOpen = true, onClose, listing }) {
                     boxShadow: 'var(--shadow-sm)',
                     fontSize: '0.9rem',
                     lineHeight: '1.45',
-                    wordBreak: 'break-word'
+                    wordBreak: 'break-word',
+                    opacity: msg.is_optimistic ? 0.82 : 1,
+                    transition: 'opacity 0.2s ease'
                   }}>
                     {msgText}
+                    {msg.is_optimistic && (
+                      <span style={{ fontSize: '0.72rem', opacity: 0.75, marginLeft: '0.4rem' }}>
+                        <i className="fa-regular fa-clock" />
+                      </span>
+                    )}
                   </div>
                 </div>
               );
