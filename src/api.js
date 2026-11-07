@@ -99,16 +99,17 @@ export const getServerHost = () => {
 };
 
 export const getApiBaseUrl = () => {
-  if (import.meta.env.VITE_API_URL) {
+  // If an old Render backend URL is stored in environment variables, ignore it and use Railway
+  if (import.meta.env.VITE_API_URL && !import.meta.env.VITE_API_URL.includes('onrender.com')) {
     return import.meta.env.VITE_API_URL;
   }
-  // Always use the live cloud backend for Android native, production web, and local development
+  // Always use the live high-speed cloud backend on Railway
   return CLOUD_API_BASE;
 };
 
 export const getWebSocketUrl = (conversationId, token = '') => {
   const tokenQuery = token ? `?token=${token}` : '';
-  if (import.meta.env.VITE_WS_URL) {
+  if (import.meta.env.VITE_WS_URL && !import.meta.env.VITE_WS_URL.includes('onrender.com')) {
     return `${import.meta.env.VITE_WS_URL}/${conversationId}${tokenQuery}`;
   }
   return `${CLOUD_WS_BASE}/${conversationId}${tokenQuery}`;
@@ -122,7 +123,7 @@ export const getImageUrl = (url) => {
   if (Capacitor.isNativePlatform()) {
     return `${CLOUD_HOST}${url.startsWith('/') ? '' : '/'}${url}`;
   }
-  if (import.meta.env.VITE_API_URL) {
+  if (import.meta.env.VITE_API_URL && !import.meta.env.VITE_API_URL.includes('onrender.com')) {
     try {
       const origin = new URL(import.meta.env.VITE_API_URL).origin;
       return `${origin}${url.startsWith('/') ? '' : '/'}${url}`;

@@ -6,12 +6,12 @@ export default defineConfig({
   server: {
     proxy: {
       '/api': {
-        target: 'https://campusstash-backend.onrender.com',
+        target: 'https://web-production-85cbf.up.railway.app',
         changeOrigin: true,
         ws: true,
       },
       '/static': {
-        target: 'https://campusstash-backend.onrender.com',
+        target: 'https://web-production-85cbf.up.railway.app',
         changeOrigin: true,
       }
     }
