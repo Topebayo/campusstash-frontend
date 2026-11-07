@@ -53,7 +53,7 @@ function Auth() {
   }, []);
 
   // Registration OTP Verification State
-  const [otpChannel, setOtpChannel] = useState('sms'); // 'sms' | 'whatsapp' | 'voice'
+  const [otpChannel, setOtpChannel] = useState('email'); // 'email' | 'whatsapp' | 'sms'
   const [otpCode, setOtpCode] = useState('');
   const [isOtpSent, setIsOtpSent] = useState(false);
   const [isPhoneVerified, setIsPhoneVerified] = useState(false);
@@ -65,7 +65,7 @@ function Auth() {
 
   // Forgot Password State
   const [forgotPhone, setForgotPhone] = useState('');
-  const [forgotChannel, setForgotChannel] = useState('sms'); // 'sms' | 'whatsapp' | 'voice'
+  const [forgotChannel, setForgotChannel] = useState('email'); // 'email' | 'whatsapp' | 'sms'
   const [forgotOtp, setForgotOtp] = useState('');
   const [forgotNewPassword, setForgotNewPassword] = useState('');
   const [showForgotPw, setShowForgotPw] = useState(false);
@@ -108,10 +108,19 @@ function Auth() {
   }, [forgotCooldown]);
 
   const handleSendOtp = async (targetPhone = phone, channel = otpChannel) => {
-    const rawPhone = targetPhone.trim();
-    if (!rawPhone) {
-      setError('Please enter your phone number first.');
-      return false;
+    const rawPhone = (targetPhone || '').trim();
+    const rawEmail = (email || '').trim().toLowerCase();
+
+    if (channel === 'email') {
+      if (!rawEmail || !rawEmail.includes('@')) {
+        setError('Please enter your valid email address above first.');
+        return false;
+      }
+    } else {
+      if (!rawPhone) {
+        setError('Please enter your phone number first.');
+        return false;
+      }
     }
     setError('');
     setOtpMessage('');
@@ -120,11 +129,15 @@ function Auth() {
     try {
       const res = await apiFetch('/auth/phone/send-otp', {
         method: 'POST',
-        body: JSON.stringify({ phone: rawPhone, channel })
+        body: JSON.stringify({ 
+          phone: rawPhone || rawEmail, 
+          email: rawEmail || undefined,
+          channel 
+        })
       });
       setIsOtpSent(true);
-      const chName = channel === 'whatsapp' ? 'WhatsApp' : (channel === 'voice' ? 'Voice Call' : 'SMS');
-      setOtpMessage(res.message || `Verification code sent to your phone via ${chName}.`);
+      const chName = channel === 'email' ? 'Email' : (channel === 'whatsapp' ? 'WhatsApp' : 'SMS');
+      setOtpMessage(res.message || `Verification code sent via ${chName}!`);
       setResendCooldown(60);
       return true;
     } catch (err) {
@@ -145,14 +158,21 @@ function Auth() {
     setOtpMessage('');
     setIsVerifyingOtp(true);
 
+    const rawEmail = (email || '').trim().toLowerCase();
+    const rawPhone = (phone || '').trim();
+
     try {
       await apiFetch('/auth/phone/verify-otp', {
         method: 'POST',
-        body: JSON.stringify({ phone: phone.trim(), otp_code: code })
+        body: JSON.stringify({ 
+          phone: rawPhone || rawEmail, 
+          email: rawEmail || undefined,
+          otp_code: code 
+        })
       });
       setIsPhoneVerified(true);
-      setVerifiedPhone(phone.trim());
-      setOtpMessage('Phone number verified successfully! Verified identity active.');
+      setVerifiedPhone(rawPhone || rawEmail);
+      setOtpMessage(otpChannel === 'email' ? 'Email verified successfully! You can now finish creating your account.' : 'Phone number verified successfully!');
       return true;
     } catch (err) {
       setError(err.message || 'Invalid or expired verification code.');
@@ -171,10 +191,10 @@ function Auth() {
   };
 
   const handleForgotSendOtp = async (overrideChannel = null) => {
-    const rawPhone = forgotPhone.trim();
+    const rawInput = forgotPhone.trim();
     const activeChannel = (typeof overrideChannel === 'string' && overrideChannel) ? overrideChannel : forgotChannel;
-    if (!rawPhone) {
-      setError('Please enter your registered Nigerian phone number.');
+    if (!rawInput) {
+      setError('Please enter your registered email address or phone number.');
       return;
     }
     setError('');
@@ -182,12 +202,17 @@ function Auth() {
     setIsForgotSending(true);
 
     try {
+      const isEmail = rawInput.includes('@') || activeChannel === 'email';
       const res = await apiFetch('/auth/forgot-password/send-otp', {
         method: 'POST',
-        body: JSON.stringify({ phone: rawPhone, channel: activeChannel })
+        body: JSON.stringify({ 
+          phone: isEmail ? undefined : rawInput,
+          email: isEmail ? rawInput.toLowerCase() : undefined,
+          channel: isEmail ? 'email' : activeChannel 
+        })
       });
       setIsForgotOtpSent(true);
-      const chName = activeChannel === 'whatsapp' ? 'WhatsApp' : (activeChannel === 'voice' ? 'Voice Call' : 'SMS');
+      const chName = isEmail ? 'Email' : (activeChannel === 'whatsapp' ? 'WhatsApp' : 'SMS');
       setOtpMessage(res.message || `Password reset code sent via ${chName}!`);
       setForgotCooldown(60);
     } catch (err) {
@@ -199,12 +224,12 @@ function Auth() {
 
   const handleForgotReset = async (e) => {
     e.preventDefault();
-    const rawPhone = forgotPhone.trim();
+    const rawInput = forgotPhone.trim();
     const code = forgotOtp.trim();
     const newPass = forgotNewPassword;
 
-    if (!rawPhone) {
-      setError('Phone number is required.');
+    if (!rawInput) {
+      setError('Email or phone number is required.');
       return;
     }
     if (!code || code.length < 4) {
@@ -220,11 +245,14 @@ function Auth() {
     setOtpMessage('');
     setIsForgotResetting(true);
 
+    const isEmail = rawInput.includes('@');
+
     try {
       const data = await apiFetch('/auth/forgot-password/reset', {
         method: 'POST',
         body: JSON.stringify({
-          phone: rawPhone,
+          phone: isEmail ? undefined : rawInput,
+          email: isEmail ? rawInput.toLowerCase() : undefined,
           otp_code: code,
           new_password: newPass
         })
@@ -287,7 +315,7 @@ function Auth() {
           }
         }
 
-        // Check if phone has been verified
+        // Check if account has been verified via OTP
         if (!isPhoneVerified) {
           // If code was sent and user typed the code, verify it now
           if (isOtpSent && otpCode.trim()) {
@@ -298,13 +326,18 @@ function Auth() {
             }
           } else if (!isOtpSent) {
             // Automatically send OTP
-            await handleSendOtp();
-            const chName = otpChannel === 'whatsapp' ? 'WhatsApp' : 'SMS';
-            setError(`We just sent a 6-digit confirmation code via ${chName}. Enter it below to activate your account.`);
+            const sent = await handleSendOtp();
+            if (sent) {
+              const chName = otpChannel === 'email' ? 'Email' : (otpChannel === 'whatsapp' ? 'WhatsApp' : 'SMS');
+              const targetDesc = otpChannel === 'email' ? (email.trim() || 'your email') : 'your phone';
+              setError(`We just sent a 6-digit confirmation code to ${targetDesc} via ${chName}. Enter it below to activate your account.`);
+            }
             setIsLoading(false);
             return;
           } else {
-            setError(`Please enter and verify the 6-digit code sent to your phone via ${otpChannel === 'whatsapp' ? 'WhatsApp' : 'SMS'}.`);
+            const chName = otpChannel === 'email' ? 'Email' : (otpChannel === 'whatsapp' ? 'WhatsApp' : 'SMS');
+            const targetDesc = otpChannel === 'email' ? 'email' : 'phone';
+            setError(`Please enter and verify the 6-digit code sent to your ${targetDesc} via ${chName}.`);
             setIsLoading(false);
             return;
           }
@@ -560,9 +593,9 @@ function Auth() {
             {/* Step 1: Request Recovery OTP */}
             <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
               <div>
-                <label className="form-label">Registered Phone Number</label>
+                <label className="form-label">Registered Email or Phone Number</label>
                 
-                {/* Channel toggle for forgot password: SMS, WhatsApp, and Email */}
+                {/* Channel toggle for forgot password: Email, WhatsApp, SMS */}
                 <div style={{
                   display: 'flex',
                   gap: '0.35rem',
@@ -574,27 +607,27 @@ function Auth() {
                 }}>
                   <button
                     type="button"
-                    onClick={() => setForgotChannel('sms')}
+                    onClick={() => setForgotChannel('email')}
                     style={{
-                      flex: 1,
+                      flex: 1.2,
                       padding: '0.45rem 0.4rem',
                       borderRadius: '9px',
                       border: 'none',
-                      backgroundColor: forgotChannel === 'sms' ? 'var(--surface)' : 'transparent',
-                      color: forgotChannel === 'sms' ? 'var(--brandblue)' : 'var(--text-muted)',
-                      fontWeight: forgotChannel === 'sms' ? '700' : '500',
+                      backgroundColor: forgotChannel === 'email' ? 'var(--brandblue)' : 'transparent',
+                      color: forgotChannel === 'email' ? '#ffffff' : 'var(--text-muted)',
+                      fontWeight: forgotChannel === 'email' ? '700' : '500',
                       fontSize: '0.75rem',
                       cursor: 'pointer',
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',
                       gap: '0.3rem',
-                      boxShadow: forgotChannel === 'sms' ? 'var(--shadow-sm)' : 'none',
+                      boxShadow: forgotChannel === 'email' ? 'var(--shadow-sm)' : 'none',
                       transition: 'all 0.15s ease'
                     }}
                   >
-                    <i className="fa-solid fa-comment-sms" />
-                    <span>SMS</span>
+                    <i className="fa-solid fa-envelope" style={{ fontSize: '0.85rem' }} />
+                    <span>Email OTP (Instant)</span>
                   </button>
                   <button
                     type="button"
@@ -622,27 +655,27 @@ function Auth() {
                   </button>
                   <button
                     type="button"
-                    onClick={() => setForgotChannel('email')}
+                    onClick={() => setForgotChannel('sms')}
                     style={{
-                      flex: 1,
+                      flex: 0.9,
                       padding: '0.45rem 0.4rem',
                       borderRadius: '9px',
                       border: 'none',
-                      backgroundColor: forgotChannel === 'email' ? 'var(--brandblue)' : 'transparent',
-                      color: forgotChannel === 'email' ? '#ffffff' : 'var(--text-muted)',
-                      fontWeight: forgotChannel === 'email' ? '700' : '500',
+                      backgroundColor: forgotChannel === 'sms' ? 'var(--surface)' : 'transparent',
+                      color: forgotChannel === 'sms' ? 'var(--brandblue)' : 'var(--text-muted)',
+                      fontWeight: forgotChannel === 'sms' ? '700' : '500',
                       fontSize: '0.75rem',
                       cursor: 'pointer',
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',
                       gap: '0.3rem',
-                      boxShadow: forgotChannel === 'email' ? 'var(--shadow-sm)' : 'none',
+                      boxShadow: forgotChannel === 'sms' ? 'var(--shadow-sm)' : 'none',
                       transition: 'all 0.15s ease'
                     }}
                   >
-                    <i className="fa-solid fa-envelope" style={{ fontSize: '0.85rem' }} />
-                    <span>Email OTP</span>
+                    <i className="fa-solid fa-comment-sms" />
+                    <span>SMS</span>
                   </button>
                 </div>
 
@@ -1240,7 +1273,7 @@ function Auth() {
                   <div>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.4rem' }}>
                       <label className="form-label" style={{ marginBottom: 0 }}>
-                        Phone Number ({otpChannel === 'whatsapp' ? 'WhatsApp' : 'SMS'} Verified)
+                        Phone Number {isPhoneVerified ? '(Verified)' : `(${otpChannel === 'email' ? 'Email OTP' : (otpChannel === 'whatsapp' ? 'WhatsApp' : 'SMS')})`}
                       </label>
                       {isPhoneVerified && (
                         <span style={{ fontSize: '0.75rem', color: '#10b981', fontWeight: '700', display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
@@ -1254,7 +1287,7 @@ function Auth() {
                       <div style={{
                         display: 'flex',
                         gap: '0.35rem',
-                        marginBottom: '0.65rem',
+                        marginBottom: '0.5rem',
                         backgroundColor: 'var(--bg-color)',
                         padding: '0.25rem',
                         borderRadius: '12px',
@@ -1262,27 +1295,27 @@ function Auth() {
                       }}>
                         <button
                           type="button"
-                          onClick={() => setOtpChannel('sms')}
+                          onClick={() => setOtpChannel('email')}
                           style={{
-                            flex: 1,
+                            flex: 1.2,
                             padding: '0.45rem 0.4rem',
                             borderRadius: '9px',
                             border: 'none',
-                            backgroundColor: otpChannel === 'sms' ? 'var(--surface)' : 'transparent',
-                            color: otpChannel === 'sms' ? 'var(--brandblue)' : 'var(--text-muted)',
-                            fontWeight: otpChannel === 'sms' ? '700' : '500',
+                            backgroundColor: otpChannel === 'email' ? 'var(--brandblue)' : 'transparent',
+                            color: otpChannel === 'email' ? '#ffffff' : 'var(--text-muted)',
+                            fontWeight: otpChannel === 'email' ? '700' : '500',
                             fontSize: '0.75rem',
                             cursor: 'pointer',
                             display: 'flex',
                             alignItems: 'center',
                             justifyContent: 'center',
                             gap: '0.3rem',
-                            boxShadow: otpChannel === 'sms' ? 'var(--shadow-sm)' : 'none',
+                            boxShadow: otpChannel === 'email' ? 'var(--shadow-sm)' : 'none',
                             transition: 'all 0.15s ease'
                           }}
                         >
-                          <i className="fa-solid fa-comment-sms" />
-                          <span>SMS</span>
+                          <i className="fa-solid fa-envelope" style={{ fontSize: '0.85rem' }} />
+                          <span>Email OTP (Instant)</span>
                         </button>
                         <button
                           type="button"
@@ -1310,29 +1343,36 @@ function Auth() {
                         </button>
                         <button
                           type="button"
-                          onClick={() => setOtpChannel('email')}
+                          onClick={() => setOtpChannel('sms')}
                           style={{
-                            flex: 1,
+                            flex: 0.9,
                             padding: '0.45rem 0.4rem',
                             borderRadius: '9px',
                             border: 'none',
-                            backgroundColor: otpChannel === 'email' ? 'var(--brandblue)' : 'transparent',
-                            color: otpChannel === 'email' ? '#ffffff' : 'var(--text-muted)',
-                            fontWeight: otpChannel === 'email' ? '700' : '500',
+                            backgroundColor: otpChannel === 'sms' ? 'var(--surface)' : 'transparent',
+                            color: otpChannel === 'sms' ? 'var(--brandblue)' : 'var(--text-muted)',
+                            fontWeight: otpChannel === 'sms' ? '700' : '500',
                             fontSize: '0.75rem',
                             cursor: 'pointer',
                             display: 'flex',
                             alignItems: 'center',
                             justifyContent: 'center',
                             gap: '0.3rem',
-                            boxShadow: otpChannel === 'email' ? 'var(--shadow-sm)' : 'none',
+                            boxShadow: otpChannel === 'sms' ? 'var(--shadow-sm)' : 'none',
                             transition: 'all 0.15s ease'
                           }}
                         >
-                          <i className="fa-solid fa-envelope" style={{ fontSize: '0.85rem' }} />
-                          <span>Email OTP</span>
+                          <i className="fa-solid fa-comment-sms" />
+                          <span>SMS</span>
                         </button>
                       </div>
+                    )}
+
+                    {!isPhoneVerified && otpChannel === 'email' && (
+                      <p style={{ fontSize: '0.75rem', color: 'var(--brandblue)', margin: '0 0 0.5rem 0.2rem', fontWeight: '500' }}>
+                        <i className="fa-solid fa-circle-info" style={{ marginRight: '0.35rem' }} />
+                        Verification code will be sent to <strong>{email.trim() || 'your email entered above'}</strong>
+                      </p>
                     )}
 
                     <div style={{ display: 'flex', gap: '0.5rem' }}>
@@ -1417,7 +1457,7 @@ function Auth() {
                       }}>
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
                           <span style={{ fontSize: '0.78rem', fontWeight: '700', color: 'var(--text-main)' }}>
-                            Enter 6-Digit {otpChannel === 'whatsapp' ? 'WhatsApp' : 'SMS'} Code
+                            Enter 6-Digit {otpChannel === 'email' ? 'Email' : (otpChannel === 'whatsapp' ? 'WhatsApp' : 'SMS')} Code {otpChannel === 'email' && '(Check inbox/spam)'}
                           </span>
                         </div>
 
