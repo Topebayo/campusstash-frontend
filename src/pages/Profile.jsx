@@ -145,7 +145,6 @@ function Profile() {
       return;
     }
 
-    // INSTANT DISPLAY: Load from session cache
     const cached = sessionStorage.getItem('cs_cached_saved_items');
     if (cached) {
       try {
@@ -270,16 +269,16 @@ function Profile() {
       <main 
         className="animate-fade-in"
         style={{ 
-          maxWidth: '860px', 
+          maxWidth: '720px', 
           margin: '0 auto', 
           width: '100%', 
-          padding: Capacitor.isNativePlatform() ? '0.5rem 1.15rem 7rem 1.15rem' : '0.5rem 1.15rem 2.5rem 1.15rem', 
+          padding: Capacitor.isNativePlatform() ? '0.75rem 1rem 7.5rem 1rem' : '0.75rem 1rem 3.5rem 1rem', 
           boxSizing: 'border-box', 
           flex: 1 
         }}
       >
         {/* ============================================================== */}
-        {/* TOP BAR: EDITORIAL TITLE & GEAR ICON                            */}
+        {/* TOP BAR: CLEAN SHOPMATE HEADER & SETTINGS GEAR                 */}
         {/* ============================================================== */}
         <div style={{
           display: 'flex',
@@ -288,25 +287,39 @@ function Profile() {
           marginBottom: '1.25rem',
           padding: '0 0.25rem'
         }}>
-          <div style={{ width: '36px' }} /> {/* Spacer */}
-
-          <h1 style={{
-            fontFamily: 'var(--font-serif)',
-            fontSize: '1.65rem',
-            fontWeight: '600',
-            color: 'var(--text-main)',
-            margin: 0
-          }}>
-            Profile
-          </h1>
+          <div>
+            <span style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '0.35rem',
+              fontSize: '0.74rem',
+              fontWeight: '700',
+              textTransform: 'uppercase',
+              letterSpacing: '0.04em',
+              color: 'var(--primary)',
+              marginBottom: '0.15rem'
+            }}>
+              <i className="fa-solid fa-circle-user" /> Student Account
+            </span>
+            <h1 style={{
+              fontFamily: 'var(--font-display)',
+              fontSize: '1.75rem',
+              fontWeight: '800',
+              color: 'var(--text-main)',
+              letterSpacing: '-0.02em',
+              margin: 0
+            }}>
+              Profile
+            </h1>
+          </div>
 
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
             <ThemeToggleBtn />
             <button
               onClick={() => setIsSettingsOpen(true)}
               style={{
-                width: '36px',
-                height: '36px',
+                width: '40px',
+                height: '40px',
                 borderRadius: '50%',
                 backgroundColor: 'var(--surface)',
                 border: '1px solid var(--border)',
@@ -315,10 +328,11 @@ function Profile() {
                 justifyContent: 'center',
                 cursor: 'pointer',
                 color: 'var(--text-main)',
-                fontSize: '0.95rem',
-                boxShadow: 'var(--shadow-sm)'
+                fontSize: '1.05rem',
+                boxShadow: 'var(--shadow-sm)',
+                transition: 'all 0.15s ease'
               }}
-              title="Settings & Security"
+              title="Settings & Preferences"
             >
               <i className="fa-solid fa-gear" />
             </button>
@@ -326,24 +340,24 @@ function Profile() {
         </div>
 
         {/* ============================================================== */}
-        {/* USER PROFILE CARD (CENTERED AVATAR & STATS)                     */}
+        {/* USER PROFILE CARD (CLEAN SHOPMATE AESTHETIC)                   */}
         {/* ============================================================== */}
         <div style={{
           backgroundColor: 'var(--surface)',
-          borderRadius: '26px',
+          borderRadius: '24px',
           padding: '1.75rem 1.25rem',
           border: '1px solid var(--border)',
           boxShadow: 'var(--shadow-card)',
           textAlign: 'center',
-          marginBottom: '1.5rem',
+          marginBottom: '1.25rem',
           position: 'relative'
         }}>
-          {/* Centered Circular Avatar */}
+          {/* Circular Avatar with Verified Badge */}
           <div style={{
             position: 'relative',
-            width: '92px',
-            height: '92px',
-            margin: '0 auto 1rem auto'
+            width: '96px',
+            height: '96px',
+            margin: '0 auto 1.1rem auto'
           }}>
             <div style={{
               width: '100%',
@@ -351,14 +365,14 @@ function Profile() {
               borderRadius: '50%',
               backgroundColor: 'var(--surface-alt)',
               border: '3px solid var(--border)',
-              boxShadow: '0 4px 16px rgba(120, 95, 75, 0.14)',
+              boxShadow: '0 6px 20px rgba(14, 68, 52, 0.12)',
               overflow: 'hidden',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              color: 'var(--terracotta)',
-              fontSize: '2rem',
-              fontWeight: '700'
+              color: 'var(--primary)',
+              fontSize: '2.1rem',
+              fontWeight: '800'
             }}>
               {profile?.avatar_url ? (
                 <img 
@@ -371,56 +385,57 @@ function Profile() {
               )}
             </div>
 
-            {/* Verified / Store Badge Pill */}
+            {/* Verified / Store Badge */}
             {profile && (
               <div style={{
                 position: 'absolute',
-                bottom: '0px',
-                right: '-10px',
-                backgroundColor: 'var(--surface)',
-                border: '1px solid var(--border)',
+                bottom: '-2px',
+                right: '-8px',
+                backgroundColor: isStore ? 'var(--primary)' : '#10B981',
+                color: '#FFFFFF',
                 borderRadius: '9999px',
-                padding: '2px 8px',
+                padding: '3px 9px',
                 display: 'flex',
                 alignItems: 'center',
                 gap: '4px',
                 fontSize: '0.72rem',
-                fontWeight: '700',
-                color: isStore ? 'var(--terracotta)' : '#2E7D32',
-                boxShadow: '0 2px 6px rgba(0,0,0,0.06)'
+                fontWeight: '800',
+                boxShadow: '0 3px 8px rgba(0,0,0,0.18)',
+                letterSpacing: '0.01em'
               }}>
-                <i className={isStore ? "fa-solid fa-store" : "fa-solid fa-circle-check"} />
-                {isStore ? 'Campus Store' : 'Verified'}
+                <i className={isStore ? "fa-solid fa-store" : "fa-solid fa-check"} />
+                {isStore ? 'Store' : 'Verified'}
               </div>
             )}
           </div>
 
           {/* User Full Name / Handle or Business Name */}
           <h2 style={{
-            fontFamily: 'var(--font-sans)',
-            fontSize: '1.35rem',
-            fontWeight: '700',
+            fontFamily: 'var(--font-display)',
+            fontSize: '1.4rem',
+            fontWeight: '800',
+            letterSpacing: '-0.02em',
             color: 'var(--text-main)',
-            margin: '0 0 0.25rem 0'
+            margin: '0 0 0.35rem 0'
           }}>
             {isStore && profile?.business_name ? profile.business_name : displayName}
           </h2>
 
           {/* Owner Credit & Category (for Stores) */}
           {isStore && (
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.45rem', flexWrap: 'wrap', marginBottom: '0.45rem' }}>
-              <span style={{ fontSize: '0.84rem', color: 'var(--text-muted)' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.45rem', flexWrap: 'wrap', marginBottom: '0.5rem' }}>
+              <span style={{ fontSize: '0.82rem', color: 'var(--text-muted)' }}>
                 Owned by <strong style={{ color: 'var(--text-main)' }}>{profile?.name || displayName}</strong>
               </span>
               {profile?.business_category && (
                 <span style={{
-                  backgroundColor: 'var(--surface-alt)',
+                  backgroundColor: 'var(--primary-light)',
                   border: '1px solid var(--border)',
                   borderRadius: '9999px',
-                  padding: '2px 8px',
-                  fontSize: '0.74rem',
-                  fontWeight: '600',
-                  color: 'var(--terracotta)'
+                  padding: '2px 10px',
+                  fontSize: '0.75rem',
+                  fontWeight: '700',
+                  color: 'var(--primary)'
                 }}>
                   🏷️ {profile.business_category}
                 </span>
@@ -428,43 +443,50 @@ function Profile() {
             </div>
           )}
 
-          {/* Subtitle: Campus • Major or Pickup Spot */}
-          <p style={{
-            fontSize: '0.85rem',
+          {/* Subtitle: Campus Location Pin */}
+          <div style={{
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: '0.4rem',
+            fontSize: '0.82rem',
+            fontWeight: '600',
             color: 'var(--text-muted)',
-            margin: '0 0 0.75rem 0'
+            marginBottom: '0.85rem'
           }}>
-            {campusMajor}
-            {isStore && profile?.business_address ? ` • 📍 ${profile.business_address}` : ''}
-          </p>
+            <i className="fa-solid fa-location-dot" style={{ color: 'var(--primary)', fontSize: '0.8rem' }} />
+            <span>{campusMajor}{isStore && profile?.business_address ? ` • ${profile.business_address}` : ''}</span>
+          </div>
 
           {/* User Bio or Business Description */}
           <p style={{
             fontSize: '0.88rem',
             color: 'var(--text-main)',
-            lineHeight: 1.45,
-            maxWidth: '420px',
+            lineHeight: 1.5,
+            maxWidth: '440px',
             margin: '0 auto 1.1rem auto',
-            opacity: 0.9
+            opacity: 0.92
           }}>
             {isStore && profile?.business_description ? profile.business_description : userBio}
           </p>
 
-          {/* Social Stats Row */}
+          {/* Social Stats Pill */}
           <div style={{
             display: 'inline-flex',
             alignItems: 'center',
-            gap: '0.5rem',
+            gap: '0.65rem',
             backgroundColor: 'var(--surface-alt)',
+            border: '1px solid var(--border)',
             borderRadius: '9999px',
-            padding: '0.35rem 1rem',
-            fontSize: '0.8rem',
-            fontWeight: '600',
+            padding: '0.4rem 1.15rem',
+            fontSize: '0.82rem',
+            fontWeight: '700',
             color: 'var(--text-main)'
           }}>
-            <span>★ {profile?.rating ? profile.rating.toFixed(1) : '0.0'} ({profile?.reviews_count || 0} reviews)</span>
-            <span style={{ opacity: 0.4 }}>•</span>
-            <span>{soldCount} Items Sold</span>
+            <span style={{ color: '#F59E0B' }}>★ {profile?.rating ? profile.rating.toFixed(1) : '5.0'}</span>
+            <span style={{ opacity: 0.35 }}>•</span>
+            <span>{profile?.reviews_count || 0} reviews</span>
+            <span style={{ opacity: 0.35 }}>•</span>
+            <span style={{ color: 'var(--primary)' }}>{soldCount} Sold</span>
           </div>
 
           {/* Store Actions or Upgrade to Store Banner */}
@@ -477,15 +499,16 @@ function Profile() {
                   display: 'inline-flex',
                   alignItems: 'center',
                   gap: '0.45rem',
-                  backgroundColor: 'var(--terracotta)',
+                  backgroundColor: 'var(--primary)',
                   color: '#FFFFFF',
                   border: 'none',
                   borderRadius: '9999px',
-                  padding: '0.55rem 1.15rem',
+                  padding: '0.65rem 1.25rem',
                   fontWeight: '700',
-                  fontSize: '0.84rem',
+                  fontSize: '0.85rem',
                   cursor: 'pointer',
-                  boxShadow: 'var(--shadow-sm)'
+                  boxShadow: 'var(--shadow-sm)',
+                  transition: 'transform 0.15s ease'
                 }}
               >
                 <i className="fa-solid fa-store" /> View Public Storefront
@@ -512,9 +535,9 @@ function Profile() {
                   color: 'var(--text-main)',
                   border: '1px solid var(--border)',
                   borderRadius: '9999px',
-                  padding: '0.55rem 1.15rem',
+                  padding: '0.65rem 1.25rem',
                   fontWeight: '700',
-                  fontSize: '0.84rem',
+                  fontSize: '0.85rem',
                   cursor: 'pointer'
                 }}
               >
@@ -523,24 +546,24 @@ function Profile() {
             </div>
           ) : (!isLoading && profile) ? (
             <div style={{
-              marginTop: '1.25rem',
-              padding: '0.85rem 1rem',
-              borderRadius: '16px',
+              marginTop: '1.35rem',
+              padding: '1rem 1.15rem',
+              borderRadius: '20px',
               backgroundColor: 'var(--surface-alt)',
-              border: '1px dashed var(--terracotta)',
+              border: '1px dashed var(--primary)',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'space-between',
-              gap: '0.85rem',
+              gap: '1rem',
               textAlign: 'left'
             }}>
               <div>
-                <div style={{ fontWeight: '700', fontSize: '0.88rem', color: 'var(--text-main)', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                  <i className="fa-solid fa-store" style={{ color: 'var(--terracotta)' }} />
+                <div style={{ fontWeight: '800', fontSize: '0.9rem', color: 'var(--text-main)', display: 'flex', alignItems: 'center', gap: '0.45rem' }}>
+                  <span style={{ fontSize: '1.1rem' }}>🏪</span>
                   Running a Student Business?
                 </div>
-                <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)', marginTop: '2px' }}>
-                  Upgrade to a Campus Store to brand your shopfront, showcase items, and chat directly with campus buyers!
+                <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)', marginTop: '3px', lineHeight: '1.4' }}>
+                  Upgrade to an official Campus Store to showcase catalog drops and chat with student buyers.
                 </div>
               </div>
               <button
@@ -558,15 +581,16 @@ function Profile() {
                 }}
                 style={{
                   whiteSpace: 'nowrap',
-                  padding: '0.5rem 0.95rem',
+                  padding: '0.6rem 1.15rem',
                   borderRadius: '9999px',
-                  backgroundColor: 'var(--terracotta)',
+                  backgroundColor: 'var(--primary)',
                   color: '#FFFFFF',
-                  fontSize: '0.8rem',
-                  fontWeight: '700',
+                  fontSize: '0.82rem',
+                  fontWeight: '800',
                   border: 'none',
                   cursor: 'pointer',
-                  boxShadow: 'var(--shadow-sm)'
+                  boxShadow: '0 4px 12px var(--primary-light)',
+                  flexShrink: 0
                 }}
               >
                 Upgrade to Store
@@ -576,7 +600,7 @@ function Profile() {
         </div>
 
         {/* ============================================================== */}
-        {/* SEGMENTED PILL SWITCHER: ACTIVE LISTINGS vs SAVED              */}
+        {/* SEGMENTED PILL SWITCHER: MY LISTINGS vs SAVED ITEMS            */}
         {/* ============================================================== */}
         <div style={{
           display: 'flex',
@@ -593,17 +617,22 @@ function Profile() {
               padding: '0.65rem 1rem',
               borderRadius: '9999px',
               border: 'none',
-              backgroundColor: activeTab === 'listings' ? 'var(--terracotta)' : 'transparent',
+              backgroundColor: activeTab === 'listings' ? 'var(--primary)' : 'transparent',
               color: activeTab === 'listings' ? '#FFFFFF' : 'var(--text-muted)',
-              fontWeight: '700',
+              fontWeight: '800',
               fontSize: '0.88rem',
-              fontFamily: 'var(--font-sans)',
+              fontFamily: 'var(--font-display)',
               cursor: 'pointer',
-              transition: 'all 0.2s ease',
-              boxShadow: activeTab === 'listings' ? '0 2px 8px rgba(200, 122, 91, 0.3)' : 'none'
+              transition: 'all 0.2s cubic-bezier(0.16, 1, 0.3, 1)',
+              boxShadow: activeTab === 'listings' ? '0 4px 12px var(--primary-light)' : 'none',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '0.45rem'
             }}
           >
-            My Active Listings ({activeCount})
+            <i className="fa-solid fa-box" />
+            <span>My Listings ({activeCount})</span>
           </button>
 
           <button
@@ -613,22 +642,27 @@ function Profile() {
               padding: '0.65rem 1rem',
               borderRadius: '9999px',
               border: 'none',
-              backgroundColor: activeTab === 'saved' ? 'var(--terracotta)' : 'transparent',
+              backgroundColor: activeTab === 'saved' ? 'var(--primary)' : 'transparent',
               color: activeTab === 'saved' ? '#FFFFFF' : 'var(--text-muted)',
-              fontWeight: '700',
+              fontWeight: '800',
               fontSize: '0.88rem',
-              fontFamily: 'var(--font-sans)',
+              fontFamily: 'var(--font-display)',
               cursor: 'pointer',
-              transition: 'all 0.2s ease',
-              boxShadow: activeTab === 'saved' ? '0 2px 8px rgba(200, 122, 91, 0.3)' : 'none'
+              transition: 'all 0.2s cubic-bezier(0.16, 1, 0.3, 1)',
+              boxShadow: activeTab === 'saved' ? '0 4px 12px var(--primary-light)' : 'none',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '0.45rem'
             }}
           >
-            My Saved ({savedListings.length})
+            <i className="fa-regular fa-heart" />
+            <span>Saved Items ({savedListings.length})</span>
           </button>
         </div>
 
         {/* ============================================================== */}
-        {/* TAB 1: MY ACTIVE LISTINGS (2-COLUMN GRID)                       */}
+        {/* TAB 1: MY ACTIVE LISTINGS (SHOPMATE 2-COLUMN GRID)              */}
         {/* ============================================================== */}
         {activeTab === 'listings' && (
           <div>
@@ -638,19 +672,45 @@ function Profile() {
                 padding: '3rem 1.5rem',
                 backgroundColor: 'var(--surface)',
                 borderRadius: '24px',
-                border: '1px solid var(--border)'
+                border: '1px solid var(--border)',
+                boxShadow: 'var(--shadow-sm)'
               }}>
-                <i className="fa-solid fa-box-open" style={{ fontSize: '2rem', color: 'var(--terracotta)', opacity: 0.6, marginBottom: '0.75rem', display: 'block' }} />
-                <h3 style={{ fontSize: '1.15rem', fontWeight: '700', marginBottom: '0.3rem' }}>
+                <div style={{
+                  width: '64px',
+                  height: '64px',
+                  borderRadius: '50%',
+                  backgroundColor: 'var(--primary-light)',
+                  color: 'var(--primary)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  fontSize: '1.6rem',
+                  margin: '0 auto 1rem auto'
+                }}>
+                  <i className="fa-solid fa-box-open" />
+                </div>
+                <h3 style={{ fontSize: '1.2rem', fontWeight: '800', fontFamily: 'var(--font-display)', marginBottom: '0.35rem', color: 'var(--text-main)' }}>
                   No Listings Posted Yet
                 </h3>
-                <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem', marginBottom: '1.25rem' }}>
-                  Declutter your dorm! Post textbooks, calculator, or gear in under a minute.
+                <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem', marginBottom: '1.35rem', maxWidth: '360px', margin: '0 auto 1.35rem auto' }}>
+                  Declutter your room! Sell textbooks, phone accessories, clothing, or gear in seconds.
                 </p>
                 <button 
-                  className="btn-primary"
                   onClick={() => setIsCreateOpen(true)}
-                  style={{ borderRadius: '9999px', padding: '0.65rem 1.4rem' }}
+                  style={{
+                    backgroundColor: 'var(--primary)',
+                    color: '#FFFFFF',
+                    border: 'none',
+                    borderRadius: '9999px',
+                    padding: '0.7rem 1.5rem',
+                    fontWeight: '800',
+                    fontSize: '0.88rem',
+                    cursor: 'pointer',
+                    boxShadow: '0 4px 14px var(--primary-light)',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '0.45rem'
+                  }}
                 >
                   <i className="fa-solid fa-plus" /> Post Your First Item
                 </button>
@@ -665,12 +725,12 @@ function Profile() {
                   return (
                     <div 
                       key={listing.id}
-                      className="aesthetic-card"
-                      style={{ opacity: isSold ? 0.75 : 1 }}
+                      className="shopmate-card"
+                      style={{ opacity: isSold ? 0.72 : 1 }}
                     >
                       {/* Image Box */}
                       <div 
-                        className="aesthetic-card-image-box"
+                        className="shopmate-card-image-box"
                         onClick={() => setSelectedDetailListing(listing)}
                       >
                         {listing.image_url ? (
@@ -680,45 +740,75 @@ function Profile() {
                             style={{ width: '100%', height: '100%', objectFit: 'cover' }} 
                           />
                         ) : (
-                          <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-light)', fontSize: '1.75rem' }}>
+                          <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-muted)', fontSize: '1.75rem' }}>
                             <i className="fa-regular fa-image" />
                           </div>
                         )}
 
-                        {/* Status Pill */}
-                        <div className={`aesthetic-card-status-pill ${isSold ? 'sold' : 'active'}`} style={{ bottom: 'auto', top: '10px' }}>
-                          <span className={`aesthetic-status-dot ${isSold ? 'sold' : 'active'}`} />
-                          <span>{isSold ? 'Sold' : 'Active'}</span>
+                        {/* Status Pill Badge */}
+                        <div style={{
+                          position: 'absolute',
+                          top: '10px',
+                          left: '10px',
+                          backgroundColor: isSold ? 'rgba(30, 41, 59, 0.85)' : 'rgba(16, 185, 129, 0.92)',
+                          color: '#FFFFFF',
+                          borderRadius: '9999px',
+                          padding: '2px 8px',
+                          fontSize: '0.68rem',
+                          fontWeight: '800',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '4px',
+                          boxShadow: '0 2px 6px rgba(0,0,0,0.18)'
+                        }}>
+                          <span style={{
+                            width: '6px',
+                            height: '6px',
+                            borderRadius: '50%',
+                            backgroundColor: isSold ? '#94A3B8' : '#A7F3D0'
+                          }} />
+                          {isSold ? 'Sold' : 'Active'}
                         </div>
                       </div>
 
-                      {/* Card Details */}
-                      <div className="aesthetic-card-details">
+                      {/* Card Body */}
+                      <div className="shopmate-card-body">
                         <h4 
-                          className="aesthetic-card-title"
+                          className="shopmate-card-title"
                           onClick={() => setSelectedDetailListing(listing)}
                         >
                           {listing.title}
                         </h4>
-                        <div className="aesthetic-card-price">
+
+                        <div className="shopmate-card-price">
                           ₦{priceFormatted}
                         </div>
 
-                        {/* Action Buttons for Seller */}
-                        <div style={{ display: 'flex', gap: '0.4rem', marginTop: '0.5rem', borderTop: '1px solid var(--border)', paddingTop: '0.45rem' }}>
+                        {/* Seller Action Controls */}
+                        <div style={{
+                          display: 'flex',
+                          gap: '0.4rem',
+                          marginTop: '0.6rem',
+                          paddingTop: '0.55rem',
+                          borderTop: '1px solid var(--border)'
+                        }}>
                           <button
                             type="button"
                             onClick={() => setEditingListing(listing)}
                             style={{
                               flex: 1,
-                              padding: '4px',
-                              borderRadius: '8px',
+                              padding: '5px 0',
+                              borderRadius: '9999px',
                               border: '1px solid var(--border)',
                               backgroundColor: 'var(--surface-alt)',
                               color: 'var(--text-main)',
                               fontSize: '0.72rem',
-                              fontWeight: '600',
-                              cursor: 'pointer'
+                              fontWeight: '700',
+                              cursor: 'pointer',
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              gap: '3px'
                             }}
                           >
                             <i className="fa-solid fa-pen" /> Edit
@@ -728,17 +818,17 @@ function Profile() {
                             onClick={() => handleToggleStatus(listing.id, listing.status)}
                             style={{
                               flex: 1,
-                              padding: '4px',
-                              borderRadius: '8px',
+                              padding: '5px 0',
+                              borderRadius: '9999px',
                               border: 'none',
-                              backgroundColor: isSold ? '#2E7D32' : 'var(--terracotta)',
-                              color: '#FFFFFF',
+                              backgroundColor: isSold ? 'var(--primary)' : 'var(--surface-alt)',
+                              color: isSold ? '#FFFFFF' : 'var(--text-main)',
                               fontSize: '0.72rem',
-                              fontWeight: '600',
+                              fontWeight: '700',
                               cursor: 'pointer'
                             }}
                           >
-                            {isSold ? 'Activate' : 'Sold'}
+                            {isSold ? 'Relist' : 'Mark Sold'}
                           </button>
                         </div>
                       </div>
@@ -751,7 +841,7 @@ function Profile() {
         )}
 
         {/* ============================================================== */}
-        {/* TAB 2: MY SAVED ITEMS (2-COLUMN GRID)                           */}
+        {/* TAB 2: MY SAVED ITEMS (SHOPMATE 2-COLUMN GRID)                  */}
         {/* ============================================================== */}
         {activeTab === 'saved' && (
           <div>
@@ -761,19 +851,42 @@ function Profile() {
                 padding: '3rem 1.5rem',
                 backgroundColor: 'var(--surface)',
                 borderRadius: '24px',
-                border: '1px solid var(--border)'
+                border: '1px solid var(--border)',
+                boxShadow: 'var(--shadow-sm)'
               }}>
-                <i className="fa-regular fa-bookmark" style={{ fontSize: '2rem', color: 'var(--terracotta)', opacity: 0.6, marginBottom: '0.75rem', display: 'block' }} />
-                <h3 style={{ fontSize: '1.15rem', fontWeight: '700', marginBottom: '0.3rem' }}>
+                <div style={{
+                  width: '64px',
+                  height: '64px',
+                  borderRadius: '50%',
+                  backgroundColor: 'var(--primary-light)',
+                  color: 'var(--primary)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  fontSize: '1.6rem',
+                  margin: '0 auto 1rem auto'
+                }}>
+                  <i className="fa-regular fa-heart" />
+                </div>
+                <h3 style={{ fontSize: '1.2rem', fontWeight: '800', fontFamily: 'var(--font-display)', marginBottom: '0.35rem', color: 'var(--text-main)' }}>
                   No Saved Items Yet
                 </h3>
-                <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem', marginBottom: '1.25rem' }}>
-                  Tap the heart icon on any listing to save it here for quick access later.
+                <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem', marginBottom: '1.35rem', maxWidth: '360px', margin: '0 auto 1.35rem auto' }}>
+                  Tap the heart icon on any campus listing to bookmark items you want to keep an eye on.
                 </p>
                 <button 
-                  className="btn-primary"
                   onClick={() => navigate('/dashboard')}
-                  style={{ borderRadius: '9999px', padding: '0.65rem 1.4rem' }}
+                  style={{
+                    backgroundColor: 'var(--primary)',
+                    color: '#FFFFFF',
+                    border: 'none',
+                    borderRadius: '9999px',
+                    padding: '0.7rem 1.5rem',
+                    fontWeight: '800',
+                    fontSize: '0.88rem',
+                    cursor: 'pointer',
+                    boxShadow: '0 4px 14px var(--primary-light)'
+                  }}
                 >
                   Explore Marketplace
                 </button>
@@ -787,10 +900,10 @@ function Profile() {
                   return (
                     <div 
                       key={listing.id}
-                      className="aesthetic-card"
+                      className="shopmate-card"
                       onClick={() => setSelectedDetailListing(listing)}
                     >
-                      <div className="aesthetic-card-image-box">
+                      <div className="shopmate-card-image-box">
                         {listing.image_url ? (
                           <img 
                             src={getImageUrl(listing.image_url)} 
@@ -798,20 +911,48 @@ function Profile() {
                             style={{ width: '100%', height: '100%', objectFit: 'cover' }} 
                           />
                         ) : (
-                          <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-light)', fontSize: '1.75rem' }}>
+                          <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-muted)', fontSize: '1.75rem' }}>
                             <i className="fa-regular fa-image" />
                           </div>
                         )}
-                        <div className="aesthetic-card-seller-pill">
-                          <span>{listing.campus_acronym || 'Campus'}</span>
+                        <div style={{
+                          position: 'absolute',
+                          top: '10px',
+                          right: '10px',
+                          width: '28px',
+                          height: '28px',
+                          borderRadius: '50%',
+                          backgroundColor: 'rgba(255, 255, 255, 0.95)',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          color: '#EF4444',
+                          fontSize: '0.85rem',
+                          boxShadow: '0 2px 6px rgba(0,0,0,0.1)'
+                        }}>
+                          <i className="fa-solid fa-heart" />
+                        </div>
+                        <div style={{
+                          position: 'absolute',
+                          bottom: '8px',
+                          left: '8px',
+                          backgroundColor: 'rgba(15, 23, 42, 0.72)',
+                          backdropFilter: 'blur(4px)',
+                          color: '#FFFFFF',
+                          borderRadius: '9999px',
+                          padding: '2px 8px',
+                          fontSize: '0.68rem',
+                          fontWeight: '700'
+                        }}>
+                          {listing.campus_acronym || 'Campus'}
                         </div>
                       </div>
 
-                      <div className="aesthetic-card-details">
-                        <h4 className="aesthetic-card-title">
+                      <div className="shopmate-card-body">
+                        <h4 className="shopmate-card-title">
                           {listing.title}
                         </h4>
-                        <div className="aesthetic-card-price">
+                        <div className="shopmate-card-price">
                           ₦{priceFormatted}
                         </div>
                       </div>
@@ -825,14 +966,13 @@ function Profile() {
 
       </main>
 
-
       {/* Item Detail Modal */}
       {selectedDetailListing && (
         <ItemDetailModal 
           isOpen={true}
           listing={selectedDetailListing}
           onClose={() => setSelectedDetailListing(null)}
-          onMessageSeller={(item) => navigate('/dashboard')}
+          onMessageSeller={() => navigate('/dashboard')}
           currentUserId={profile?.id}
           onEditListing={(item) => {
             setSelectedDetailListing(null);
@@ -898,15 +1038,15 @@ function Profile() {
               maxHeight: '90vh', 
               overflowY: 'auto',
               borderRadius: '24px',
-              padding: '1.5rem'
+              padding: '1.75rem'
             }}
           >
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem' }}>
               <div>
-                <h3 style={{ fontSize: '1.25rem', fontWeight: '700', color: 'var(--text-main)', margin: 0 }}>
+                <h3 style={{ fontSize: '1.35rem', fontWeight: '800', fontFamily: 'var(--font-display)', color: 'var(--text-main)', margin: 0 }}>
                   {profile?.account_type === 'store' ? 'Edit Campus Store' : 'Upgrade to Campus Store'}
                 </h3>
-                <p style={{ fontSize: '0.82rem', color: 'var(--text-muted)', margin: '0.2rem 0 0 0' }}>
+                <p style={{ fontSize: '0.82rem', color: 'var(--text-muted)', margin: '0.25rem 0 0 0' }}>
                   Set your official campus business identity, contact details, and pickup spot
                 </p>
               </div>
@@ -914,12 +1054,17 @@ function Profile() {
                 type="button"
                 onClick={() => setShowStoreManagerModal(false)}
                 style={{
-                  background: 'none',
+                  background: 'var(--surface-alt)',
                   border: 'none',
-                  fontSize: '1.2rem',
+                  borderRadius: '50%',
+                  width: '32px',
+                  height: '32px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  fontSize: '1rem',
                   color: 'var(--text-muted)',
-                  cursor: 'pointer',
-                  padding: '4px'
+                  cursor: 'pointer'
                 }}
               >
                 <i className="fa-solid fa-xmark" />
@@ -930,8 +1075,8 @@ function Profile() {
               <div style={{
                 backgroundColor: '#FEE2E2',
                 color: '#991B1B',
-                padding: '0.65rem 0.85rem',
-                borderRadius: '12px',
+                padding: '0.75rem 1rem',
+                borderRadius: '14px',
                 fontSize: '0.84rem',
                 marginBottom: '1rem',
                 fontWeight: '600'
@@ -940,10 +1085,10 @@ function Profile() {
               </div>
             )}
 
-            <form onSubmit={handleSaveStore} style={{ display: 'flex', flexDirection: 'column', gap: '0.9rem' }}>
+            <form onSubmit={handleSaveStore} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
               <div>
-                <label className="form-label" style={{ fontWeight: '600', fontSize: '0.84rem', display: 'block', marginBottom: '0.35rem' }}>
-                  Real Business / Store Name *
+                <label className="form-label" style={{ fontWeight: '700', fontSize: '0.84rem', display: 'block', marginBottom: '0.35rem' }}>
+                  Store / Brand Name *
                 </label>
                 <input
                   type="text"
@@ -956,7 +1101,7 @@ function Profile() {
               </div>
 
               <div>
-                <label className="form-label" style={{ fontWeight: '600', fontSize: '0.84rem', display: 'block', marginBottom: '0.35rem' }}>
+                <label className="form-label" style={{ fontWeight: '700', fontSize: '0.84rem', display: 'block', marginBottom: '0.35rem' }}>
                   Business Category
                 </label>
                 <select
@@ -972,7 +1117,7 @@ function Profile() {
               </div>
 
               <div>
-                <label className="form-label" style={{ fontWeight: '600', fontSize: '0.84rem', display: 'block', marginBottom: '0.35rem' }}>
+                <label className="form-label" style={{ fontWeight: '700', fontSize: '0.84rem', display: 'block', marginBottom: '0.35rem' }}>
                   Store Bio / Tagline (Optional)
                 </label>
                 <textarea
@@ -980,25 +1125,25 @@ function Profile() {
                   rows={2}
                   value={storeForm.business_description}
                   onChange={(e) => setStoreForm(prev => ({ ...prev, business_description: e.target.value }))}
-                  placeholder="e.g. Premium thrift fits & shoes. Daily hostel delivery."
+                  placeholder="e.g. Curated vintage sneakers & graphic tees. Delivery to hostel gates daily."
                 />
               </div>
 
               <div>
-                <label className="form-label" style={{ fontWeight: '600', fontSize: '0.84rem', display: 'block', marginBottom: '0.35rem' }}>
-                  Hostel / Campus Pickup Spot (Optional)
+                <label className="form-label" style={{ fontWeight: '700', fontSize: '0.84rem', display: 'block', marginBottom: '0.35rem' }}>
+                  Campus Pickup Spot (Optional)
                 </label>
                 <input
                   type="text"
                   className="form-input"
                   value={storeForm.business_address}
                   onChange={(e) => setStoreForm(prev => ({ ...prev, business_address: e.target.value }))}
-                  placeholder="e.g. Achievers Hall Room B12 or Sub Car Park"
+                  placeholder="e.g. SUB Car Park or Achievers Hall Room B12"
                 />
               </div>
 
               <div>
-                <label className="form-label" style={{ fontWeight: '600', fontSize: '0.84rem', display: 'block', marginBottom: '0.35rem' }}>
+                <label className="form-label" style={{ fontWeight: '700', fontSize: '0.84rem', display: 'block', marginBottom: '0.35rem' }}>
                   Instagram / Social Handle (Optional)
                 </label>
                 <input
@@ -1010,18 +1155,19 @@ function Profile() {
                 />
               </div>
 
-              <div style={{ display: 'flex', gap: '0.65rem', marginTop: '0.5rem' }}>
+              <div style={{ display: 'flex', gap: '0.75rem', marginTop: '0.5rem' }}>
                 <button
                   type="button"
                   onClick={() => setShowStoreManagerModal(false)}
                   style={{
                     flex: 1,
-                    padding: '0.75rem',
-                    borderRadius: '12px',
+                    padding: '0.8rem',
+                    borderRadius: '9999px',
                     border: '1px solid var(--border)',
                     backgroundColor: 'var(--surface-alt)',
                     color: 'var(--text-main)',
-                    fontWeight: '600',
+                    fontWeight: '700',
+                    fontSize: '0.88rem',
                     cursor: 'pointer'
                   }}
                 >
@@ -1032,14 +1178,16 @@ function Profile() {
                   disabled={isSavingStore}
                   style={{
                     flex: 2,
-                    padding: '0.75rem',
-                    borderRadius: '12px',
+                    padding: '0.8rem',
+                    borderRadius: '9999px',
                     border: 'none',
-                    backgroundColor: 'var(--terracotta)',
+                    backgroundColor: 'var(--primary)',
                     color: '#FFFFFF',
-                    fontWeight: '700',
+                    fontWeight: '800',
+                    fontSize: '0.88rem',
                     cursor: 'pointer',
-                    opacity: isSavingStore ? 0.7 : 1
+                    opacity: isSavingStore ? 0.7 : 1,
+                    boxShadow: '0 4px 14px var(--primary-light)'
                   }}
                 >
                   {isSavingStore ? 'Saving...' : (profile?.account_type === 'store' ? 'Save Changes' : 'Activate Campus Store')}
@@ -1050,7 +1198,7 @@ function Profile() {
         </div>
       )}
 
-      {/* Seller Storefront Modal (Previewing own store) */}
+      {/* Seller Storefront Modal */}
       {showStorefrontModal && (
         <SellerStorefrontModal
           isOpen={true}

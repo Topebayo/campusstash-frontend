@@ -37,11 +37,11 @@ const compressImage = (file, maxWidth = 800, maxHeight = 800, quality = 0.75) =>
 };
 
 const CATEGORIES = [
-  'Textbooks',
-  'Electronics',
-  'Dorm Essentials',
-  'Fashion & Apparel',
-  'Other'
+  { name: 'Textbooks', icon: 'fa-book' },
+  { name: 'Electronics', icon: 'fa-laptop' },
+  { name: 'Dorm Essentials', icon: 'fa-couch' },
+  { name: 'Fashion & Apparel', icon: 'fa-shirt' },
+  { name: 'Other', icon: 'fa-shapes' }
 ];
 
 function CreateListingModal({ isOpen, onClose, onCreated, onSuccess }) {
@@ -53,6 +53,7 @@ function CreateListingModal({ isOpen, onClose, onCreated, onSuccess }) {
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [isOpen, onClose]);
+
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [price, setPrice] = useState('');
@@ -170,7 +171,7 @@ function CreateListingModal({ isOpen, onClose, onCreated, onSuccess }) {
     }
   };
 
-  React.useEffect(() => {
+  useEffect(() => {
     if (isOpen) {
       setCreatedItem(null);
       setCopiedLink(false);
@@ -310,10 +311,10 @@ function CreateListingModal({ isOpen, onClose, onCreated, onSuccess }) {
       });
 
       if (typeof onCreated === 'function') {
-        try { onCreated(createdData); } catch (e) {}
+        try { onCreated(createdData); } catch (err) {}
       }
       if (typeof onSuccess === 'function') {
-        try { onSuccess(createdData); } catch (e) {}
+        try { onSuccess(createdData); } catch (err) {}
       }
       setCreatedItem(createdData);
     } catch (err) {
@@ -324,20 +325,40 @@ function CreateListingModal({ isOpen, onClose, onCreated, onSuccess }) {
   };
 
   return (
-    <div className="modal-overlay" onClick={onClose}>
+    <div className="modal-overlay" onClick={onClose} style={{ zIndex: 1100 }}>
       <div 
         className="modal-content animate-fade-in" 
         onClick={(e) => e.stopPropagation()} 
-        style={{ maxWidth: '560px', padding: '2rem' }}
+        style={{ 
+          maxWidth: '560px', 
+          width: '94%',
+          maxHeight: '92vh',
+          overflowY: 'auto',
+          borderRadius: '26px',
+          padding: '1.75rem',
+          backgroundColor: 'var(--surface)',
+          border: '1px solid var(--border)',
+          boxShadow: 'var(--shadow-xl)'
+        }}
       >
         {/* Header */}
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1.25rem' }}>
           <div>
-            <span className="badge-pill" style={{ marginBottom: '0.4rem' }}>
-              <i className="fa-solid fa-tag" /> New Item
+            <span style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '0.35rem',
+              fontSize: '0.74rem',
+              fontWeight: '700',
+              textTransform: 'uppercase',
+              letterSpacing: '0.04em',
+              color: 'var(--primary)',
+              marginBottom: '0.2rem'
+            }}>
+              <i className="fa-solid fa-tag" /> Sell on Campus
             </span>
-            <h2 style={{ fontFamily: 'var(--font-display)', fontSize: '1.6rem', fontWeight: '800', letterSpacing: '-0.02em', color: 'var(--text-main)' }}>
-              Create Listing
+            <h2 style={{ fontFamily: 'var(--font-display)', fontSize: '1.55rem', fontWeight: '800', letterSpacing: '-0.02em', color: 'var(--text-main)', margin: 0 }}>
+              Post an Item
             </h2>
           </div>
           <button 
@@ -351,7 +372,7 @@ function CreateListingModal({ isOpen, onClose, onCreated, onSuccess }) {
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              fontSize: '1.1rem',
+              fontSize: '1rem',
               cursor: 'pointer',
               color: 'var(--text-muted)',
               transition: 'background 0.2s'
@@ -362,17 +383,18 @@ function CreateListingModal({ isOpen, onClose, onCreated, onSuccess }) {
         </div>
 
         {createdItem ? (
-          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center', padding: '1rem 0', gap: '1.25rem' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center', padding: '1.25rem 0', gap: '1.25rem' }}>
             <div style={{
               width: '72px',
               height: '72px',
               borderRadius: '50%',
-              backgroundColor: 'var(--lightgreen)',
-              color: 'var(--brandgreen)',
+              backgroundColor: 'var(--primary-light)',
+              color: 'var(--primary)',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              fontSize: '2rem'
+              fontSize: '2rem',
+              boxShadow: '0 6px 20px var(--primary-light)'
             }}>
               <i className="fa-solid fa-check" />
             </div>
@@ -381,10 +403,10 @@ function CreateListingModal({ isOpen, onClose, onCreated, onSuccess }) {
               <h3 style={{ fontFamily: 'var(--font-display)', fontSize: '1.45rem', fontWeight: '800', color: 'var(--text-main)', marginBottom: '0.35rem' }}>
                 {createdItem.isBatch ? `🎉 Batch Drop Live! (${createdItem.count} Items)` : 'Listing Published!'}
               </h3>
-              <p style={{ fontSize: '0.88rem', color: 'var(--text-muted)', maxWidth: '380px', lineHeight: '1.5' }}>
+              <p style={{ fontSize: '0.88rem', color: 'var(--text-muted)', maxWidth: '380px', lineHeight: '1.5', margin: '0 auto' }}>
                 {createdItem.isBatch 
                   ? `Successfully published ${createdItem.count} items to your campus shop catalog. Broadcast the drop to your WhatsApp Status now!`
-                  : 'Your item is live. Share it to your WhatsApp Status and hostel group chats right now to find a student buyer today!'}
+                  : 'Your item is live on campus! Share it to your WhatsApp Status and hostel group chats right now to find a student buyer today.'}
               </p>
             </div>
 
@@ -408,17 +430,17 @@ function CreateListingModal({ isOpen, onClose, onCreated, onSuccess }) {
                   backgroundColor: '#25D366',
                   color: '#ffffff',
                   border: 'none',
-                  borderRadius: '12px',
+                  borderRadius: '9999px',
                   padding: '0.85rem',
                   fontSize: '0.95rem',
-                  fontWeight: '700',
+                  fontWeight: '800',
                   fontFamily: 'var(--font-display)',
                   cursor: 'pointer',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
                   gap: '0.5rem',
-                  boxShadow: '0 4px 12px rgba(37, 211, 102, 0.3)'
+                  boxShadow: '0 4px 14px rgba(37, 211, 102, 0.3)'
                 }}
               >
                 <i className="fa-brands fa-whatsapp" style={{ fontSize: '1.2rem' }} /> Share Drop to WhatsApp Status
@@ -439,10 +461,10 @@ function CreateListingModal({ isOpen, onClose, onCreated, onSuccess }) {
                   backgroundColor: 'var(--surface-alt)',
                   color: 'var(--text-main)',
                   border: '1px solid var(--border)',
-                  borderRadius: '12px',
+                  borderRadius: '9999px',
                   padding: '0.75rem',
                   fontSize: '0.88rem',
-                  fontWeight: '600',
+                  fontWeight: '700',
                   cursor: 'pointer',
                   display: 'flex',
                   alignItems: 'center',
@@ -456,12 +478,21 @@ function CreateListingModal({ isOpen, onClose, onCreated, onSuccess }) {
 
             <button
               type="button"
-              className="btn-secondary"
               onClick={() => {
                 resetForm();
                 onClose();
               }}
-              style={{ width: '100%', padding: '0.75rem' }}
+              style={{
+                width: '100%',
+                padding: '0.75rem',
+                borderRadius: '9999px',
+                border: 'none',
+                backgroundColor: 'var(--primary)',
+                color: '#FFFFFF',
+                fontWeight: '800',
+                fontSize: '0.9rem',
+                cursor: 'pointer'
+              }}
             >
               Done
             </button>
@@ -472,7 +503,7 @@ function CreateListingModal({ isOpen, onClose, onCreated, onSuccess }) {
           <div style={{
             display: 'flex',
             backgroundColor: 'var(--surface-alt)',
-            borderRadius: '12px',
+            borderRadius: '9999px',
             padding: '4px',
             marginBottom: '1.25rem',
             border: '1px solid var(--border)'
@@ -483,14 +514,14 @@ function CreateListingModal({ isOpen, onClose, onCreated, onSuccess }) {
               style={{
                 flex: 1,
                 padding: '0.55rem',
-                borderRadius: '9px',
+                borderRadius: '9999px',
                 border: 'none',
-                backgroundColor: uploadMode === 'single' ? 'var(--surface)' : 'transparent',
-                color: uploadMode === 'single' ? 'var(--terracotta)' : 'var(--text-muted)',
-                fontWeight: '700',
+                backgroundColor: uploadMode === 'single' ? 'var(--primary)' : 'transparent',
+                color: uploadMode === 'single' ? '#FFFFFF' : 'var(--text-muted)',
+                fontWeight: '800',
                 fontSize: '0.85rem',
                 cursor: 'pointer',
-                boxShadow: uploadMode === 'single' ? '0 2px 6px rgba(0,0,0,0.06)' : 'none',
+                boxShadow: uploadMode === 'single' ? '0 3px 10px var(--primary-light)' : 'none',
                 transition: 'all 0.15s ease'
               }}
             >
@@ -502,18 +533,18 @@ function CreateListingModal({ isOpen, onClose, onCreated, onSuccess }) {
               style={{
                 flex: 1,
                 padding: '0.55rem',
-                borderRadius: '9px',
+                borderRadius: '9999px',
                 border: 'none',
-                backgroundColor: uploadMode === 'batch' ? 'var(--surface)' : 'transparent',
-                color: uploadMode === 'batch' ? 'var(--terracotta)' : 'var(--text-muted)',
-                fontWeight: '700',
+                backgroundColor: uploadMode === 'batch' ? 'var(--primary)' : 'transparent',
+                color: uploadMode === 'batch' ? '#FFFFFF' : 'var(--text-muted)',
+                fontWeight: '800',
                 fontSize: '0.85rem',
                 cursor: 'pointer',
-                boxShadow: uploadMode === 'batch' ? '0 2px 6px rgba(0,0,0,0.06)' : 'none',
+                boxShadow: uploadMode === 'batch' ? '0 3px 10px var(--primary-light)' : 'none',
                 transition: 'all 0.15s ease'
               }}
             >
-              🏪 Vendor Batch Drop (5-15 Items)
+              🏪 Vendor Drop (5-15 Items)
             </button>
           </div>
 
@@ -523,7 +554,7 @@ function CreateListingModal({ isOpen, onClose, onCreated, onSuccess }) {
               backgroundColor: 'var(--surface-alt)',
               border: '1px solid var(--border)',
               padding: '0.8rem 1rem',
-              borderRadius: '14px',
+              borderRadius: '16px',
               marginBottom: '1.25rem',
               fontSize: '0.86rem',
               display: 'flex',
@@ -535,28 +566,26 @@ function CreateListingModal({ isOpen, onClose, onCreated, onSuccess }) {
                 width: '24px',
                 height: '24px',
                 borderRadius: '50%',
-                backgroundColor: 'var(--lightblue)',
-                color: 'var(--brandblue)',
+                backgroundColor: 'rgba(239, 68, 68, 0.15)',
+                color: '#EF4444',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
                 fontSize: '0.78rem',
                 flexShrink: 0
               }}>
-                <i className="fa-solid fa-circle-info" />
+                <i className="fa-solid fa-circle-exclamation" />
               </div>
-              <span style={{ fontWeight: '500' }}>{error}</span>
+              <span style={{ fontWeight: '600' }}>{error}</span>
             </div>
           )}
 
           {uploadMode === 'batch' ? (
-            /* ============================================================== */
-            /* BATCH DROP FORM FOR STUDENT SHOPS                             */
-            /* ============================================================== */
+            /* BATCH DROP FORM */
             <form onSubmit={handleBatchSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1.1rem' }}>
               <div style={{
-                backgroundColor: 'var(--surface-alt)',
-                borderRadius: '14px',
+                backgroundColor: 'var(--primary-light)',
+                borderRadius: '16px',
                 padding: '0.85rem 1rem',
                 border: '1px solid var(--border)',
                 display: 'flex',
@@ -564,19 +593,18 @@ function CreateListingModal({ isOpen, onClose, onCreated, onSuccess }) {
                 gap: '0.65rem'
               }}>
                 <span style={{ fontSize: '1.2rem' }}>💡</span>
-                <span style={{ fontSize: '0.82rem', color: 'var(--text-muted)', lineHeight: '1.4' }}>
-                  Select multiple photos from your gallery at once. Each photo becomes an item in your drop with its own title and price.
+                <span style={{ fontSize: '0.82rem', color: 'var(--text-main)', lineHeight: '1.4' }}>
+                  Select multiple photos at once. Each photo creates an item in your campus store catalog with its own title and price.
                 </span>
               </div>
 
               {/* Campus Location for Batch Drop */}
               <div>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.35rem' }}>
-                  <label className="form-label" style={{ marginBottom: 0, display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                    <i className="fa-solid fa-location-dot" style={{ color: 'var(--brandblue)' }} />
-                    <span>Campus Location for Drop</span>
+                  <label className="form-label" style={{ marginBottom: 0, fontWeight: '700', fontSize: '0.84rem' }}>
+                    Campus Location for Drop
                   </label>
-                  <span style={{ fontSize: '0.74rem', color: 'var(--brandblue)', fontWeight: '600' }}>
+                  <span style={{ fontSize: '0.74rem', color: 'var(--primary)', fontWeight: '700' }}>
                     Required
                   </span>
                 </div>
@@ -612,9 +640,9 @@ function CreateListingModal({ isOpen, onClose, onCreated, onSuccess }) {
               <div 
                 onClick={() => batchFileInputRef.current?.click()}
                 style={{
-                  border: '2px dashed var(--terracotta)',
-                  borderRadius: '16px',
-                  padding: '1.35rem 1rem',
+                  border: '2px dashed var(--primary)',
+                  borderRadius: '20px',
+                  padding: '1.4rem 1rem',
                   textAlign: 'center',
                   backgroundColor: 'var(--surface-alt)',
                   cursor: 'pointer',
@@ -624,7 +652,7 @@ function CreateListingModal({ isOpen, onClose, onCreated, onSuccess }) {
                 <div style={{ fontSize: '2rem', marginBottom: '0.35rem' }}>
                   📸
                 </div>
-                <div style={{ fontWeight: '700', fontSize: '0.96rem', color: 'var(--text-main)' }}>
+                <div style={{ fontWeight: '800', fontSize: '0.96rem', color: 'var(--text-main)' }}>
                   {batchItems.length > 0 ? '+ Add More Photos to Drop' : 'Tap to Pick 5–15 Photos from Gallery'}
                 </div>
                 <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)', marginTop: '3px' }}>
@@ -635,7 +663,7 @@ function CreateListingModal({ isOpen, onClose, onCreated, onSuccess }) {
               {/* Batch Queue Cards */}
               {batchItems.length > 0 && (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', maxHeight: '340px', overflowY: 'auto', paddingRight: '4px' }}>
-                  <div style={{ fontSize: '0.82rem', fontWeight: '700', color: 'var(--text-muted)' }}>
+                  <div style={{ fontSize: '0.82rem', fontWeight: '800', color: 'var(--text-muted)' }}>
                     Drop Items ({batchItems.length}):
                   </div>
                   {batchItems.map((item, idx) => (
@@ -645,14 +673,13 @@ function CreateListingModal({ isOpen, onClose, onCreated, onSuccess }) {
                         display: 'flex',
                         gap: '0.75rem',
                         padding: '0.75rem',
-                        borderRadius: '14px',
+                        borderRadius: '16px',
                         backgroundColor: 'var(--surface-alt)',
                         border: '1px solid var(--border)',
                         alignItems: 'center'
                       }}
                     >
-                      {/* Thumbnail with Remove */}
-                      <div style={{ position: 'relative', width: '64px', height: '64px', flexShrink: 0, borderRadius: '10px', overflow: 'hidden', border: '1px solid var(--border)' }}>
+                      <div style={{ position: 'relative', width: '64px', height: '64px', flexShrink: 0, borderRadius: '12px', overflow: 'hidden', border: '1px solid var(--border)' }}>
                         <img src={item.preview} alt={`Item ${idx + 1}`} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                         <button
                           type="button"
@@ -673,20 +700,18 @@ function CreateListingModal({ isOpen, onClose, onCreated, onSuccess }) {
                             fontSize: '0.65rem',
                             cursor: 'pointer'
                           }}
-                          title="Remove item"
                         >
                           ✕
                         </button>
                       </div>
 
-                      {/* Title & Price & Category */}
                       <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
                         <input 
                           type="text"
                           className="form-input"
                           value={item.title}
                           onChange={(e) => handleUpdateBatchItem(item.id, 'title', e.target.value)}
-                          placeholder={`Item #${idx + 1} Title (e.g. Nike Vintage Tee)`}
+                          placeholder={`Item #${idx + 1} Title`}
                           required
                           style={{ padding: '0.45rem 0.65rem', fontSize: '0.86rem', backgroundColor: 'var(--surface)' }}
                         />
@@ -707,7 +732,7 @@ function CreateListingModal({ isOpen, onClose, onCreated, onSuccess }) {
                             style={{ padding: '0.45rem 0.65rem', fontSize: '0.84rem', backgroundColor: 'var(--surface)' }}
                           >
                             {CATEGORIES.map(cat => (
-                              <option key={cat} value={cat}>{cat}</option>
+                              <option key={cat.name} value={cat.name}>{cat.name}</option>
                             ))}
                           </select>
                         </div>
@@ -717,110 +742,146 @@ function CreateListingModal({ isOpen, onClose, onCreated, onSuccess }) {
                 </div>
               )}
 
-              {/* Action Buttons for Batch */}
               <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.75rem', marginTop: '0.5rem' }}>
-                <button type="button" className="btn-secondary" onClick={onClose} disabled={isSubmitting}>
+                <button 
+                  type="button" 
+                  onClick={onClose} 
+                  disabled={isSubmitting}
+                  style={{
+                    padding: '0.7rem 1.4rem',
+                    borderRadius: '9999px',
+                    border: '1px solid var(--border)',
+                    backgroundColor: 'var(--surface-alt)',
+                    color: 'var(--text-main)',
+                    fontWeight: '700',
+                    cursor: 'pointer'
+                  }}
+                >
                   Cancel
                 </button>
                 <button 
                   type="submit" 
-                  className="btn-primary" 
                   disabled={isSubmitting || batchItems.length === 0}
-                  style={{ borderRadius: '9999px', padding: '0.7rem 1.4rem' }}
+                  style={{
+                    backgroundColor: 'var(--primary)',
+                    color: '#FFFFFF',
+                    border: 'none',
+                    borderRadius: '9999px',
+                    padding: '0.7rem 1.5rem',
+                    fontWeight: '800',
+                    fontSize: '0.88rem',
+                    cursor: isSubmitting ? 'not-allowed' : 'pointer',
+                    boxShadow: '0 4px 14px var(--primary-light)',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '0.45rem'
+                  }}
                 >
-                  {isSubmitting ? (
-                    <>
-                      <i className="fa-solid fa-circle-notch fa-spin" />
-                      Publishing {batchItems.length} items...
-                    </>
-                  ) : (
-                    <>
-                      <i className="fa-solid fa-rocket" />
-                      Publish Drop ({batchItems.length} items)
-                    </>
-                  )}
+                  {isSubmitting ? 'Publishing Drop...' : `Publish Drop (${batchItems.length} items)`}
                 </button>
               </div>
             </form>
           ) : (
-        <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1.1rem' }}>
-          <div>
-            <label className="form-label">Item Title</label>
-            <input 
-              className="form-input"
-              type="text" 
-              required
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-              placeholder="e.g. Essential Calculus 8th Edition, Scientific Calculator fx-991"
-            />
-          </div>
-
-          <div>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.35rem' }}>
-              <label className="form-label" style={{ marginBottom: 0, display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                <i className="fa-solid fa-location-dot" style={{ color: 'var(--brandblue)' }} />
-                <span>Campus / University Location</span>
-              </label>
-              <span style={{ fontSize: '0.74rem', color: 'var(--brandblue)', fontWeight: '600' }}>
-                Required
-              </span>
-            </div>
-            <select 
-              className="form-input"
-              value={campusId}
-              onChange={(e) => {
-                setCampusId(e.target.value);
-                if (e.target.value) localStorage.setItem('campusstash_user_campus', e.target.value);
-              }}
-              required
-              style={{
-                cursor: 'pointer',
-                backgroundColor: 'var(--surface)',
-                border: !campusId ? '1.5px solid var(--brandblue)' : undefined
-              }}
-            >
-              <option value="">-- Select Your Campus (e.g. UI, LCU, UNILAG...) --</option>
-              {campuses.map(c => (
-                <option key={c.id} value={c.id}>
-                  {c.acronym} - {c.name} ({c.state})
-                </option>
-              ))}
-            </select>
-            <span style={{ fontSize: '0.74rem', color: 'var(--text-muted)', marginTop: '0.25rem', display: 'block' }}>
-              Students from this university will see your listing in their campus stash.
-            </span>
-          </div>
-
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+          /* SINGLE LISTING FORM */
+          <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1.1rem' }}>
             <div>
-              <label className="form-label">Category</label>
+              <label className="form-label" style={{ fontWeight: '700', fontSize: '0.84rem', display: 'block', marginBottom: '0.35rem' }}>
+                Item Title *
+              </label>
+              <input 
+                className="form-input"
+                type="text" 
+                required
+                value={title}
+                onChange={(e) => setTitle(e.target.value)}
+                placeholder="e.g. Essential Calculus 8th Edition, Scientific Calculator fx-991"
+              />
+            </div>
+
+            <div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.35rem' }}>
+                <label className="form-label" style={{ marginBottom: 0, fontWeight: '700', fontSize: '0.84rem' }}>
+                  Campus / University Location *
+                </label>
+                <span style={{ fontSize: '0.74rem', color: 'var(--primary)', fontWeight: '700' }}>
+                  Required
+                </span>
+              </div>
               <select 
                 className="form-input"
-                value={category}
-                onChange={(e) => setCategory(e.target.value)}
-                style={{ cursor: 'pointer', backgroundColor: 'var(--surface)' }}
+                value={campusId}
+                onChange={(e) => {
+                  setCampusId(e.target.value);
+                  if (e.target.value) localStorage.setItem('campusstash_user_campus', e.target.value);
+                }}
+                required
+                style={{
+                  cursor: 'pointer',
+                  backgroundColor: 'var(--surface)',
+                  border: !campusId ? '1.5px solid var(--primary)' : undefined
+                }}
               >
-                {CATEGORIES.map(cat => (
-                  <option key={cat} value={cat}>{cat}</option>
+                <option value="">-- Select Your Campus (e.g. UI, LCU, UNILAG...) --</option>
+                {campuses.map(c => (
+                  <option key={c.id} value={c.id}>
+                    {c.acronym} - {c.name} ({c.state})
+                  </option>
                 ))}
               </select>
             </div>
 
+            {/* Category Pill Picker */}
             <div>
-              <label className="form-label">Price (NGN)</label>
+              <label className="form-label" style={{ fontWeight: '700', fontSize: '0.84rem', display: 'block', marginBottom: '0.45rem' }}>
+                Category
+              </label>
+              <div style={{ display: 'flex', gap: '0.45rem', flexWrap: 'wrap' }}>
+                {CATEGORIES.map(cat => {
+                  const isSelected = category === cat.name;
+                  return (
+                    <button
+                      type="button"
+                      key={cat.name}
+                      onClick={() => setCategory(cat.name)}
+                      style={{
+                        padding: '0.45rem 0.95rem',
+                        borderRadius: '9999px',
+                        border: isSelected ? '1.5px solid var(--primary)' : '1px solid var(--border)',
+                        backgroundColor: isSelected ? 'var(--primary-light)' : 'var(--surface-alt)',
+                        color: isSelected ? 'var(--primary)' : 'var(--text-muted)',
+                        fontWeight: isSelected ? '800' : '600',
+                        fontSize: '0.8rem',
+                        cursor: 'pointer',
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '0.4rem',
+                        transition: 'all 0.15s ease'
+                      }}
+                    >
+                      <i className={`fa-solid ${cat.icon}`} />
+                      <span>{cat.name}</span>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Price (NGN) */}
+            <div>
+              <label className="form-label" style={{ fontWeight: '700', fontSize: '0.84rem', display: 'block', marginBottom: '0.35rem' }}>
+                Price (NGN) *
+              </label>
               <div style={{ position: 'relative' }}>
                 <span style={{
                   position: 'absolute',
                   left: '1rem',
                   top: '50%',
                   transform: 'translateY(-50%)',
-                  color: 'var(--brandgreen)',
-                  fontFamily: 'var(--font-display)',
-                  fontWeight: '700',
-                  fontSize: '1rem'
+                  color: 'var(--primary)',
+                  fontWeight: '800',
+                  fontSize: '1.05rem'
                 }}>
-                  {'\u20A6'}
+                  ₦
                 </span>
                 <input 
                   className="form-input"
@@ -834,295 +895,312 @@ function CreateListingModal({ isOpen, onClose, onCreated, onSuccess }) {
                 />
               </div>
             </div>
-          </div>
 
-          <div>
-            <label className="form-label">Description & Condition</label>
-            <textarea 
-              className="form-input"
-              required
-              rows="3"
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              placeholder="Provide details about condition, edition, accessories included, or preferred campus pickup spots..."
-              style={{ resize: 'none' }}
-            />
-          </div>
-
-          {/* Dual Image Uploaders */}
-          <div>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.4rem' }}>
-              <label className="form-label" style={{ margin: 0 }}>Item Photos (Up to 2)</label>
-              <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Cover + Detail Angle</span>
+            <div>
+              <label className="form-label" style={{ fontWeight: '700', fontSize: '0.84rem', display: 'block', marginBottom: '0.35rem' }}>
+                Description & Pickup Spot
+              </label>
+              <textarea 
+                className="form-input"
+                required
+                rows="3"
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+                placeholder="Details on condition, edition, accessories included, or preferred hostel pickup spot..."
+                style={{ resize: 'none' }}
+              />
             </div>
 
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.85rem' }}>
-              {/* Photo 1: Cover Photo */}
-              <div style={{
-                border: '2px dashed var(--border)',
-                borderRadius: '12px',
-                height: '130px',
-                backgroundColor: 'var(--bg-color)',
-                position: 'relative',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                overflow: 'hidden',
-                cursor: 'pointer'
-              }}>
-                {image1Preview ? (
-                  <>
-                    <img 
-                      src={image1Preview} 
-                      alt="Cover Preview" 
-                      style={{ width: '100%', height: '100%', objectFit: 'cover' }} 
-                    />
-                    <div style={{
-                      position: 'absolute',
-                      top: '0.35rem',
-                      left: '0.35rem',
-                      backgroundColor: 'rgba(15, 23, 42, 0.75)',
-                      color: '#fff',
-                      fontSize: '0.68rem',
-                      fontWeight: '700',
-                      padding: '0.2rem 0.45rem',
-                      borderRadius: '6px'
-                    }}>
-                      Cover
-                    </div>
-                    {isCompressing1 ? (
+            {/* Dual Image Uploaders */}
+            <div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.45rem' }}>
+                <label className="form-label" style={{ margin: 0, fontWeight: '700', fontSize: '0.84rem' }}>
+                  Item Photos (Up to 2)
+                </label>
+                <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Cover + Detail</span>
+              </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.85rem' }}>
+                {/* Photo 1: Cover Photo */}
+                <div style={{
+                  border: '2px dashed var(--primary)',
+                  borderRadius: '16px',
+                  height: '135px',
+                  backgroundColor: 'var(--surface-alt)',
+                  position: 'relative',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  overflow: 'hidden',
+                  cursor: 'pointer'
+                }}>
+                  {image1Preview ? (
+                    <>
+                      <img 
+                        src={image1Preview} 
+                        alt="Cover Preview" 
+                        style={{ width: '100%', height: '100%', objectFit: 'cover' }} 
+                      />
                       <div style={{
                         position: 'absolute',
-                        bottom: '0.35rem',
-                        left: '0.35rem',
-                        backgroundColor: 'rgba(15, 23, 42, 0.85)',
-                        color: 'var(--brandblue)',
+                        top: '0.4rem',
+                        left: '0.4rem',
+                        backgroundColor: 'rgba(15, 23, 42, 0.78)',
+                        color: '#fff',
                         fontSize: '0.68rem',
-                        fontWeight: '700',
-                        padding: '0.2rem 0.45rem',
-                        borderRadius: '6px',
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '0.3rem'
+                        fontWeight: '800',
+                        padding: '0.2rem 0.5rem',
+                        borderRadius: '9999px'
                       }}>
-                        <i className="fa-solid fa-circle-notch fa-spin" /> Optimizing...
+                        Cover
                       </div>
-                    ) : compressedImage1 ? (
+                      {isCompressing1 ? (
+                        <div style={{
+                          position: 'absolute',
+                          bottom: '0.4rem',
+                          left: '0.4rem',
+                          backgroundColor: 'rgba(15, 23, 42, 0.85)',
+                          color: '#34D399',
+                          fontSize: '0.68rem',
+                          fontWeight: '700',
+                          padding: '0.2rem 0.5rem',
+                          borderRadius: '9999px',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '0.3rem'
+                        }}>
+                          <i className="fa-solid fa-circle-notch fa-spin" /> Optimizing...
+                        </div>
+                      ) : compressedImage1 ? (
+                        <div style={{
+                          position: 'absolute',
+                          bottom: '0.4rem',
+                          left: '0.4rem',
+                          backgroundColor: '#10B981',
+                          color: '#fff',
+                          fontSize: '0.65rem',
+                          fontWeight: '800',
+                          padding: '0.15rem 0.45rem',
+                          borderRadius: '9999px',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '0.25rem'
+                        }}>
+                          <i className="fa-solid fa-check" /> Ready
+                        </div>
+                      ) : null}
+                      <button
+                        type="button"
+                        onClick={removeImage1}
+                        title="Remove image"
+                        style={{
+                          position: 'absolute',
+                          top: '0.4rem',
+                          right: '0.4rem',
+                          backgroundColor: 'rgba(239, 68, 68, 0.9)',
+                          color: '#fff',
+                          border: 'none',
+                          borderRadius: '50%',
+                          width: '24px',
+                          height: '24px',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          cursor: 'pointer',
+                          fontSize: '0.75rem'
+                        }}
+                      >
+                        <i className="fa-solid fa-xmark" />
+                      </button>
+                    </>
+                  ) : (
+                    <>
+                      <input 
+                        type="file" 
+                        accept="image/*" 
+                        onChange={handleImage1Change} 
+                        style={{ position: 'absolute', inset: 0, opacity: 0, cursor: 'pointer' }} 
+                      />
+                      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.3rem', padding: '0.5rem', textAlign: 'center' }}>
+                        <i className="fa-solid fa-camera" style={{ fontSize: '1.4rem', color: 'var(--primary)' }} />
+                        <span style={{ fontSize: '0.82rem', fontWeight: '800', color: 'var(--text-main)' }}>
+                          Photo 1 (Cover)
+                        </span>
+                        <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>
+                          Front / Main view
+                        </span>
+                      </div>
+                    </>
+                  )}
+                </div>
+
+                {/* Photo 2: Detail / Back Photo */}
+                <div style={{
+                  border: '2px dashed var(--border)',
+                  borderRadius: '16px',
+                  height: '135px',
+                  backgroundColor: 'var(--surface-alt)',
+                  position: 'relative',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  overflow: 'hidden',
+                  cursor: 'pointer'
+                }}>
+                  {image2Preview ? (
+                    <>
+                      <img 
+                        src={image2Preview} 
+                        alt="Detail Preview" 
+                        style={{ width: '100%', height: '100%', objectFit: 'cover' }} 
+                      />
                       <div style={{
                         position: 'absolute',
-                        bottom: '0.35rem',
-                        left: '0.35rem',
-                        backgroundColor: 'rgba(16, 185, 129, 0.9)',
+                        top: '0.4rem',
+                        left: '0.4rem',
+                        backgroundColor: 'rgba(15, 23, 42, 0.78)',
                         color: '#fff',
-                        fontSize: '0.65rem',
-                        fontWeight: '700',
-                        padding: '0.15rem 0.4rem',
-                        borderRadius: '6px',
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '0.25rem'
+                        fontSize: '0.68rem',
+                        fontWeight: '800',
+                        padding: '0.2rem 0.5rem',
+                        borderRadius: '9999px'
                       }}>
-                        <i className="fa-solid fa-bolt" /> Ready
+                        Detail
                       </div>
-                    ) : null}
-                    <button
-                      type="button"
-                      onClick={removeImage1}
-                      title="Remove image"
-                      style={{
-                        position: 'absolute',
-                        top: '0.35rem',
-                        right: '0.35rem',
-                        backgroundColor: 'rgba(239, 68, 68, 0.9)',
-                        color: '#fff',
-                        border: 'none',
-                        borderRadius: '50%',
-                        width: '24px',
-                        height: '24px',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        cursor: 'pointer',
-                        fontSize: '0.75rem'
-                      }}
-                    >
-                      <i className="fa-solid fa-xmark" />
-                    </button>
+                      {isCompressing2 ? (
+                        <div style={{
+                          position: 'absolute',
+                          bottom: '0.4rem',
+                          left: '0.4rem',
+                          backgroundColor: 'rgba(15, 23, 42, 0.85)',
+                          color: '#34D399',
+                          fontSize: '0.68rem',
+                          fontWeight: '700',
+                          padding: '0.2rem 0.5rem',
+                          borderRadius: '9999px',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '0.3rem'
+                        }}>
+                          <i className="fa-solid fa-circle-notch fa-spin" /> Optimizing...
+                        </div>
+                      ) : compressedImage2 ? (
+                        <div style={{
+                          position: 'absolute',
+                          bottom: '0.4rem',
+                          left: '0.4rem',
+                          backgroundColor: '#10B981',
+                          color: '#fff',
+                          fontSize: '0.65rem',
+                          fontWeight: '800',
+                          padding: '0.15rem 0.45rem',
+                          borderRadius: '9999px',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '0.25rem'
+                        }}>
+                          <i className="fa-solid fa-check" /> Ready
+                        </div>
+                      ) : null}
+                      <button
+                        type="button"
+                        onClick={removeImage2}
+                        title="Remove image"
+                        style={{
+                          position: 'absolute',
+                          top: '0.4rem',
+                          right: '0.4rem',
+                          backgroundColor: 'rgba(239, 68, 68, 0.9)',
+                          color: '#fff',
+                          border: 'none',
+                          borderRadius: '50%',
+                          width: '24px',
+                          height: '24px',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          cursor: 'pointer',
+                          fontSize: '0.75rem'
+                        }}
+                      >
+                        <i className="fa-solid fa-xmark" />
+                      </button>
+                    </>
+                  ) : (
+                    <>
+                      <input 
+                        type="file" 
+                        accept="image/*" 
+                        onChange={handleImage2Change} 
+                        style={{ position: 'absolute', inset: 0, opacity: 0, cursor: 'pointer' }} 
+                      />
+                      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.3rem', padding: '0.5rem', textAlign: 'center' }}>
+                        <i className="fa-solid fa-plus" style={{ fontSize: '1.4rem', color: 'var(--text-muted)' }} />
+                        <span style={{ fontSize: '0.82rem', fontWeight: '800', color: 'var(--text-main)' }}>
+                          Photo 2 (Optional)
+                        </span>
+                        <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>
+                          Back or tag detail
+                        </span>
+                      </div>
+                    </>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            {/* Modal Actions */}
+            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.75rem', marginTop: '0.5rem' }}>
+              <button 
+                type="button" 
+                onClick={onClose} 
+                disabled={isSubmitting}
+                style={{
+                  padding: '0.75rem 1.4rem',
+                  borderRadius: '9999px',
+                  border: '1px solid var(--border)',
+                  backgroundColor: 'var(--surface-alt)',
+                  color: 'var(--text-main)',
+                  fontWeight: '700',
+                  fontSize: '0.88rem',
+                  cursor: 'pointer'
+                }}
+              >
+                Cancel
+              </button>
+              <button 
+                type="submit" 
+                disabled={isSubmitting}
+                style={{
+                  backgroundColor: 'var(--primary)',
+                  color: '#FFFFFF',
+                  border: 'none',
+                  borderRadius: '9999px',
+                  padding: '0.75rem 1.75rem',
+                  fontWeight: '800',
+                  fontSize: '0.9rem',
+                  cursor: isSubmitting ? 'not-allowed' : 'pointer',
+                  boxShadow: '0 4px 14px var(--primary-light)',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '0.45rem'
+                }}
+              >
+                {isSubmitting ? (
+                  <>
+                    <i className="fa-solid fa-circle-notch fa-spin" />
+                    <span>Posting...</span>
                   </>
                 ) : (
                   <>
-                    <input 
-                      type="file"
-                      accept="image/*"
-                      onChange={handleImage1Change}
-                      style={{
-                        position: 'absolute',
-                        top: 0,
-                        left: 0,
-                        width: '100%',
-                        height: '100%',
-                        opacity: 0,
-                        cursor: 'pointer'
-                      }}
-                    />
-                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.3rem', padding: '0.5rem', textAlign: 'center' }}>
-                      <i className="fa-solid fa-camera" style={{ fontSize: '1.3rem', color: 'var(--brandgreen)' }} />
-                      <span style={{ fontSize: '0.8rem', fontWeight: '700', color: 'var(--text-main)' }}>
-                        Photo 1 (Cover)
-                      </span>
-                      <span style={{ fontSize: '0.7rem', color: 'var(--text-light)' }}>
-                        Front view
-                      </span>
-                    </div>
+                    <i className="fa-solid fa-check" />
+                    <span>Post Listing</span>
                   </>
                 )}
-              </div>
-
-              {/* Photo 2: Detail / Back Photo */}
-              <div style={{
-                border: '2px dashed var(--border)',
-                borderRadius: '12px',
-                height: '130px',
-                backgroundColor: 'var(--bg-color)',
-                position: 'relative',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                overflow: 'hidden',
-                cursor: 'pointer'
-              }}>
-                {image2Preview ? (
-                  <>
-                    <img 
-                      src={image2Preview} 
-                      alt="Detail Preview" 
-                      style={{ width: '100%', height: '100%', objectFit: 'cover' }} 
-                    />
-                    <div style={{
-                      position: 'absolute',
-                      top: '0.35rem',
-                      left: '0.35rem',
-                      backgroundColor: 'rgba(15, 23, 42, 0.75)',
-                      color: '#fff',
-                      fontSize: '0.68rem',
-                      fontWeight: '700',
-                      padding: '0.2rem 0.45rem',
-                      borderRadius: '6px'
-                    }}>
-                      Detail
-                    </div>
-                    {isCompressing2 ? (
-                      <div style={{
-                        position: 'absolute',
-                        bottom: '0.35rem',
-                        left: '0.35rem',
-                        backgroundColor: 'rgba(15, 23, 42, 0.85)',
-                        color: 'var(--brandblue)',
-                        fontSize: '0.68rem',
-                        fontWeight: '700',
-                        padding: '0.2rem 0.45rem',
-                        borderRadius: '6px',
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '0.3rem'
-                      }}>
-                        <i className="fa-solid fa-circle-notch fa-spin" /> Optimizing...
-                      </div>
-                    ) : compressedImage2 ? (
-                      <div style={{
-                        position: 'absolute',
-                        bottom: '0.35rem',
-                        left: '0.35rem',
-                        backgroundColor: 'rgba(16, 185, 129, 0.9)',
-                        color: '#fff',
-                        fontSize: '0.65rem',
-                        fontWeight: '700',
-                        padding: '0.15rem 0.4rem',
-                        borderRadius: '6px',
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '0.25rem'
-                      }}>
-                        <i className="fa-solid fa-bolt" /> Ready
-                      </div>
-                    ) : null}
-                    <button
-                      type="button"
-                      onClick={removeImage2}
-                      title="Remove image"
-                      style={{
-                        position: 'absolute',
-                        top: '0.35rem',
-                        right: '0.35rem',
-                        backgroundColor: 'rgba(239, 68, 68, 0.9)',
-                        color: '#fff',
-                        border: 'none',
-                        borderRadius: '50%',
-                        width: '24px',
-                        height: '24px',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        cursor: 'pointer',
-                        fontSize: '0.75rem'
-                      }}
-                    >
-                      <i className="fa-solid fa-xmark" />
-                    </button>
-                  </>
-                ) : (
-                  <>
-                    <input 
-                      type="file"
-                      accept="image/*"
-                      onChange={handleImage2Change}
-                      style={{
-                        position: 'absolute',
-                        top: 0,
-                        left: 0,
-                        width: '100%',
-                        height: '100%',
-                        opacity: 0,
-                        cursor: 'pointer'
-                      }}
-                    />
-                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.3rem', padding: '0.5rem', textAlign: 'center' }}>
-                      <i className="fa-solid fa-plus" style={{ fontSize: '1.3rem', color: 'var(--text-muted)' }} />
-                      <span style={{ fontSize: '0.8rem', fontWeight: '700', color: 'var(--text-main)' }}>
-                        Photo 2 (Optional)
-                      </span>
-                      <span style={{ fontSize: '0.7rem', color: 'var(--text-light)' }}>
-                        Back or detail
-                      </span>
-                    </div>
-                  </>
-                )}
-              </div>
+              </button>
             </div>
-          </div>
-
-
-
-          <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.75rem', marginTop: '0.5rem' }}>
-            <button type="button" className="btn-secondary" onClick={onClose} disabled={isSubmitting}>
-              Cancel
-            </button>
-            <button type="submit" className="btn-primary" disabled={isSubmitting}>
-              {isSubmitting ? (
-                <>
-                  <i className="fa-solid fa-circle-notch fa-spin" />
-                  Posting...
-                </>
-              ) : (
-                <>
-                  <i className="fa-solid fa-check" />
-                  Post Listing
-                </>
-              )}
-            </button>
-          </div>
-        </form>
-        )}
+          </form>
+          )}
         </>
         )}
       </div>

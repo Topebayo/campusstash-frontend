@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { setAppTheme, getAppTheme } from './ThemeToggleBtn';
+import { setAppTheme, getAppTheme, getThemePreference } from './ThemeToggleBtn';
 import { apiFetch } from '../api';
 
 function SettingsModal({ isOpen, onClose, onLogout, userProfile, onUpdateUser }) {
-  const [activeTab, setActiveTab] = useState('account'); // 'account' | 'security' | 'notifications' | 'appearance' | 'safety'
+  const [activeTab, setActiveTab] = useState('appearance'); // Open with appearance / theme for instant visibility, or 'account'
 
   // Account Profile state
   const [handle, setHandle] = useState('');
@@ -32,11 +32,13 @@ function SettingsModal({ isOpen, onClose, onLogout, userProfile, onUpdateUser })
     return localStorage.getItem('cs_pref_notify_deals') !== 'false';
   });
 
-  // Theme state
-  const [theme, setTheme] = useState(() => getAppTheme());
+  // Stored Theme Preference: 'system' | 'light' | 'dark'
+  const [themePref, setThemePref] = useState(() => getThemePreference());
 
   useEffect(() => {
-    const handleSync = (e) => setTheme(e.detail || getAppTheme());
+    const handleSync = () => {
+      setThemePref(getThemePreference());
+    };
     window.addEventListener('campus:theme_change', handleSync);
     return () => window.removeEventListener('campus:theme_change', handleSync);
   }, []);
@@ -56,6 +58,7 @@ function SettingsModal({ isOpen, onClose, onLogout, userProfile, onUpdateUser })
       setNewPassword('');
       setConfirmPassword('');
       setCacheCleared(false);
+      setThemePref(getThemePreference());
 
       if (userProfile) {
         setHandle(userProfile.profile?.burner_handle || '');
@@ -91,10 +94,6 @@ function SettingsModal({ isOpen, onClose, onLogout, userProfile, onUpdateUser })
   const handleAccountSubmit = async (e) => {
     e.preventDefault();
     setAccountMessage({ text: '', type: '' });
-    if (!handle.trim()) {
-      setAccountMessage({ text: 'Username / Burner Handle cannot be empty.', type: 'error' });
-      return;
-    }
     if (!phone.trim()) {
       setAccountMessage({ text: 'Phone number cannot be empty.', type: 'error' });
       return;
@@ -177,14 +176,15 @@ function SettingsModal({ isOpen, onClose, onLogout, userProfile, onUpdateUser })
     localStorage.setItem('cs_pref_notify_deals', String(val));
   };
 
-  const handleThemeChange = (newTheme) => {
-    setTheme(newTheme);
-    setAppTheme(newTheme);
+  const handleThemeChange = (newPref) => {
+    setThemePref(newPref);
+    setAppTheme(newPref);
   };
 
   const handleClearCache = () => {
     localStorage.removeItem('cached_listings');
     localStorage.removeItem('cached_inbox');
+    sessionStorage.removeItem('cs_cached_saved_items');
     setCacheCleared(true);
     setTimeout(() => setCacheCleared(false), 3000);
   };
@@ -218,8 +218,8 @@ function SettingsModal({ isOpen, onClose, onLogout, userProfile, onUpdateUser })
         position: 'fixed',
         inset: 0,
         backgroundColor: 'rgba(15, 23, 42, 0.72)',
-        backdropFilter: 'blur(6px)',
-        WebkitBackdropFilter: 'blur(6px)',
+        backdropFilter: 'blur(8px)',
+        WebkitBackdropFilter: 'blur(8px)',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
@@ -235,7 +235,7 @@ function SettingsModal({ isOpen, onClose, onLogout, userProfile, onUpdateUser })
           maxWidth: '560px',
           maxHeight: '90vh',
           backgroundColor: 'var(--surface)',
-          borderRadius: '24px',
+          borderRadius: '26px',
           border: '1px solid var(--border)',
           boxShadow: 'var(--shadow-xl)',
           display: 'flex',
@@ -252,32 +252,33 @@ function SettingsModal({ isOpen, onClose, onLogout, userProfile, onUpdateUser })
           alignItems: 'center',
           backgroundColor: 'var(--surface)'
         }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
             <div style={{
-              width: '36px',
-              height: '36px',
-              borderRadius: '10px',
-              backgroundColor: 'var(--lightblue)',
-              color: 'var(--brandblue)',
+              width: '40px',
+              height: '40px',
+              borderRadius: '50%',
+              backgroundColor: 'var(--primary-light)',
+              color: 'var(--primary)',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              fontSize: '1rem'
+              fontSize: '1.1rem'
             }}>
-              <i className="fa-solid fa-gear" />
+              <i className="fa-solid fa-sliders" />
             </div>
             <div>
               <h3 style={{
                 fontFamily: 'var(--font-display)',
-                fontSize: '1.2rem',
+                fontSize: '1.25rem',
                 fontWeight: '800',
                 color: 'var(--text-main)',
+                letterSpacing: '-0.01em',
                 margin: 0
               }}>
                 Settings & Preferences
               </h3>
               <span style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>
-                Account security, alerts & app settings
+                Theme, account, alerts & phone sync
               </span>
             </div>
           </div>
@@ -285,13 +286,14 @@ function SettingsModal({ isOpen, onClose, onLogout, userProfile, onUpdateUser })
           <button
             onClick={onClose}
             style={{
-              background: 'none',
+              background: 'var(--surface-alt)',
               border: 'none',
               color: 'var(--text-muted)',
-              fontSize: '1.2rem',
+              fontSize: '1.1rem',
               cursor: 'pointer',
-              padding: '0.4rem',
-              borderRadius: '8px',
+              width: '32px',
+              height: '32px',
+              borderRadius: '50%',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center'
@@ -307,13 +309,15 @@ function SettingsModal({ isOpen, onClose, onLogout, userProfile, onUpdateUser })
           borderBottom: '1px solid var(--border)',
           backgroundColor: 'var(--surface-alt)',
           overflowX: 'auto',
-          scrollbarWidth: 'none'
+          scrollbarWidth: 'none',
+          padding: '4px 8px',
+          gap: '4px'
         }}>
           {[
-            { id: 'account', label: 'Account', icon: 'fa-user' },
+            { id: 'appearance', label: 'Theme & Sync', icon: 'fa-palette' },
+            { id: 'account', label: 'Profile', icon: 'fa-user' },
             { id: 'security', label: 'Security', icon: 'fa-lock' },
             { id: 'notifications', label: 'Alerts', icon: 'fa-bell' },
-            { id: 'appearance', label: 'Theme', icon: 'fa-palette' },
             { id: 'safety', label: 'Safety', icon: 'fa-shield-halved' }
           ].map(tab => {
             const isActive = activeTab === tab.id;
@@ -323,21 +327,23 @@ function SettingsModal({ isOpen, onClose, onLogout, userProfile, onUpdateUser })
                 onClick={() => setActiveTab(tab.id)}
                 style={{
                   flex: 1,
-                  minWidth: '85px',
-                  padding: '0.75rem 0.5rem',
+                  minWidth: '95px',
+                  padding: '0.6rem 0.65rem',
                   border: 'none',
-                  borderBottom: isActive ? '2.5px solid var(--brandblue)' : '2.5px solid transparent',
-                  backgroundColor: 'transparent',
-                  color: isActive ? 'var(--brandblue)' : 'var(--text-muted)',
+                  borderRadius: '9999px',
+                  backgroundColor: isActive ? 'var(--primary)' : 'transparent',
+                  color: isActive ? '#FFFFFF' : 'var(--text-muted)',
                   fontFamily: 'var(--font-display)',
-                  fontWeight: isActive ? '700' : '600',
-                  fontSize: '0.84rem',
+                  fontWeight: isActive ? '800' : '600',
+                  fontSize: '0.82rem',
                   cursor: 'pointer',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
                   gap: '0.4rem',
-                  transition: 'all 0.15s ease'
+                  transition: 'all 0.18s cubic-bezier(0.16, 1, 0.3, 1)',
+                  boxShadow: isActive ? '0 3px 10px var(--primary-light)' : 'none',
+                  whiteSpace: 'nowrap'
                 }}
               >
                 <i className={`fa-solid ${tab.icon}`} />
@@ -356,36 +362,238 @@ function SettingsModal({ isOpen, onClose, onLogout, userProfile, onUpdateUser })
           flexDirection: 'column',
           gap: '1.25rem'
         }}>
-          {/* TAB 0: ACCOUNT / PROFILE */}
+          {/* TAB 0: THEME / APPEARANCE (SYSTEM DARK MODE SYNC) */}
+          {activeTab === 'appearance' && (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '1.2rem' }}>
+              <div>
+                <h4 style={{ fontFamily: 'var(--font-display)', fontSize: '1.05rem', fontWeight: '800', color: 'var(--text-main)', margin: '0 0 0.35rem 0' }}>
+                  Interface Mode & Phone Sync
+                </h4>
+                <p style={{ fontSize: '0.82rem', color: 'var(--text-muted)', margin: 0, lineHeight: '1.45' }}>
+                  Choose whether CampusStash automatically syncs with your phone's dark mode or stays locked in light or dark mode.
+                </p>
+              </div>
+
+              {/* 3 Theme Options */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                {/* 1. System / Phone Default (Recommended) */}
+                <div
+                  onClick={() => handleThemeChange('system')}
+                  style={{
+                    padding: '1.1rem 1.2rem',
+                    borderRadius: '18px',
+                    border: '2px solid',
+                    borderColor: themePref === 'system' ? 'var(--primary)' : 'var(--border)',
+                    backgroundColor: themePref === 'system' ? 'var(--primary-light)' : 'var(--surface-alt)',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    gap: '1rem',
+                    transition: 'all 0.15s ease'
+                  }}
+                >
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.85rem' }}>
+                    <div style={{
+                      width: '42px',
+                      height: '42px',
+                      borderRadius: '50%',
+                      backgroundColor: themePref === 'system' ? 'var(--primary)' : 'var(--surface)',
+                      color: themePref === 'system' ? '#FFFFFF' : 'var(--text-main)',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      fontSize: '1.2rem',
+                      flexShrink: 0
+                    }}>
+                      <i className="fa-solid fa-circle-half-stroke" />
+                    </div>
+                    <div>
+                      <div style={{ fontWeight: '800', fontSize: '0.92rem', color: 'var(--text-main)', display: 'flex', alignItems: 'center', gap: '0.45rem' }}>
+                        <span>Auto (Follow Phone System)</span>
+                        <span style={{
+                          backgroundColor: '#10B981',
+                          color: '#FFFFFF',
+                          fontSize: '0.65rem',
+                          fontWeight: '800',
+                          padding: '1px 6px',
+                          borderRadius: '9999px',
+                          textTransform: 'uppercase'
+                        }}>
+                          Recommended
+                        </span>
+                      </div>
+                      <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)', marginTop: '2px' }}>
+                        Automatically changes whenever you toggle dark mode on your phone
+                      </div>
+                    </div>
+                  </div>
+                  <div style={{
+                    width: '24px',
+                    height: '24px',
+                    borderRadius: '50%',
+                    border: `2px solid ${themePref === 'system' ? 'var(--primary)' : 'var(--border)'}`,
+                    backgroundColor: themePref === 'system' ? 'var(--primary)' : 'transparent',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    color: '#FFFFFF',
+                    fontSize: '0.75rem',
+                    flexShrink: 0
+                  }}>
+                    {themePref === 'system' && <i className="fa-solid fa-check" />}
+                  </div>
+                </div>
+
+                {/* 2. Light Mode */}
+                <div
+                  onClick={() => handleThemeChange('light')}
+                  style={{
+                    padding: '1.1rem 1.2rem',
+                    borderRadius: '18px',
+                    border: '2px solid',
+                    borderColor: themePref === 'light' ? 'var(--primary)' : 'var(--border)',
+                    backgroundColor: themePref === 'light' ? 'var(--primary-light)' : 'var(--surface-alt)',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    gap: '1rem',
+                    transition: 'all 0.15s ease'
+                  }}
+                >
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.85rem' }}>
+                    <div style={{
+                      width: '42px',
+                      height: '42px',
+                      borderRadius: '50%',
+                      backgroundColor: themePref === 'light' ? 'var(--primary)' : 'var(--surface)',
+                      color: themePref === 'light' ? '#FFFFFF' : '#F59E0B',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      fontSize: '1.25rem',
+                      flexShrink: 0
+                    }}>
+                      <i className="fa-solid fa-sun" />
+                    </div>
+                    <div>
+                      <div style={{ fontWeight: '800', fontSize: '0.92rem', color: 'var(--text-main)' }}>
+                        Light Mode
+                      </div>
+                      <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)', marginTop: '2px' }}>
+                        Fresh mint & clean white aesthetic
+                      </div>
+                    </div>
+                  </div>
+                  <div style={{
+                    width: '24px',
+                    height: '24px',
+                    borderRadius: '50%',
+                    border: `2px solid ${themePref === 'light' ? 'var(--primary)' : 'var(--border)'}`,
+                    backgroundColor: themePref === 'light' ? 'var(--primary)' : 'transparent',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    color: '#FFFFFF',
+                    fontSize: '0.75rem',
+                    flexShrink: 0
+                  }}>
+                    {themePref === 'light' && <i className="fa-solid fa-check" />}
+                  </div>
+                </div>
+
+                {/* 3. Dark Mode */}
+                <div
+                  onClick={() => handleThemeChange('dark')}
+                  style={{
+                    padding: '1.1rem 1.2rem',
+                    borderRadius: '18px',
+                    border: '2px solid',
+                    borderColor: themePref === 'dark' ? 'var(--primary)' : 'var(--border)',
+                    backgroundColor: themePref === 'dark' ? 'var(--primary-light)' : 'var(--surface-alt)',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    gap: '1rem',
+                    transition: 'all 0.15s ease'
+                  }}
+                >
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.85rem' }}>
+                    <div style={{
+                      width: '42px',
+                      height: '42px',
+                      borderRadius: '50%',
+                      backgroundColor: themePref === 'dark' ? 'var(--primary)' : 'var(--surface)',
+                      color: themePref === 'dark' ? '#0E1210' : 'var(--primary)',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      fontSize: '1.2rem',
+                      flexShrink: 0
+                    }}>
+                      <i className="fa-solid fa-moon" />
+                    </div>
+                    <div>
+                      <div style={{ fontWeight: '800', fontSize: '0.92rem', color: 'var(--text-main)' }}>
+                        Dark Mode
+                      </div>
+                      <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)', marginTop: '2px' }}>
+                        Deep obsidian forest & emerald glow
+                      </div>
+                    </div>
+                  </div>
+                  <div style={{
+                    width: '24px',
+                    height: '24px',
+                    borderRadius: '50%',
+                    border: `2px solid ${themePref === 'dark' ? 'var(--primary)' : 'var(--border)'}`,
+                    backgroundColor: themePref === 'dark' ? 'var(--primary)' : 'transparent',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    color: '#FFFFFF',
+                    fontSize: '0.75rem',
+                    flexShrink: 0
+                  }}>
+                    {themePref === 'dark' && <i className="fa-solid fa-check" />}
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* TAB 1: ACCOUNT / PROFILE */}
           {activeTab === 'account' && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
               <div>
-                <h4 style={{ fontFamily: 'var(--font-display)', fontSize: '1rem', fontWeight: '700', color: 'var(--text-main)', margin: '0 0 0.35rem 0' }}>
-                  Student Profile & Identity
+                <h4 style={{ fontFamily: 'var(--font-display)', fontSize: '1.05rem', fontWeight: '800', color: 'var(--text-main)', margin: '0 0 0.35rem 0' }}>
+                  Student Identity
                 </h4>
                 <p style={{ fontSize: '0.82rem', color: 'var(--text-muted)', margin: 0 }}>
-                  Update your anonymous campus handle, phone number, and account details.
+                  Manage your anonymous campus handle and contact details.
                 </p>
               </div>
 
               {accountMessage.text && (
                 <div style={{
                   padding: '0.75rem 1rem',
-                  borderRadius: '12px',
+                  borderRadius: '14px',
                   fontSize: '0.85rem',
                   fontWeight: '600',
-                  backgroundColor: accountMessage.type === 'success' ? 'rgba(34, 197, 94, 0.12)' : 'rgba(239, 68, 68, 0.12)',
-                  color: accountMessage.type === 'success' ? '#16a34a' : '#ef4444',
-                  border: `1px solid ${accountMessage.type === 'success' ? '#86efac' : '#fca5a5'}`
+                  backgroundColor: accountMessage.type === 'success' ? 'rgba(16, 185, 129, 0.12)' : 'rgba(239, 68, 68, 0.12)',
+                  color: accountMessage.type === 'success' ? '#10B981' : '#EF4444',
+                  border: `1px solid ${accountMessage.type === 'success' ? '#A7F3D0' : '#FECACA'}`
                 }}>
                   <i className={`fa-solid ${accountMessage.type === 'success' ? 'fa-circle-check' : 'fa-triangle-exclamation'}`} style={{ marginRight: '0.45rem' }} />
                   {accountMessage.text}
                 </div>
               )}
 
-              <form onSubmit={handleAccountSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '0.95rem' }}>
+              <form onSubmit={handleAccountSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
                 <div>
-                  <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: '700', color: 'var(--text-main)', marginBottom: '0.35rem', fontFamily: 'var(--font-display)' }}>
+                  <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: '700', color: 'var(--text-main)', marginBottom: '0.35rem' }}>
                     Burner Handle / Username
                   </label>
                   <div style={{ position: 'relative' }}>
@@ -394,7 +602,7 @@ function SettingsModal({ isOpen, onClose, onLogout, userProfile, onUpdateUser })
                       left: '1rem',
                       top: '50%',
                       transform: 'translateY(-50%)',
-                      color: 'var(--text-light)',
+                      color: 'var(--text-muted)',
                       fontWeight: '700'
                     }}>
                       @
@@ -408,13 +616,13 @@ function SettingsModal({ isOpen, onClose, onLogout, userProfile, onUpdateUser })
                       style={{ paddingLeft: '2.2rem', backgroundColor: 'var(--surface-alt)', opacity: 0.85, cursor: 'not-allowed' }}
                     />
                   </div>
-                  <span style={{ fontSize: '0.74rem', color: 'var(--brandblue)', marginTop: '0.25rem', display: 'flex', alignItems: 'center', gap: '0.3rem', fontWeight: '600' }}>
-                    <i className="fa-solid fa-lock" /> Permanent username (cannot be changed once verified)
+                  <span style={{ fontSize: '0.74rem', color: 'var(--primary)', marginTop: '0.35rem', display: 'flex', alignItems: 'center', gap: '0.3rem', fontWeight: '700' }}>
+                    <i className="fa-solid fa-lock" /> Permanent username (verified on campus)
                   </span>
                 </div>
 
                 <div>
-                  <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: '700', color: 'var(--text-main)', marginBottom: '0.35rem', fontFamily: 'var(--font-display)' }}>
+                  <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: '700', color: 'var(--text-main)', marginBottom: '0.35rem' }}>
                     Phone Number
                   </label>
                   <input
@@ -425,14 +633,14 @@ function SettingsModal({ isOpen, onClose, onLogout, userProfile, onUpdateUser })
                     placeholder="e.g. 08012345678"
                     style={{ backgroundColor: 'var(--surface-alt)', opacity: 0.85, cursor: 'not-allowed' }}
                   />
-                  <span style={{ fontSize: '0.74rem', color: 'var(--brandgreen)', marginTop: '0.25rem', display: 'flex', alignItems: 'center', gap: '0.3rem', fontWeight: '600' }}>
-                    <i className="fa-solid fa-shield-halved" /> Verified phone number (locked for campus security)
+                  <span style={{ fontSize: '0.74rem', color: 'var(--primary)', marginTop: '0.35rem', display: 'flex', alignItems: 'center', gap: '0.3rem', fontWeight: '700' }}>
+                    <i className="fa-solid fa-shield-halved" /> Phone verified for student trust & scam prevention
                   </span>
                 </div>
 
                 <div>
-                  <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: '700', color: 'var(--text-main)', marginBottom: '0.35rem', fontFamily: 'var(--font-display)' }}>
-                    Display Name (Optional)
+                  <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: '700', color: 'var(--text-main)', marginBottom: '0.35rem' }}>
+                    Full / Display Name (Optional)
                   </label>
                   <input
                     type="text"
@@ -444,7 +652,7 @@ function SettingsModal({ isOpen, onClose, onLogout, userProfile, onUpdateUser })
                 </div>
 
                 <div>
-                  <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: '700', color: 'var(--text-main)', marginBottom: '0.35rem', fontFamily: 'var(--font-display)' }}>
+                  <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: '700', color: 'var(--text-main)', marginBottom: '0.35rem' }}>
                     Registered Email (Read-only)
                   </label>
                   <input
@@ -458,30 +666,25 @@ function SettingsModal({ isOpen, onClose, onLogout, userProfile, onUpdateUser })
 
                 <button
                   type="submit"
-                  className="btn-primary"
                   disabled={accountLoading}
                   style={{
                     padding: '0.8rem',
+                    borderRadius: '9999px',
+                    border: 'none',
+                    backgroundColor: 'var(--primary)',
+                    color: '#FFFFFF',
                     fontSize: '0.9rem',
-                    fontWeight: '700',
+                    fontWeight: '800',
                     marginTop: '0.5rem',
+                    cursor: accountLoading ? 'not-allowed' : 'pointer',
+                    boxShadow: '0 4px 14px var(--primary-light)',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
                     gap: '0.5rem'
                   }}
                 >
-                  {accountLoading ? (
-                    <>
-                      <i className="fa-solid fa-circle-notch fa-spin" />
-                      <span>Saving Profile...</span>
-                    </>
-                  ) : (
-                    <>
-                      <i className="fa-solid fa-floppy-disk" />
-                      <span>Save Profile Changes</span>
-                    </>
-                  )}
+                  {accountLoading ? 'Saving...' : 'Save Profile Changes'}
                 </button>
               </form>
 
@@ -489,30 +692,30 @@ function SettingsModal({ isOpen, onClose, onLogout, userProfile, onUpdateUser })
               <div style={{
                 marginTop: '1.25rem',
                 padding: '1.1rem',
-                borderRadius: '16px',
-                border: '1px solid #fecaca',
+                borderRadius: '18px',
+                border: '1px solid #FECACA',
                 backgroundColor: 'rgba(239, 68, 68, 0.05)'
               }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem', marginBottom: '0.35rem' }}>
-                  <i className="fa-solid fa-triangle-exclamation" style={{ color: '#dc2626', fontSize: '0.95rem' }} />
-                  <span style={{ fontFamily: 'var(--font-display)', fontWeight: '800', fontSize: '0.92rem', color: '#dc2626' }}>
+                  <i className="fa-solid fa-triangle-exclamation" style={{ color: '#DC2626', fontSize: '0.95rem' }} />
+                  <span style={{ fontWeight: '800', fontSize: '0.92rem', color: '#DC2626' }}>
                     Danger Zone: Delete Account
                   </span>
                 </div>
                 <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', lineHeight: '1.4', margin: '0 0 0.85rem 0' }}>
-                  Permanently delete your profile, listings, and messages. This action is irreversible and immediate.
+                  Permanently delete your profile, listings, and messages. This action is irreversible.
                 </p>
                 <button
                   type="button"
                   onClick={() => setIsConfirmDeleteOpen(true)}
                   style={{
-                    backgroundColor: '#fee2e2',
-                    color: '#dc2626',
-                    border: '1px solid #fca5a5',
-                    borderRadius: '10px',
-                    padding: '0.55rem 0.95rem',
+                    backgroundColor: '#FEE2E2',
+                    color: '#DC2626',
+                    border: '1px solid #FCA5A5',
+                    borderRadius: '9999px',
+                    padding: '0.55rem 1.15rem',
                     fontSize: '0.82rem',
-                    fontWeight: '700',
+                    fontWeight: '800',
                     cursor: 'pointer',
                     display: 'inline-flex',
                     alignItems: 'center',
@@ -526,128 +729,149 @@ function SettingsModal({ isOpen, onClose, onLogout, userProfile, onUpdateUser })
             </div>
           )}
 
-          {/* TAB 1: SECURITY (Change Password & Session) */}
+          {/* TAB 2: SECURITY */}
           {activeTab === 'security' && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
               <div>
-                <h4 style={{ fontFamily: 'var(--font-display)', fontSize: '1rem', fontWeight: '700', color: 'var(--text-main)', margin: '0 0 0.35rem 0' }}>
+                <h4 style={{ fontFamily: 'var(--font-display)', fontSize: '1.05rem', fontWeight: '800', color: 'var(--text-main)', margin: '0 0 0.35rem 0' }}>
                   Change Password
                 </h4>
                 <p style={{ fontSize: '0.82rem', color: 'var(--text-muted)', margin: 0 }}>
-                  Update your credentials to keep your student account and chats safe.
+                  Update your password to keep your student account and chats safe.
                 </p>
               </div>
 
               {pwMessage.text && (
                 <div style={{
                   padding: '0.75rem 1rem',
-                  borderRadius: '12px',
+                  borderRadius: '14px',
                   fontSize: '0.85rem',
                   fontWeight: '600',
-                  backgroundColor: pwMessage.type === 'success' ? 'rgba(34, 197, 94, 0.12)' : 'rgba(239, 68, 68, 0.12)',
-                  color: pwMessage.type === 'success' ? '#16a34a' : '#ef4444',
-                  border: `1px solid ${pwMessage.type === 'success' ? '#86efac' : '#fca5a5'}`
+                  backgroundColor: pwMessage.type === 'success' ? 'rgba(16, 185, 129, 0.12)' : 'rgba(239, 68, 68, 0.12)',
+                  color: pwMessage.type === 'success' ? '#10B981' : '#EF4444',
+                  border: `1px solid ${pwMessage.type === 'success' ? '#A7F3D0' : '#FECACA'}`
                 }}>
                   <i className={`fa-solid ${pwMessage.type === 'success' ? 'fa-circle-check' : 'fa-triangle-exclamation'}`} style={{ marginRight: '0.45rem' }} />
                   {pwMessage.text}
                 </div>
               )}
 
-              <form onSubmit={handlePasswordSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
+              <form onSubmit={handlePasswordSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
                 <div>
-                  <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: '700', color: 'var(--text-main)', marginBottom: '0.35rem', fontFamily: 'var(--font-display)' }}>
+                  <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: '700', color: 'var(--text-main)', marginBottom: '0.35rem' }}>
                     Current Password
                   </label>
-                  <input
-                    type={showPassword ? 'text' : 'password'}
-                    className="form-input"
-                    value={currentPassword}
-                    onChange={(e) => setCurrentPassword(e.target.value)}
-                    placeholder="Enter current password"
-                    required
-                  />
+                  <div style={{ position: 'relative' }}>
+                    <input
+                      type={showPassword ? 'text' : 'password'}
+                      className="form-input"
+                      required
+                      value={currentPassword}
+                      onChange={(e) => setCurrentPassword(e.target.value)}
+                      placeholder="Enter current password"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword(p => !p)}
+                      style={{
+                        position: 'absolute',
+                        right: '0.85rem',
+                        top: '50%',
+                        transform: 'translateY(-50%)',
+                        background: 'none',
+                        border: 'none',
+                        color: 'var(--text-muted)',
+                        cursor: 'pointer',
+                        fontSize: '0.9rem'
+                      }}
+                    >
+                      <i className={`fa-solid ${showPassword ? 'fa-eye-slash' : 'fa-eye'}`} />
+                    </button>
+                  </div>
                 </div>
 
                 <div>
-                  <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: '700', color: 'var(--text-main)', marginBottom: '0.35rem', fontFamily: 'var(--font-display)' }}>
+                  <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: '700', color: 'var(--text-main)', marginBottom: '0.35rem' }}>
                     New Password
                   </label>
                   <input
                     type={showPassword ? 'text' : 'password'}
                     className="form-input"
+                    required
                     value={newPassword}
                     onChange={(e) => setNewPassword(e.target.value)}
-                    placeholder="At least 6 characters"
-                    minLength={6}
-                    required
+                    placeholder="At least 8 characters"
                   />
                 </div>
 
                 <div>
-                  <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: '700', color: 'var(--text-main)', marginBottom: '0.35rem', fontFamily: 'var(--font-display)' }}>
+                  <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: '700', color: 'var(--text-main)', marginBottom: '0.35rem' }}>
                     Confirm New Password
                   </label>
                   <input
                     type={showPassword ? 'text' : 'password'}
                     className="form-input"
+                    required
                     value={confirmPassword}
                     onChange={(e) => setConfirmPassword(e.target.value)}
                     placeholder="Repeat new password"
-                    minLength={6}
-                    required
                   />
-                </div>
-
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer' }} onClick={() => setShowPassword(!showPassword)}>
-                  <input 
-                    type="checkbox" 
-                    checked={showPassword} 
-                    onChange={(e) => setShowPassword(e.target.checked)}
-                    style={{ cursor: 'pointer', accentColor: 'var(--brandblue)' }}
-                  />
-                  <span style={{ fontSize: '0.82rem', color: 'var(--text-muted)' }}>Show passwords</span>
                 </div>
 
                 <button
                   type="submit"
                   disabled={pwLoading}
-                  className="btn-primary"
-                  style={{ marginTop: '0.5rem', padding: '0.75rem', width: '100%', fontSize: '0.9rem' }}
+                  style={{
+                    padding: '0.8rem',
+                    borderRadius: '9999px',
+                    border: 'none',
+                    backgroundColor: 'var(--primary)',
+                    color: '#FFFFFF',
+                    fontSize: '0.9rem',
+                    fontWeight: '800',
+                    cursor: pwLoading ? 'not-allowed' : 'pointer',
+                    boxShadow: '0 4px 14px var(--primary-light)',
+                    marginTop: '0.5rem'
+                  }}
                 >
-                  {pwLoading ? (
-                    <>
-                      <i className="fa-solid fa-circle-notch fa-spin" /> Updating Password...
-                    </>
-                  ) : (
-                    <>
-                      <i className="fa-solid fa-key" /> Update Password
-                    </>
-                  )}
+                  {pwLoading ? 'Updating Password...' : 'Update Password'}
                 </button>
               </form>
 
-              {/* Data & Cache Action */}
+              {/* Cache Maintenance */}
               <div style={{
-                marginTop: '0.75rem',
-                paddingTop: '1rem',
-                borderTop: '1px solid var(--border)',
+                marginTop: '1.25rem',
+                padding: '1.1rem',
+                borderRadius: '18px',
+                border: '1px solid var(--border)',
+                backgroundColor: 'var(--surface-alt)',
                 display: 'flex',
+                alignItems: 'center',
                 justifyContent: 'space-between',
-                alignItems: 'center'
+                gap: '1rem'
               }}>
                 <div>
-                  <div style={{ fontSize: '0.85rem', fontWeight: '700', color: 'var(--text-main)', fontFamily: 'var(--font-display)' }}>
-                    App Cache & Synced Storage
+                  <div style={{ fontWeight: '800', fontSize: '0.88rem', color: 'var(--text-main)' }}>
+                    App Cache & Offline Storage
                   </div>
-                  <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
-                    Clear local storage to refresh listings & chats
+                  <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)', marginTop: '2px' }}>
+                    Clear saved cache if images or messages seem stale
                   </div>
                 </div>
                 <button
                   type="button"
                   onClick={handleClearCache}
-                  className="btn-secondary"
-                  style={{ padding: '0.45rem 0.85rem', fontSize: '0.8rem', borderRadius: '10px' }}
+                  style={{
+                    padding: '0.5rem 1rem',
+                    fontSize: '0.8rem',
+                    borderRadius: '9999px',
+                    border: '1px solid var(--border)',
+                    backgroundColor: 'var(--surface)',
+                    color: 'var(--text-main)',
+                    fontWeight: '700',
+                    cursor: 'pointer',
+                    whiteSpace: 'nowrap'
+                  }}
                 >
                   {cacheCleared ? 'Cleared ✓' : 'Clear Cache'}
                 </button>
@@ -655,159 +879,48 @@ function SettingsModal({ isOpen, onClose, onLogout, userProfile, onUpdateUser })
             </div>
           )}
 
-          {/* TAB 2: NOTIFICATIONS */}
+          {/* TAB 3: ALERTS */}
           {activeTab === 'notifications' && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
               <div>
-                <h4 style={{ fontFamily: 'var(--font-display)', fontSize: '1rem', fontWeight: '700', color: 'var(--text-main)', margin: '0 0 0.35rem 0' }}>
+                <h4 style={{ fontFamily: 'var(--font-display)', fontSize: '1.05rem', fontWeight: '800', color: 'var(--text-main)', margin: '0 0 0.35rem 0' }}>
                   Notification Preferences
                 </h4>
                 <p style={{ fontSize: '0.82rem', color: 'var(--text-muted)', margin: 0 }}>
-                  Control when and how you receive real-time campus alerts.
+                  Manage notifications and real-time alerts.
                 </p>
               </div>
 
-              {/* Toggle 1: Messages */}
-              <div style={{
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center',
-                padding: '0.9rem 1rem',
-                backgroundColor: 'var(--surface-alt)',
-                borderRadius: '16px',
-                border: '1px solid var(--border)'
-              }}>
-                <div>
-                  <div style={{ fontSize: '0.88rem', fontWeight: '700', color: 'var(--text-main)', fontFamily: 'var(--font-display)' }}>
-                    Chat Messages
+              {[
+                { label: 'Chat Messages', desc: 'Receive alerts when buyers or sellers message you', checked: notifyMessages, toggle: toggleNotifyMessages },
+                { label: 'Meetup Proposals & Dropzones', desc: 'Alerts when someone suggests or agrees to a meetup spot', checked: notifyMeetups, toggle: toggleNotifyMeetups },
+                { label: 'Price Drops & Catalog Drops', desc: 'Highlights for popular student items in your campus', checked: notifyDeals, toggle: toggleNotifyDeals }
+              ].map((item, idx) => (
+                <div key={idx} style={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  padding: '1rem 1.15rem',
+                  backgroundColor: 'var(--surface-alt)',
+                  borderRadius: '18px',
+                  border: '1px solid var(--border)'
+                }}>
+                  <div>
+                    <div style={{ fontSize: '0.88rem', fontWeight: '800', color: 'var(--text-main)' }}>
+                      {item.label}
+                    </div>
+                    <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)', marginTop: '2px' }}>
+                      {item.desc}
+                    </div>
                   </div>
-                  <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>
-                    Receive alerts when buyers or sellers send messages
-                  </div>
+                  <input
+                    type="checkbox"
+                    checked={item.checked}
+                    onChange={item.toggle}
+                    style={{ width: '22px', height: '22px', cursor: 'pointer', accentColor: 'var(--primary)' }}
+                  />
                 </div>
-                <input
-                  type="checkbox"
-                  checked={notifyMessages}
-                  onChange={toggleNotifyMessages}
-                  style={{ width: '20px', height: '20px', cursor: 'pointer', accentColor: 'var(--brandblue)' }}
-                />
-              </div>
-
-              {/* Toggle 2: Meetups */}
-              <div style={{
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center',
-                padding: '0.9rem 1rem',
-                backgroundColor: 'var(--surface-alt)',
-                borderRadius: '16px',
-                border: '1px solid var(--border)'
-              }}>
-                <div>
-                  <div style={{ fontSize: '0.88rem', fontWeight: '700', color: 'var(--text-main)', fontFamily: 'var(--font-display)' }}>
-                    Meetup Proposals & Dropzone Alerts
-                  </div>
-                  <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>
-                    Get notified when someone suggests or agrees to a meetup spot
-                  </div>
-                </div>
-                <input
-                  type="checkbox"
-                  checked={notifyMeetups}
-                  onChange={toggleNotifyMeetups}
-                  style={{ width: '20px', height: '20px', cursor: 'pointer', accentColor: 'var(--brandblue)' }}
-                />
-              </div>
-
-              {/* Toggle 3: Deals */}
-              <div style={{
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center',
-                padding: '0.9rem 1rem',
-                backgroundColor: 'var(--surface-alt)',
-                borderRadius: '16px',
-                border: '1px solid var(--border)'
-              }}>
-                <div>
-                  <div style={{ fontSize: '0.88rem', fontWeight: '700', color: 'var(--text-main)', fontFamily: 'var(--font-display)' }}>
-                    Price Drops & New Campus Gear
-                  </div>
-                  <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>
-                    Highlights for popular student items in your campus
-                  </div>
-                </div>
-                <input
-                  type="checkbox"
-                  checked={notifyDeals}
-                  onChange={toggleNotifyDeals}
-                  style={{ width: '20px', height: '20px', cursor: 'pointer', accentColor: 'var(--brandblue)' }}
-                />
-              </div>
-            </div>
-          )}
-
-          {/* TAB 3: THEME / APPEARANCE */}
-          {activeTab === 'appearance' && (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-              <div>
-                <h4 style={{ fontFamily: 'var(--font-display)', fontSize: '1rem', fontWeight: '700', color: 'var(--text-main)', margin: '0 0 0.35rem 0' }}>
-                  Interface Theme
-                </h4>
-                <p style={{ fontSize: '0.82rem', color: 'var(--text-muted)', margin: 0 }}>
-                  Choose your preferred color mode for study sessions and night browsing.
-                </p>
-              </div>
-
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.85rem' }}>
-                <div
-                  onClick={() => handleThemeChange('light')}
-                  style={{
-                    padding: '1.25rem 1rem',
-                    borderRadius: '16px',
-                    border: '2px solid',
-                    borderColor: theme === 'light' ? 'var(--terracotta)' : 'var(--border)',
-                    backgroundColor: 'var(--surface)',
-                    color: 'var(--text-main)',
-                    cursor: 'pointer',
-                    textAlign: 'center',
-                    boxShadow: theme === 'light' ? 'var(--shadow-card)' : 'none',
-                    transition: 'all 0.15s ease'
-                  }}
-                >
-                  <i className="fa-solid fa-sun" style={{ fontSize: '1.6rem', color: '#f59e0b', marginBottom: '0.5rem', display: 'block' }} />
-                  <div style={{ fontWeight: '700', fontSize: '0.9rem', fontFamily: 'var(--font-display)' }}>
-                    Light Mode
-                  </div>
-                  <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '0.2rem' }}>
-                    Warm Cream Linen
-                  </div>
-                </div>
-
-                <div
-                  onClick={() => handleThemeChange('dark')}
-                  style={{
-                    padding: '1.25rem 1rem',
-                    borderRadius: '16px',
-                    border: '2px solid',
-                    borderColor: theme === 'dark' ? 'var(--terracotta)' : 'var(--border)',
-                    backgroundColor: 'var(--surface-alt)',
-                    color: 'var(--text-main)',
-                    cursor: 'pointer',
-                    textAlign: 'center',
-                    boxShadow: theme === 'dark' ? 'var(--shadow-card)' : 'none',
-                    transition: 'all 0.15s ease'
-                  }}
-                >
-                  <i className="fa-solid fa-moon" style={{ fontSize: '1.6rem', color: 'var(--terracotta)', marginBottom: '0.5rem', display: 'block' }} />
-                  <div style={{ fontWeight: '700', fontSize: '0.9rem', fontFamily: 'var(--font-display)' }}>
-                    Dark Mode
-                  </div>
-                  <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '0.2rem' }}>
-                    Warm Obsidian & Clay
-                  </div>
-                </div>
-              </div>
+              ))}
             </div>
           )}
 
@@ -815,43 +928,44 @@ function SettingsModal({ isOpen, onClose, onLogout, userProfile, onUpdateUser })
           {activeTab === 'safety' && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
               <div>
-                <h4 style={{ fontFamily: 'var(--font-display)', fontSize: '1rem', fontWeight: '700', color: 'var(--text-main)', margin: '0 0 0.35rem 0' }}>
+                <h4 style={{ fontFamily: 'var(--font-display)', fontSize: '1.05rem', fontWeight: '800', color: 'var(--text-main)', margin: '0 0 0.35rem 0' }}>
                   Campus Safety Guidelines
                 </h4>
                 <p style={{ fontSize: '0.82rem', color: 'var(--text-muted)', margin: 0 }}>
-                  Best practices for safe student-to-student transactions.
+                  Always protect yourself and your money on campus.
                 </p>
               </div>
 
               {[
-                { icon: 'fa-location-dot', title: 'Campus Safe Dropzones', text: 'Always meet in well-lit public spots like the campus library, cafeteria, or student union building.' },
-                { icon: 'fa-user-shield', title: 'Anonymous Burner Masking', text: 'Keep conversations inside CampusStash chat. Never share personal home addresses or banking passwords.' },
-                { icon: 'fa-handshake', title: 'Inspect Before Payment', text: 'Thoroughly examine textbooks, laptops, electronics, and accessories in person before completing deals.' }
+                { icon: 'fa-location-dot', title: 'Campus Safe Dropzones', text: 'Always meet in open, well-lit public spots like the campus library, cafeteria, or hostel reception.' },
+                { icon: 'fa-user-shield', title: 'Anonymous Chat Masking', text: 'Keep conversations inside CampusStash. Never share personal home addresses or banking OTPs.' },
+                { icon: 'fa-handshake', title: 'Inspect Before Payment', text: 'Carefully test textbooks, laptops, phones, and items in person before completing any payment.' }
               ].map((rule, idx) => (
                 <div key={idx} style={{
                   display: 'flex',
                   gap: '0.85rem',
-                  padding: '0.85rem 1rem',
+                  padding: '1rem',
                   backgroundColor: 'var(--surface-alt)',
-                  borderRadius: '14px',
-                  border: '1px solid var(--border)'
+                  borderRadius: '18px',
+                  border: '1px solid var(--border)',
+                  alignItems: 'center'
                 }}>
                   <div style={{
-                    width: '32px',
-                    height: '32px',
-                    borderRadius: '8px',
-                    backgroundColor: 'var(--lightblue)',
-                    color: 'var(--brandblue)',
+                    width: '38px',
+                    height: '38px',
+                    borderRadius: '50%',
+                    backgroundColor: 'var(--primary-light)',
+                    color: 'var(--primary)',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
                     flexShrink: 0,
-                    fontSize: '0.9rem'
+                    fontSize: '1rem'
                   }}>
                     <i className={`fa-solid ${rule.icon}`} />
                   </div>
                   <div>
-                    <div style={{ fontSize: '0.85rem', fontWeight: '700', color: 'var(--text-main)', fontFamily: 'var(--font-display)' }}>
+                    <div style={{ fontSize: '0.88rem', fontWeight: '800', color: 'var(--text-main)' }}>
                       {rule.title}
                     </div>
                     <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)', lineHeight: '1.4', marginTop: '0.15rem' }}>
@@ -870,8 +984,7 @@ function SettingsModal({ isOpen, onClose, onLogout, userProfile, onUpdateUser })
             position: 'fixed',
             inset: 0,
             backgroundColor: 'rgba(0,0,0,0.72)',
-            backdropFilter: 'blur(4px)',
-            WebkitBackdropFilter: 'blur(4px)',
+            backdropFilter: 'blur(6px)',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
@@ -880,37 +993,37 @@ function SettingsModal({ isOpen, onClose, onLogout, userProfile, onUpdateUser })
           }}>
             <div className="animate-fade-in" style={{
               backgroundColor: 'var(--surface)',
-              borderRadius: '20px',
-              padding: '1.6rem',
+              borderRadius: '24px',
+              padding: '1.75rem',
               maxWidth: '420px',
               width: '100%',
-              border: '1px solid #fca5a5',
+              border: '1px solid #FCA5A5',
               boxShadow: 'var(--shadow-xl)',
               textAlign: 'center'
             }}>
               <div style={{
-                width: '52px',
-                height: '52px',
+                width: '56px',
+                height: '56px',
                 borderRadius: '50%',
-                backgroundColor: '#fee2e2',
-                color: '#dc2626',
+                backgroundColor: '#FEE2E2',
+                color: '#DC2626',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                fontSize: '1.4rem',
+                fontSize: '1.5rem',
                 margin: '0 auto 1rem auto'
               }}>
                 <i className="fa-solid fa-triangle-exclamation" />
               </div>
-              <h4 style={{ fontFamily: 'var(--font-display)', fontWeight: '800', fontSize: '1.2rem', color: '#dc2626', margin: '0 0 0.5rem 0' }}>
+              <h4 style={{ fontFamily: 'var(--font-display)', fontWeight: '800', fontSize: '1.25rem', color: '#DC2626', margin: '0 0 0.5rem 0' }}>
                 Delete Account Permanently?
               </h4>
-              <p style={{ fontSize: '0.84rem', color: 'var(--text-muted)', lineHeight: '1.45', margin: '0 0 1.25rem 0' }}>
-                Are you sure you want to delete your CampusStash account? All your active listings, student requests, and chat history will be permanently wiped immediately. This action cannot be undone.
+              <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', lineHeight: '1.5', margin: '0 0 1.25rem 0' }}>
+                Are you sure? All your active campus listings, reviews, and chats will be immediately and irreversibly wiped.
               </p>
               
               {deleteError && (
-                <div style={{ color: '#dc2626', fontSize: '0.82rem', marginBottom: '0.85rem', fontWeight: '600' }}>
+                <div style={{ color: '#DC2626', fontSize: '0.82rem', marginBottom: '0.85rem', fontWeight: '700' }}>
                   {deleteError}
                 </div>
               )}
@@ -922,8 +1035,8 @@ function SettingsModal({ isOpen, onClose, onLogout, userProfile, onUpdateUser })
                   onClick={() => { setIsConfirmDeleteOpen(false); setDeleteError(''); }}
                   style={{
                     flex: 1,
-                    padding: '0.7rem 1rem',
-                    borderRadius: '12px',
+                    padding: '0.75rem 1rem',
+                    borderRadius: '9999px',
                     border: '1px solid var(--border)',
                     backgroundColor: 'var(--surface-alt)',
                     color: 'var(--text-main)',
@@ -940,28 +1053,17 @@ function SettingsModal({ isOpen, onClose, onLogout, userProfile, onUpdateUser })
                   onClick={handleDeleteAccount}
                   style={{
                     flex: 1,
-                    padding: '0.7rem 1rem',
-                    borderRadius: '12px',
+                    padding: '0.75rem 1rem',
+                    borderRadius: '9999px',
                     border: 'none',
-                    backgroundColor: '#dc2626',
-                    color: '#ffffff',
-                    fontWeight: '700',
+                    backgroundColor: '#DC2626',
+                    color: '#FFFFFF',
+                    fontWeight: '800',
                     fontSize: '0.86rem',
-                    cursor: isDeleting ? 'not-allowed' : 'pointer',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    gap: '0.35rem'
+                    cursor: isDeleting ? 'not-allowed' : 'pointer'
                   }}
                 >
-                  {isDeleting ? (
-                    <>
-                      <i className="fa-solid fa-circle-notch fa-spin" />
-                      <span>Deleting...</span>
-                    </>
-                  ) : (
-                    <span>Yes, Delete</span>
-                  )}
+                  {isDeleting ? 'Deleting...' : 'Yes, Delete'}
                 </button>
               </div>
             </div>
@@ -977,6 +1079,9 @@ function SettingsModal({ isOpen, onClose, onLogout, userProfile, onUpdateUser })
           justifyContent: 'space-between',
           alignItems: 'center'
         }}>
+          <span style={{ fontSize: '0.78rem', color: 'var(--text-muted)', fontWeight: '600' }}>
+            CampusStash v2.4 • Student Verified
+          </span>
 
           <button
             type="button"
@@ -987,13 +1092,13 @@ function SettingsModal({ isOpen, onClose, onLogout, userProfile, onUpdateUser })
             style={{
               background: 'none',
               border: 'none',
-              color: '#dc2626',
-              fontSize: '0.82rem',
-              fontWeight: '700',
+              color: '#DC2626',
+              fontSize: '0.84rem',
+              fontWeight: '800',
               cursor: 'pointer',
               display: 'flex',
               alignItems: 'center',
-              gap: '0.35rem'
+              gap: '0.4rem'
             }}
           >
             <i className="fa-solid fa-right-from-bracket" />

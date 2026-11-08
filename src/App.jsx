@@ -99,21 +99,33 @@ function App() {
     };
     window.addEventListener('beforeinstallprompt', handleBeforeInstall);
 
+    const getSystemTheme = () => {
+      return window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+    };
+
     const applyTheme = () => {
       const savedTheme = localStorage.getItem('theme');
-      if (savedTheme === 'dark') {
-        document.documentElement.setAttribute('data-theme', 'dark');
+      let effectiveTheme = 'light';
+      if (savedTheme === 'dark' || savedTheme === 'light') {
+        effectiveTheme = savedTheme;
       } else {
-        document.documentElement.setAttribute('data-theme', 'light');
+        // Defaults to user's phone / system dark mode automatically
+        effectiveTheme = getSystemTheme();
       }
+      document.documentElement.setAttribute('data-theme', effectiveTheme);
+      window.dispatchEvent(new CustomEvent('campus:theme_change', { detail: effectiveTheme }));
     };
 
     applyTheme();
 
     const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
-    const handleSystemThemeChange = () => {
-      if ((localStorage.getItem('theme') || 'system') === 'system') {
-        applyTheme();
+    const handleSystemThemeChange = (e) => {
+      const savedTheme = localStorage.getItem('theme');
+      // Real-time listener: when phone toggles dark mode, update instantly if on auto/system
+      if (!savedTheme || savedTheme === 'system') {
+        const newTheme = e.matches ? 'dark' : 'light';
+        document.documentElement.setAttribute('data-theme', newTheme);
+        window.dispatchEvent(new CustomEvent('campus:theme_change', { detail: newTheme }));
       }
     };
 

@@ -139,6 +139,77 @@ const [campuses, setCampuses] = useState(() => {
     }
   });
 
+  // Moving Promo Carousel State
+  const [currentSlideIndex, setCurrentSlideIndex] = useState(0);
+  const [isSlidePaused, setIsSlidePaused] = useState(false);
+  const touchStartX = useRef(0);
+  const touchEndX = useRef(0);
+
+  const PROMO_SLIDES = useMemo(() => [
+    {
+      id: 1,
+      title: "This week's fresh picks",
+      subtitle: "100% verified campus stash, delivered within 15 mins...",
+      btnText: "Shop Now",
+      action: () => {
+        const el = document.querySelector('.shopmate-section-header');
+        if (el) el.scrollIntoView({ behavior: 'smooth' });
+      },
+      bg: '#0E4434',
+      darkBg: '#11362A',
+      icon: BooksIcon,
+      badge: "100% Student Verified"
+    },
+    {
+      id: 2,
+      title: "Got tech or gadgets to sell?",
+      subtitle: "Turn calculators, phones & dorm essentials into instant cash.",
+      btnText: "List an Item",
+      action: () => handleOpenCreateModal(),
+      bg: '#0B3B36',
+      darkBg: '#0E332E',
+      icon: TechIcon,
+      badge: "Quick Campus Cash"
+    },
+    {
+      id: 3,
+      title: "Discover campus stores",
+      subtitle: "Explore thrift fashion, hostel snacks & custom accessories.",
+      btnText: "Explore Stores",
+      action: () => navigate('/discover'),
+      bg: '#082E22',
+      darkBg: '#0C261D',
+      icon: StoresIcon,
+      badge: "Student Vendors"
+    }
+  ], []);
+
+  // Auto-advance carousel every 4 seconds unless paused
+  useEffect(() => {
+    if (isSlidePaused) return;
+    const timer = setInterval(() => {
+      setCurrentSlideIndex(prev => (prev + 1) % PROMO_SLIDES.length);
+    }, 4200);
+    return () => clearInterval(timer);
+  }, [isSlidePaused, PROMO_SLIDES.length]);
+
+  const handleTouchStart = (e) => {
+    touchStartX.current = e.touches[0].clientX;
+  };
+  const handleTouchMove = (e) => {
+    touchEndX.current = e.touches[0].clientX;
+  };
+  const handleTouchEnd = () => {
+    const diff = touchStartX.current - touchEndX.current;
+    if (Math.abs(diff) > 40) {
+      if (diff > 0) {
+        setCurrentSlideIndex(prev => (prev + 1) % PROMO_SLIDES.length);
+      } else {
+        setCurrentSlideIndex(prev => (prev - 1 + PROMO_SLIDES.length) % PROMO_SLIDES.length);
+      }
+    }
+  };
+
   // Listings state
   const [listings, setListings] = useState(() => {
     try {
@@ -774,28 +845,74 @@ const [campuses, setCampuses] = useState(() => {
         </div>
 
         {/* ============================================================== */}
-        {/* SHOPMATE FRESH PICKS BANNER (MATCHING RIGHT PHONE SCREEN)     */}
+        {/* SHOPMATE MOVING PROMO CAROUSEL (SWIPABLE & AUTO-ROTATING)     */}
         {/* ============================================================== */}
-        <div className="shopmate-promo-banner">
-          <div className="shopmate-promo-content">
-            <h3 className="shopmate-promo-title">This week's fresh picks</h3>
-            <p className="shopmate-promo-sub">100% verified campus stash, delivered within 15 mins...</p>
-            <button 
-              className="shopmate-promo-btn"
-              onClick={handleOpenCreateModal}
-            >
-              Shop Now
-            </button>
-          </div>
-          <div className="shopmate-promo-graphic">
-            <BooksIcon size={64} />
+        <div 
+          className="shopmate-carousel-wrapper"
+          onMouseEnter={() => setIsSlidePaused(true)}
+          onMouseLeave={() => setIsSlidePaused(false)}
+          onTouchStart={handleTouchStart}
+          onTouchMove={handleTouchMove}
+          onTouchEnd={handleTouchEnd}
+        >
+          <div 
+            className="shopmate-carousel-track"
+            style={{ transform: `translateX(-${currentSlideIndex * 100}%)` }}
+          >
+            {PROMO_SLIDES.map((slide) => {
+              const SlideIcon = slide.icon;
+              return (
+                <div 
+                  key={slide.id}
+                  className="shopmate-promo-slide"
+                  style={{ backgroundColor: slide.bg }}
+                >
+                  <div className="shopmate-promo-content">
+                    <span style={{
+                      display: 'inline-block',
+                      backgroundColor: 'rgba(255, 255, 255, 0.16)',
+                      backdropFilter: 'blur(6px)',
+                      color: '#A7F3D0',
+                      fontSize: '0.66rem',
+                      fontWeight: '700',
+                      textTransform: 'uppercase',
+                      letterSpacing: '0.04em',
+                      padding: '2px 8px',
+                      borderRadius: '9999px',
+                      marginBottom: '0.45rem'
+                    }}>
+                      {slide.badge}
+                    </span>
+                    <h3 className="shopmate-promo-title">{slide.title}</h3>
+                    <p className="shopmate-promo-sub">{slide.subtitle}</p>
+                    <button 
+                      className="shopmate-promo-btn"
+                      onClick={slide.action}
+                    >
+                      {slide.btnText}
+                    </button>
+                  </div>
+                  <div className="shopmate-promo-graphic">
+                    <SlideIcon size={64} />
+                  </div>
+                </div>
+              );
+            })}
           </div>
         </div>
-        {/* 3-Dot Carousel Indicator */}
+
+        {/* Interactive Carousel Pagination Dots */}
         <div className="shopmate-carousel-dots">
-          <span className="dot active" />
-          <span className="dot" />
-          <span className="dot" />
+          {PROMO_SLIDES.map((slide, idx) => (
+            <button
+              key={slide.id}
+              type="button"
+              className={`dot ${currentSlideIndex === idx ? 'active' : ''}`}
+              onClick={() => setCurrentSlideIndex(idx)}
+              title={`Go to slide ${idx + 1}`}
+              style={{ border: 'none', cursor: 'pointer' }}
+            />
+          ))}
         </div>
 
         {/* ============================================================== */}
