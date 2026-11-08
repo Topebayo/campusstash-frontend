@@ -709,18 +709,20 @@ function Dashboard() {
           </div>
         </div>
 
-        {/* ============================================================== */}
-        {/* EDITORIAL SERIF HEADLINE                                        */}
+                {/* ============================================================== */}
+        {/* EDITORIAL SERIF HEADLINE & ADD TO HOME BUTTON                  */}
         {/* ============================================================== */}
         <div style={{
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          gap: '0.75rem',
-          marginBottom: '1.25rem'
+          position: 'relative',
+          marginBottom: '1.25rem',
+          minHeight: '4.2rem'
         }}>
-          <h1 className="aesthetic-headline" style={{ margin: 0, flex: 1 }}>
-          Find what you need<br />today, {activeCampusAcronym || 'Campus'} 🎓
+          <h1 className="aesthetic-headline" style={{ 
+            margin: 0, 
+            paddingRight: '130px',
+            lineHeight: 1.15
+          }}>
+            Find what you need<br />today, {activeCampusAcronym || 'Campus'} 🎓
           </h1>
 
           {!isStandalone && !Capacitor.isNativePlatform() && (
@@ -731,41 +733,46 @@ function Dashboard() {
                 window.dispatchEvent(new CustomEvent('campusstash:show_install_guide'));
               }}
               style={{
-                display: 'flex',
+                position: 'absolute',
+                right: 0,
+                bottom: '2px',
+                display: 'inline-flex',
                 alignItems: 'center',
-                gap: '0.55rem',
+                gap: '0.45rem',
                 backgroundColor: 'var(--surface)',
                 border: '1.5px solid rgba(200, 122, 91, 0.45)',
                 borderRadius: '16px',
-                padding: '0.5rem 0.75rem',
+                padding: '0.4rem 0.65rem',
                 cursor: 'pointer',
                 boxShadow: '0 4px 14px rgba(200, 122, 91, 0.16)',
-                flexShrink: 0,
                 transition: 'all 0.15s ease',
-                WebkitTapHighlightColor: 'transparent'
+                WebkitTapHighlightColor: 'transparent',
+                zIndex: 5
               }}
               aria-label="Add to Home Screen"
             >
               <img 
                 src="/apple-touch-icon.png" 
                 alt="App" 
-                style={{ width: '32px', height: '32px', borderRadius: '8px', boxShadow: '0 2px 6px rgba(200,122,91,0.25)' }} 
+                style={{ width: '28px', height: '28px', borderRadius: '7px', boxShadow: '0 2px 6px rgba(200,122,91,0.25)', flexShrink: 0 }} 
               />
               <div style={{ textAlign: 'left', display: 'flex', flexDirection: 'column' }}>
                 <span style={{
                   fontFamily: 'var(--font-display)',
                   fontWeight: 800,
-                  fontSize: '0.8rem',
+                  fontSize: '0.74rem',
                   color: 'var(--text-main)',
-                  lineHeight: 1.2
+                  lineHeight: 1.15,
+                  whiteSpace: 'nowrap'
                 }}>
                   Add to Home
                 </span>
                 <span style={{
-                  fontSize: '0.66rem',
+                  fontSize: '0.62rem',
                   color: 'var(--terracotta)',
                   fontWeight: 700,
-                  marginTop: '1px'
+                  marginTop: '1px',
+                  whiteSpace: 'nowrap'
                 }}>
                   Install 📲
                 </span>
@@ -774,7 +781,7 @@ function Dashboard() {
           )}
         </div>
 
-        {/* ============================================================== */}
+{/* ============================================================== */}
         {/* AESTHETIC ROUNDED PILL SEARCH BAR                              */}
         {/* ============================================================== */}
         <div className="aesthetic-search-container">

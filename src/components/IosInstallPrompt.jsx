@@ -23,14 +23,29 @@ export default function IosInstallPrompt() {
 
     // 3. Listen for manual trigger from "Add to Home" button or Settings
     const handleManualTrigger = () => {
-      setPlatform(
-        /iphone|ipad|ipod/.test(window.navigator.userAgent.toLowerCase()) ? 'ios' : 'android'
-      );
+      const ua = window.navigator.userAgent.toLowerCase();
+      const isIos = /iphone|ipad|ipod/.test(ua) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+      setPlatform(isIos ? 'ios' : 'android');
       setShowPrompt(true);
     };
     window.addEventListener('campusstash:show_install_guide', handleManualTrigger);
 
-    // 4. Detect Android / Chromium beforeinstallprompt
+    // 4. Auto-guide for iOS Safari users (Apple never shows an automatic install prompt)
+    const ua = window.navigator.userAgent.toLowerCase();
+    const isIos = /iphone|ipad|ipod/.test(ua) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+    let autoTimer = null;
+    if (isIos) {
+      const dismissed = localStorage.getItem('cs_install_prompt_dismissed');
+      const isRecent = dismissed && (Date.now() - parseInt(dismissed, 10)) < 3 * 24 * 60 * 60 * 1000;
+      if (!isRecent) {
+        autoTimer = setTimeout(() => {
+          setPlatform('ios');
+          setShowPrompt(true);
+        }, 2200);
+      }
+    }
+
+    // 5. Detect Android / Chromium beforeinstallprompt
     const handleBeforeInstall = (e) => {
       e.preventDefault();
       setDeferredPrompt(e);
@@ -39,6 +54,7 @@ export default function IosInstallPrompt() {
     window.addEventListener('beforeinstallprompt', handleBeforeInstall);
 
     return () => {
+      if (autoTimer) clearTimeout(autoTimer);
       window.removeEventListener('beforeinstallprompt', handleBeforeInstall);
       window.removeEventListener('campusstash:show_install_guide', handleManualTrigger);
     };
