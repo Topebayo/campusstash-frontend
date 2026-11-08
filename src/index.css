@@ -2249,7 +2249,7 @@ html, body {
 }
 
 /* ==========================================================================
-   SHOPMATE MOBILE-FIRST UI DESIGN SYSTEM
+   SHOPMATE MOBILE-FIRST UI DESIGN SYSTEM (TEMPLATE FIDELITY)
    ========================================================================== */
 
 /* Top Location & Campus Header */
@@ -2257,59 +2257,55 @@ html, body {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0.5rem 0 1rem 0;
+  padding: 0.65rem 0 1rem 0;
   gap: 0.75rem;
+  width: 100%;
 }
 
-.shopmate-location-pill {
+.shopmate-location-group {
   display: flex;
   align-items: center;
-  gap: 0.65rem;
+  gap: 0.75rem;
+  cursor: pointer;
+  user-select: none;
+  max-width: calc(100% - 120px);
+}
+
+.shopmate-location-group:active {
+  transform: scale(0.98);
+}
+
+.shopmate-pin-circle {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
   background: var(--surface);
   border: 1px solid var(--border);
-  padding: 0.45rem 0.85rem;
-  border-radius: 9999px;
-  cursor: pointer;
-  box-shadow: var(--shadow-sm);
-  transition: all 0.2s ease;
-  max-width: calc(100% - 110px);
-}
-
-.shopmate-location-pill:active {
-  transform: scale(0.97);
-}
-
-.shopmate-location-icon {
-  width: 32px;
-  height: 32px;
-  border-radius: 50%;
-  background: var(--primary-light);
-  color: var(--primary);
+  color: var(--text-main);
   display: flex;
   align-items: center;
   justify-content: center;
   font-size: 0.95rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
   flex-shrink: 0;
 }
 
-.shopmate-location-info {
+.shopmate-location-text {
   display: flex;
   flex-direction: column;
-  text-align: left;
   overflow: hidden;
 }
 
-.shopmate-location-label {
-  font-size: 0.68rem;
-  font-weight: 600;
+.shopmate-location-delivery-to {
+  font-size: 0.7rem;
+  font-weight: 500;
   color: var(--text-muted);
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
   line-height: 1;
+  margin-bottom: 2px;
 }
 
-.shopmate-location-title {
-  font-size: 0.88rem;
+.shopmate-location-campus-name {
+  font-size: 0.92rem;
   font-weight: 700;
   color: var(--text-main);
   white-space: nowrap;
@@ -2324,13 +2320,13 @@ html, body {
 .shopmate-header-actions {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
+  gap: 0.45rem;
   flex-shrink: 0;
 }
 
-.shopmate-icon-btn {
-  width: 38px;
-  height: 38px;
+.shopmate-header-btn {
+  width: 36px;
+  height: 36px;
   border-radius: 50%;
   background: var(--surface);
   border: 1px solid var(--border);
@@ -2338,23 +2334,22 @@ html, body {
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 0.95rem;
+  font-size: 0.92rem;
   cursor: pointer;
-  box-shadow: var(--shadow-sm);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
   transition: all 0.15s ease;
 }
 
-.shopmate-icon-btn:hover {
-  border-color: var(--primary);
-  color: var(--primary);
+.shopmate-header-btn:active {
+  transform: scale(0.92);
 }
 
 /* ShopMate Punchy Hero Headline */
 .shopmate-hero-headline {
   font-family: var(--font-display);
-  font-size: 1.7rem;
+  font-size: 1.72rem;
   font-weight: 800;
-  line-height: 1.16;
+  line-height: 1.14;
   letter-spacing: -0.025em;
   color: var(--text-main);
   margin: 0.25rem 0 1.15rem 0;
@@ -2362,7 +2357,7 @@ html, body {
 
 .shopmate-hero-accent {
   color: var(--primary);
-  display: block;
+  display: inline;
 }
 
 /* ShopMate Search Bar */
@@ -2372,9 +2367,9 @@ html, body {
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: 9999px;
-  padding: 0.45rem 0.65rem 0.45rem 1.1rem;
-  box-shadow: var(--shadow-sm);
-  margin-bottom: 1.35rem;
+  padding: 0.5rem 0.65rem 0.5rem 1.1rem;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.03);
+  margin-bottom: 1.4rem;
   transition: all 0.2s ease;
   position: relative;
 }
@@ -2392,7 +2387,7 @@ html, body {
   color: var(--text-main);
   font-family: var(--font-sans);
   font-size: 0.92rem;
-  padding: 0.35rem 0.5rem;
+  padding: 0.3rem 0.5rem;
 }
 
 .shopmate-search-input::placeholder {
@@ -2400,48 +2395,49 @@ html, body {
   opacity: 0.85;
 }
 
-.shopmate-search-filter-btn {
-  width: 36px;
-  height: 36px;
+.shopmate-search-scanner-btn {
+  width: 34px;
+  height: 34px;
   border-radius: 50%;
-  background: var(--surface-alt);
+  background: transparent;
   border: none;
-  color: var(--text-main);
+  color: var(--text-muted);
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  font-size: 0.85rem;
   transition: all 0.15s ease;
   flex-shrink: 0;
 }
 
-.shopmate-search-filter-btn:active {
-  transform: scale(0.92);
+.shopmate-search-scanner-btn:active {
+  transform: scale(0.9);
+  color: var(--primary);
 }
 
-/* 6-Category Grid (ShopMate 2 rows x 3 columns) */
+/* 6-Category Squircle Grid (ShopMate 2 rows x 3 columns) */
 .shopmate-cat-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 0.75rem;
-  margin-bottom: 1.5rem;
+  gap: 0.85rem;
+  margin-bottom: 1.6rem;
 }
 
 .shopmate-cat-card {
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: 20px;
-  padding: 0.85rem 0.4rem;
+  padding: 1rem 0.4rem 0.85rem 0.4rem;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  box-shadow: var(--shadow-sm);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
   transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
   text-align: center;
   user-select: none;
+  min-height: 98px;
 }
 
 .shopmate-cat-card:active {
@@ -2455,14 +2451,15 @@ html, body {
 }
 
 .shopmate-cat-icon {
-  font-size: 1.85rem;
-  line-height: 1;
-  margin-bottom: 0.4rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 0.5rem;
   transition: transform 0.2s ease;
 }
 
 .shopmate-cat-card:hover .shopmate-cat-icon {
-  transform: scale(1.1);
+  transform: scale(1.08);
 }
 
 .shopmate-cat-name {
@@ -2478,23 +2475,23 @@ html, body {
 
 /* Promo Banner Card (Fresh Picks / Campus Deals) */
 .shopmate-promo-banner {
-  background: linear-gradient(135deg, #0B4D3C 0%, #063529 100%);
+  background: #0E4434;
   color: #FFFFFF;
-  border-radius: 24px;
-  padding: 1.25rem 1.35rem;
-  margin-bottom: 1.6rem;
+  border-radius: 22px;
+  padding: 1.35rem 1.4rem;
+  margin-bottom: 0.6rem;
   position: relative;
   overflow: hidden;
-  box-shadow: 0 10px 25px rgba(11, 77, 60, 0.25);
+  box-shadow: 0 8px 24px rgba(14, 68, 52, 0.22);
   display: flex;
   align-items: center;
   justify-content: space-between;
 }
 
 [data-theme="dark"] .shopmate-promo-banner {
-  background: linear-gradient(135deg, #13392E 0%, #0B241D 100%);
+  background: #11362A;
   border: 1px solid rgba(52, 211, 153, 0.2);
-  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
 }
 
 .shopmate-promo-content {
@@ -2502,22 +2499,8 @@ html, body {
   z-index: 2;
 }
 
-.shopmate-promo-badge {
-  display: inline-block;
-  background: rgba(255, 255, 255, 0.2);
-  backdrop-filter: blur(8px);
-  color: #A7F3D0;
-  font-size: 0.68rem;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  padding: 2px 8px;
-  border-radius: 9999px;
-  margin-bottom: 0.4rem;
-}
-
 .shopmate-promo-title {
-  font-size: 1.15rem;
+  font-size: 1.18rem;
   font-weight: 800;
   line-height: 1.2;
   margin-bottom: 0.35rem;
@@ -2525,26 +2508,31 @@ html, body {
 }
 
 .shopmate-promo-sub {
-  font-size: 0.76rem;
-  color: rgba(255, 255, 255, 0.82);
+  font-size: 0.78rem;
+  color: #D1FAE5;
   line-height: 1.35;
-  margin-bottom: 0.85rem;
+  margin-bottom: 0.95rem;
 }
 
 .shopmate-promo-btn {
-  background: #FFFFFF;
-  color: #0B4D3C;
+  background: #082F24;
+  color: #FFFFFF;
   border: none;
   font-weight: 800;
   font-size: 0.78rem;
-  padding: 0.45rem 1rem;
+  padding: 0.5rem 1.15rem;
   border-radius: 9999px;
   cursor: pointer;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
   transition: all 0.15s ease;
   display: inline-flex;
   align-items: center;
   gap: 0.35rem;
+}
+
+[data-theme="dark"] .shopmate-promo-btn {
+  background: #34D399;
+  color: #0E1210;
 }
 
 .shopmate-promo-btn:active {
@@ -2552,14 +2540,42 @@ html, body {
 }
 
 .shopmate-promo-graphic {
-  font-size: 3.5rem;
   position: absolute;
   right: 12px;
   top: 50%;
   transform: translateY(-50%);
   z-index: 1;
-  filter: drop-shadow(0 6px 12px rgba(0,0,0,0.25));
   user-select: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* 3-Dot Carousel Indicator */
+.shopmate-carousel-dots {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  margin-bottom: 1.6rem;
+}
+
+.shopmate-carousel-dots .dot {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: #D1D5DB;
+  transition: all 0.2s ease;
+}
+
+[data-theme="dark"] .shopmate-carousel-dots .dot {
+  background: #374151;
+}
+
+.shopmate-carousel-dots .dot.active {
+  width: 18px;
+  border-radius: 9999px;
+  background: var(--primary);
 }
 
 /* ShopMate Section Header */
@@ -2567,7 +2583,7 @@ html, body {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 0.85rem;
+  margin-bottom: 0.95rem;
 }
 
 .shopmate-section-title {
@@ -2592,7 +2608,7 @@ html, body {
   color: var(--primary);
 }
 
-/* ShopMate 2-Column Product Cards */
+/* ShopMate 2-Column Product Cards (Right Screen Fidelity) */
 .shopmate-grid-2col {
   display: grid !important;
   grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
@@ -2617,26 +2633,26 @@ html, body {
 .shopmate-card {
   background: var(--surface);
   border: 1px solid var(--border);
-  border-radius: 22px;
+  border-radius: 20px;
   padding: 0.65rem;
   display: flex;
   flex-direction: column;
   position: relative;
-  box-shadow: var(--shadow-card);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.02);
   cursor: pointer;
   transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
   overflow: hidden;
 }
 
 .shopmate-card:hover {
-  transform: translateY(-3px);
+  transform: translateY(-2px);
   box-shadow: var(--shadow-md);
   border-color: var(--primary-light);
 }
 
 .shopmate-card-image-wrap {
   width: 100%;
-  height: 135px;
+  height: 125px;
   background: var(--surface-alt);
   border-radius: 16px;
   position: relative;
@@ -2644,12 +2660,12 @@ html, body {
   display: flex;
   align-items: center;
   justify-content: center;
-  margin-bottom: 0.6rem;
+  margin-bottom: 0.55rem;
 }
 
 @media (min-width: 640px) {
   .shopmate-card-image-wrap {
-    height: 165px;
+    height: 155px;
   }
 }
 
@@ -2661,32 +2677,32 @@ html, body {
 }
 
 .shopmate-card:hover .shopmate-card-img {
-  transform: scale(1.05);
+  transform: scale(1.04);
 }
 
 .shopmate-card-heart-btn {
   position: absolute;
   top: 8px;
   right: 8px;
-  width: 32px;
-  height: 32px;
+  width: 30px;
+  height: 30px;
   border-radius: 50%;
-  background: rgba(255, 255, 255, 0.9);
+  background: rgba(255, 255, 255, 0.92);
   backdrop-filter: blur(8px);
   border: none;
   color: #9CA3AF;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 0.9rem;
+  font-size: 0.88rem;
   cursor: pointer;
   z-index: 3;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
   transition: all 0.15s ease;
 }
 
 [data-theme="dark"] .shopmate-card-heart-btn {
-  background: rgba(26, 32, 28, 0.85);
+  background: rgba(22, 27, 24, 0.88);
   color: #9CA8A2;
 }
 
@@ -2703,21 +2719,21 @@ html, body {
   align-self: flex-start;
   background: var(--surface-alt);
   color: var(--text-muted);
-  font-size: 0.65rem;
+  font-size: 0.62rem;
   font-weight: 700;
   text-transform: uppercase;
-  letter-spacing: 0.03em;
-  padding: 2px 7px;
-  border-radius: 6px;
-  margin-bottom: 0.3rem;
+  letter-spacing: 0.04em;
+  padding: 2px 6px;
+  border-radius: 4px;
+  margin-bottom: 0.25rem;
 }
 
 .shopmate-card-title {
-  font-size: 0.88rem;
+  font-size: 0.86rem;
   font-weight: 700;
   color: var(--text-main);
   line-height: 1.25;
-  margin-bottom: 0.25rem;
+  margin-bottom: 0.2rem;
   display: -webkit-box;
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
@@ -2726,12 +2742,12 @@ html, body {
 }
 
 .shopmate-card-meta {
-  font-size: 0.72rem;
+  font-size: 0.7rem;
   color: var(--text-muted);
   display: flex;
   align-items: center;
   gap: 0.35rem;
-  margin-bottom: 0.55rem;
+  margin-bottom: 0.45rem;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -2742,19 +2758,19 @@ html, body {
   align-items: center;
   justify-content: space-between;
   margin-top: auto;
-  padding-top: 0.25rem;
+  padding-top: 0.2rem;
 }
 
 .shopmate-card-price {
-  font-size: 1.05rem;
+  font-size: 1.02rem;
   font-weight: 800;
   color: var(--text-main);
   letter-spacing: -0.01em;
 }
 
 .shopmate-card-plus-btn {
-  width: 32px;
-  height: 32px;
+  width: 28px;
+  height: 28px;
   border-radius: 50%;
   background: var(--primary);
   color: #FFFFFF;
@@ -2762,15 +2778,15 @@ html, body {
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 0.85rem;
+  font-size: 0.78rem;
   cursor: pointer;
-  box-shadow: 0 4px 10px var(--primary-light);
+  box-shadow: 0 3px 8px var(--primary-light);
   transition: all 0.15s ease;
   flex-shrink: 0;
 }
 
 .shopmate-card-plus-btn:active {
-  transform: scale(0.9);
+  transform: scale(0.88);
 }
 
 /* ==========================================================================
@@ -2781,15 +2797,15 @@ html, body {
   bottom: 16px;
   left: 50%;
   transform: translateX(-50%);
-  width: calc(100% - 28px);
-  max-width: 440px;
+  width: calc(100% - 32px);
+  max-width: 420px;
   background: var(--dock-bg);
   backdrop-filter: blur(24px) saturate(160%);
   -webkit-backdrop-filter: blur(24px) saturate(160%);
   border: 1px solid var(--dock-border);
   border-radius: 9999px;
-  padding: 6px 10px;
-  box-shadow: 0 12px 36px rgba(15, 74, 56, 0.12), 0 2px 8px rgba(0, 0, 0, 0.05);
+  padding: 6px 8px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -2828,7 +2844,7 @@ html, body {
   color: var(--primary);
   font-weight: 800;
   font-size: 0.88rem;
-  padding: 8px 16px;
+  padding: 7px 16px;
 }
 
 .shopmate-dock-label {
@@ -2839,8 +2855,8 @@ html, body {
 }
 
 .shopmate-dock-center-action {
-  width: 42px;
-  height: 42px;
+  width: 40px;
+  height: 40px;
   border-radius: 50%;
   background: var(--primary);
   color: #FFFFFF;
@@ -2848,9 +2864,9 @@ html, body {
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 1.15rem;
+  font-size: 1.1rem;
   cursor: pointer;
-  box-shadow: 0 6px 18px rgba(15, 74, 56, 0.35);
+  box-shadow: 0 6px 16px rgba(14, 68, 52, 0.3);
   transition: transform 0.15s ease, background-color 0.15s ease;
   flex-shrink: 0;
 }
@@ -2864,5 +2880,3 @@ html, body {
 .shopmate-dock-center-action:active {
   transform: scale(0.92);
 }
-
-
