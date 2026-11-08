@@ -109,6 +109,11 @@ function Dashboard() {
   const [activeTab, setActiveTab] = useState('items');
 
   // Campus scoping
+  const [isStandalone, setIsStandalone] = useState(() => {
+    if (typeof window === 'undefined') return false;
+    return window.navigator.standalone === true || window.matchMedia('(display-mode: standalone)').matches;
+  });
+
   const [campuses, setCampuses] = useState(() => {
     try {
       const cached = localStorage.getItem('campusstash_cached_campuses');
@@ -707,9 +712,67 @@ function Dashboard() {
         {/* ============================================================== */}
         {/* EDITORIAL SERIF HEADLINE                                        */}
         {/* ============================================================== */}
-        <h1 className="aesthetic-headline">
+        <div style={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          gap: '0.75rem',
+          marginBottom: '1.25rem'
+        }}>
+          <h1 className="aesthetic-headline" style={{ margin: 0, flex: 1 }}>
           Find what you need<br />today, {activeCampusAcronym || 'Campus'} 🎓
-        </h1>
+          </h1>
+
+          {!isStandalone && !Capacitor.isNativePlatform() && (
+            <button
+              type="button"
+              onClick={() => {
+                localStorage.removeItem('cs_install_prompt_dismissed');
+                window.dispatchEvent(new CustomEvent('campusstash:show_install_guide'));
+              }}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.55rem',
+                backgroundColor: 'var(--surface)',
+                border: '1.5px solid rgba(200, 122, 91, 0.45)',
+                borderRadius: '16px',
+                padding: '0.5rem 0.75rem',
+                cursor: 'pointer',
+                boxShadow: '0 4px 14px rgba(200, 122, 91, 0.16)',
+                flexShrink: 0,
+                transition: 'all 0.15s ease',
+                WebkitTapHighlightColor: 'transparent'
+              }}
+              aria-label="Add to Home Screen"
+            >
+              <img 
+                src="/apple-touch-icon.png" 
+                alt="App" 
+                style={{ width: '32px', height: '32px', borderRadius: '8px', boxShadow: '0 2px 6px rgba(200,122,91,0.25)' }} 
+              />
+              <div style={{ textAlign: 'left', display: 'flex', flexDirection: 'column' }}>
+                <span style={{
+                  fontFamily: 'var(--font-display)',
+                  fontWeight: 800,
+                  fontSize: '0.8rem',
+                  color: 'var(--text-main)',
+                  lineHeight: 1.2
+                }}>
+                  Add to Home
+                </span>
+                <span style={{
+                  fontSize: '0.66rem',
+                  color: 'var(--terracotta)',
+                  fontWeight: 700,
+                  marginTop: '1px'
+                }}>
+                  Install 📲
+                </span>
+              </div>
+            </button>
+          )}
+        </div>
 
         {/* ============================================================== */}
         {/* AESTHETIC ROUNDED PILL SEARCH BAR                              */}
