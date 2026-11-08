@@ -9,7 +9,6 @@ import Profile from './pages/Profile';
 import Messages from './pages/Messages';
 import Saved from './pages/Saved';
 import Discover from './pages/Discover';
-import IosInstallPrompt from './components/IosInstallPrompt';
 
 class ErrorBoundary extends React.Component {
   constructor(props) {
@@ -94,6 +93,12 @@ class ErrorBoundary extends React.Component {
 function App() {
   useEffect(() => {
     // Theme Sync: defaults to Aesthetic Minimal (light cream) unless explicitly set to dark
+    // Suppress browser automatic install banners (e.g. Android Chrome infobar)
+    const handleBeforeInstall = (e) => {
+      e.preventDefault();
+    };
+    window.addEventListener('beforeinstallprompt', handleBeforeInstall);
+
     const applyTheme = () => {
       const savedTheme = localStorage.getItem('theme');
       if (savedTheme === 'dark') {
@@ -130,6 +135,7 @@ function App() {
     }
 
     return () => {
+      window.removeEventListener('beforeinstallprompt', handleBeforeInstall);
       mediaQuery.removeEventListener('change', handleSystemThemeChange);
       if (listenerHandle && typeof listenerHandle.remove === 'function') {
         listenerHandle.remove();
@@ -153,7 +159,6 @@ function App() {
         <Route path="/saved" element={<Navigate to="/profile?tab=saved" replace />} />
         <Route path="*" element={<Dashboard />} />
       </Routes>
-      <IosInstallPrompt />
       </div>
     </ErrorBoundary>
   );

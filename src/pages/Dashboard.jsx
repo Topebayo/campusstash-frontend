@@ -109,12 +109,7 @@ function Dashboard() {
   const [activeTab, setActiveTab] = useState('items');
 
   // Campus scoping
-  const [isStandalone, setIsStandalone] = useState(() => {
-    if (typeof window === 'undefined') return false;
-    return window.navigator.standalone === true || window.matchMedia('(display-mode: standalone)').matches;
-  });
-
-  const [campuses, setCampuses] = useState(() => {
+const [campuses, setCampuses] = useState(() => {
     try {
       const cached = localStorage.getItem('campusstash_cached_campuses');
       return cached ? JSON.parse(cached) : DEFAULT_CAMPUSES;
@@ -709,77 +704,12 @@ function Dashboard() {
           </div>
         </div>
 
-                {/* ============================================================== */}
-        {/* EDITORIAL SERIF HEADLINE & ADD TO HOME BUTTON                  */}
+                        {/* ============================================================== */}
+        {/* EDITORIAL SERIF HEADLINE                                        */}
         {/* ============================================================== */}
-        <div style={{
-          position: 'relative',
-          marginBottom: '1.25rem',
-          minHeight: '4.2rem'
-        }}>
-          <h1 className="aesthetic-headline" style={{ 
-            margin: 0, 
-            paddingRight: '130px',
-            lineHeight: 1.15
-          }}>
-            Find what you need<br />today, {activeCampusAcronym || 'Campus'} 🎓
-          </h1>
-
-          {!isStandalone && !Capacitor.isNativePlatform() && (
-            <button
-              type="button"
-              onClick={() => {
-                localStorage.removeItem('cs_install_prompt_dismissed');
-                window.dispatchEvent(new CustomEvent('campusstash:show_install_guide'));
-              }}
-              style={{
-                position: 'absolute',
-                right: 0,
-                bottom: '2px',
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: '0.45rem',
-                backgroundColor: 'var(--surface)',
-                border: '1.5px solid rgba(200, 122, 91, 0.45)',
-                borderRadius: '16px',
-                padding: '0.4rem 0.65rem',
-                cursor: 'pointer',
-                boxShadow: '0 4px 14px rgba(200, 122, 91, 0.16)',
-                transition: 'all 0.15s ease',
-                WebkitTapHighlightColor: 'transparent',
-                zIndex: 5
-              }}
-              aria-label="Add to Home Screen"
-            >
-              <img 
-                src="/apple-touch-icon.png" 
-                alt="App" 
-                style={{ width: '28px', height: '28px', borderRadius: '7px', boxShadow: '0 2px 6px rgba(200,122,91,0.25)', flexShrink: 0 }} 
-              />
-              <div style={{ textAlign: 'left', display: 'flex', flexDirection: 'column' }}>
-                <span style={{
-                  fontFamily: 'var(--font-display)',
-                  fontWeight: 800,
-                  fontSize: '0.74rem',
-                  color: 'var(--text-main)',
-                  lineHeight: 1.15,
-                  whiteSpace: 'nowrap'
-                }}>
-                  Add to Home
-                </span>
-                <span style={{
-                  fontSize: '0.62rem',
-                  color: 'var(--terracotta)',
-                  fontWeight: 700,
-                  marginTop: '1px',
-                  whiteSpace: 'nowrap'
-                }}>
-                  Install 📲
-                </span>
-              </div>
-            </button>
-          )}
-        </div>
+        <h1 className="aesthetic-headline" style={{ margin: '0 0 1.25rem 0', lineHeight: 1.15 }}>
+          Find what you need<br />today, {activeCampusAcronym || 'Campus'} 🎓
+        </h1>
 
 {/* ============================================================== */}
         {/* AESTHETIC ROUNDED PILL SEARCH BAR                              */}
