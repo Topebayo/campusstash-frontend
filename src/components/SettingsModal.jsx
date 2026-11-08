@@ -808,6 +808,51 @@ function SettingsModal({ isOpen, onClose, onLogout, userProfile, onUpdateUser })
                   </div>
                 </div>
               </div>
+
+              {/* Install App on iPhone / Home Screen */}
+              <div style={{
+                marginTop: '0.5rem',
+                padding: '0.95rem',
+                backgroundColor: 'var(--surface-alt)',
+                border: '1px solid var(--border)',
+                borderRadius: '16px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                gap: '0.75rem'
+              }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                  <img src="/apple-touch-icon.png" alt="CampusStash" style={{ width: '36px', height: '36px', borderRadius: '9px', boxShadow: '0 2px 8px rgba(200, 122, 91, 0.25)' }} />
+                  <div>
+                    <div style={{ fontWeight: '700', fontSize: '0.88rem', color: 'var(--text-main)' }}>
+                      Install on iPhone / Android
+                    </div>
+                    <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                      Add to your home screen for full app view
+                    </div>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    localStorage.removeItem('cs_install_prompt_dismissed');
+                    window.dispatchEvent(new CustomEvent('campusstash:show_install_guide'));
+                    onClose();
+                  }}
+                  style={{
+                    backgroundColor: 'var(--terracotta)',
+                    color: '#fff',
+                    border: 'none',
+                    borderRadius: '9999px',
+                    padding: '0.45rem 0.95rem',
+                    fontSize: '0.78rem',
+                    fontWeight: '700',
+                    cursor: 'pointer'
+                  }}
+                >
+                  Guide
+                </button>
+              </div>
             </div>
           )}
 

@@ -9,6 +9,7 @@ import Profile from './pages/Profile';
 import Messages from './pages/Messages';
 import Saved from './pages/Saved';
 import Discover from './pages/Discover';
+import IosInstallPrompt from './components/IosInstallPrompt';
 
 class ErrorBoundary extends React.Component {
   constructor(props) {
@@ -152,6 +153,7 @@ function App() {
         <Route path="/saved" element={<Navigate to="/profile?tab=saved" replace />} />
         <Route path="*" element={<Dashboard />} />
       </Routes>
+      <IosInstallPrompt />
       </div>
     </ErrorBoundary>
   );
