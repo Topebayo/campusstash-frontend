@@ -1,6 +1,6 @@
 @echo off
-title CampusStash Live Preview Tunnel
+title CampusStash Private Local Wi-Fi Preview
 cd /d "%~dp0"
-echo Starting CampusStash Preview Tunnel...
-npm run preview:tunnel
+echo Starting Private Local Preview...
+npm run preview:local
 pause
