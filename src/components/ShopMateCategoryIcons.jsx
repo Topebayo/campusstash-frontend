@@ -206,3 +206,4 @@ export function StoresIcon({ size = 44 }) {
     </svg>
   );
 }
+
