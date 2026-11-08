@@ -37,33 +37,14 @@ function decodeJwt(token) {
   }
 }
 
-// Curated Aesthetic Trending Categories with visual cards
-const TRENDING_CATEGORIES = [
-  { 
-    name: 'Textbooks', 
-    label: 'Textbooks', 
-    image: 'https://images.unsplash.com/photo-1497633762265-9d179a990aa6?w=400&q=80' 
-  },
-  { 
-    name: 'Electronics', 
-    label: 'Tech & Gear', 
-    image: 'https://images.unsplash.com/photo-1519389950473-47ba0277781c?w=400&q=80' 
-  },
-  { 
-    name: 'Fashion & Apparel', 
-    label: 'Apparel', 
-    image: 'https://images.unsplash.com/photo-1503342217505-b0a15ec3261c?w=400&q=80' 
-  },
-  { 
-    name: 'Dorm Essentials', 
-    label: 'Dorm & Living', 
-    image: 'https://images.unsplash.com/photo-1555041469-a586c61ea9bc?w=400&q=80' 
-  },
-  { 
-    name: 'All', 
-    label: 'All Items', 
-    image: 'https://images.unsplash.com/photo-1524995997946-a1c2e315a42f?w=400&q=80' 
-  }
+// ShopMate 6-Tile Category Grid
+const SHOPMATE_CATEGORIES = [
+  { id: 'Textbooks', name: 'Textbooks', icon: '📚', label: 'Books' },
+  { id: 'Electronics', name: 'Electronics', icon: '💻', label: 'Tech' },
+  { id: 'Fashion & Apparel', name: 'Fashion & Apparel', icon: '👗', label: 'Fashion' },
+  { id: 'Food & Groceries', name: 'Food & Groceries', icon: '🍔', label: 'Food' },
+  { id: 'Dorm Essentials', name: 'Dorm Essentials', icon: '🛏️', label: 'Dorm' },
+  { id: 'Stores', name: 'Stores', icon: '🏪', label: 'Stores' }
 ];
 
 const PRICE_RANGES = [
@@ -426,6 +407,7 @@ const [campuses, setCampuses] = useState(() => {
         if (selCat === 'electronics' && !itemCat.includes('elect') && !itemCat.includes('tech') && !itemCat.includes('gear')) return false;
         if (selCat === 'fashion & apparel' && !itemCat.includes('fashion') && !itemCat.includes('apparel') && !itemCat.includes('wear')) return false;
         if (selCat === 'dorm essentials' && !itemCat.includes('dorm') && !itemCat.includes('living') && !itemCat.includes('home')) return false;
+        if (selCat === 'food & groceries' && !itemCat.includes('food') && !itemCat.includes('snack') && !itemCat.includes('drink') && !itemCat.includes('grocery') && !itemCat.includes('eat')) return false;
       }
       if (searchQuery.trim()) {
         const q = searchQuery.toLowerCase().trim();
@@ -558,75 +540,26 @@ const [campuses, setCampuses] = useState(() => {
           }}
         >
         {/* ============================================================== */}
-        {/* AESTHETIC MINIMAL TOP BAR: AVATAR & CAMPUS SELECTOR PILL       */}
+        {/* SHOPMATE TOP BAR: LOCATION PILL & ACTIONS                      */}
         {/* ============================================================== */}
-        <div style={{
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          marginBottom: '1rem',
-          position: 'relative'
-        }}>
-          {/* User Circular Avatar */}
+        <header className="shopmate-header">
+          {/* Location / Campus Selector Pill */}
           <div 
-            onClick={() => {
-              const token = localStorage.getItem('token');
-              if (!token) {
-                navigate('/auth');
-              } else {
-                navigate('/profile');
-              }
-            }}
-            style={{
-              width: '38px',
-              height: '38px',
-              borderRadius: '50%',
-              backgroundColor: 'var(--surface-alt)',
-              border: '2px solid var(--border)',
-              boxShadow: '0 2px 8px rgba(120, 95, 75, 0.12)',
-              overflow: 'hidden',
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              color: 'var(--terracotta)',
-              flexShrink: 0
-            }}
-            title="View Profile"
+            className="shopmate-location-pill"
+            onClick={() => setShowCampusPicker(prev => !prev)}
+            ref={campusPickerRef}
+            title={`Select Campus (Current: ${activeCampusName})`}
           >
-            {currentUser?.avatar_url ? (
-              <img 
-                src={getImageUrl(currentUser.avatar_url)} 
-                alt="User" 
-                style={{ width: '100%', height: '100%', objectFit: 'cover' }} 
-              />
-            ) : (
-              <span style={{ fontWeight: '700', fontSize: '1rem', fontFamily: 'var(--font-sans)' }}>
-                {currentUser?.email ? currentUser.email.charAt(0).toUpperCase() : <i className="fa-regular fa-user" />}
-              </span>
-            )}
-          </div>
-
-          {/* Top Actions: Theme Toggle & Campus Selector */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.55rem' }}>
-            <ThemeToggleBtn />
-            <div style={{ position: 'relative' }} ref={campusPickerRef}>
-              <button
-                onClick={() => setShowCampusPicker(prev => !prev)}
-                className="campus-pill-btn"
-                title={`Selected Campus: ${activeCampusName}`}
-              >
-                <span style={{ fontSize: '0.85rem', lineHeight: 1 }}>🎓</span>
-                <span style={{
-                  maxWidth: '120px',
-                  overflow: 'hidden',
-                  textOverflow: 'ellipsis',
-                  whiteSpace: 'nowrap'
-                }}>
-                  {activeCampusAcronym || activeCampusName || 'All Campuses'}
-                </span>
+            <div className="shopmate-location-icon">
+              <i className="fa-solid fa-location-dot" />
+            </div>
+            <div className="shopmate-location-info">
+              <span className="shopmate-location-label">Campus Delivery</span>
+              <div className="shopmate-location-title">
+                <span>{activeCampusAcronym || activeCampusName || 'Select Campus'}</span>
                 <i className="fa-solid fa-chevron-down" style={{ fontSize: '0.62rem', opacity: 0.65 }} />
-              </button>
+              </div>
+            </div>
 
             {/* Campus Dropdown Popover */}
             {showCampusPicker && (
@@ -634,14 +567,14 @@ const [campuses, setCampuses] = useState(() => {
                 style={{
                   position: 'absolute',
                   top: '100%',
-                  right: 0,
+                  left: 0,
                   marginTop: '0.5rem',
                   backgroundColor: 'var(--surface)',
                   border: '1px solid var(--border)',
-                  borderRadius: '16px',
+                  borderRadius: '20px',
                   boxShadow: 'var(--shadow-xl)',
-                  zIndex: 100,
-                  minWidth: '260px',
+                  zIndex: 200,
+                  minWidth: '270px',
                   maxWidth: '320px',
                   maxHeight: '340px',
                   overflowY: 'auto',
@@ -650,40 +583,41 @@ const [campuses, setCampuses] = useState(() => {
                   flexDirection: 'column',
                   gap: '0.25rem'
                 }}
+                onClick={(e) => e.stopPropagation()}
               >
                 <button
                   onClick={() => handleSelectCampus('')}
                   style={{
-                    padding: '0.55rem 0.85rem',
-                    borderRadius: '10px',
+                    padding: '0.6rem 0.85rem',
+                    borderRadius: '12px',
                     border: 'none',
-                    backgroundColor: !selectedCampusId ? 'var(--surface-alt)' : 'transparent',
-                    color: !selectedCampusId ? 'var(--terracotta)' : 'var(--text-main)',
+                    backgroundColor: !selectedCampusId ? 'var(--primary-light)' : 'transparent',
+                    color: !selectedCampusId ? 'var(--primary)' : 'var(--text-main)',
                     fontWeight: !selectedCampusId ? '700' : '500',
                     textAlign: 'left',
                     cursor: 'pointer',
-                    fontSize: '0.85rem',
+                    fontSize: '0.86rem',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'space-between'
                   }}
                 >
-                  <span>🌐 All Nigerian Campuses</span>
+                  <span>🌐 All Campuses</span>
                 </button>
                 {campuses.map(c => (
                   <button
                     key={c.id}
                     onClick={() => handleSelectCampus(c.id)}
                     style={{
-                      padding: '0.55rem 0.85rem',
-                      borderRadius: '10px',
+                      padding: '0.6rem 0.85rem',
+                      borderRadius: '12px',
                       border: 'none',
-                      backgroundColor: selectedCampusId === c.id ? 'var(--surface-alt)' : 'transparent',
-                      color: selectedCampusId === c.id ? 'var(--terracotta)' : 'var(--text-main)',
+                      backgroundColor: selectedCampusId === c.id ? 'var(--primary-light)' : 'transparent',
+                      color: selectedCampusId === c.id ? 'var(--primary)' : 'var(--text-main)',
                       fontWeight: selectedCampusId === c.id ? '700' : '500',
                       textAlign: 'left',
                       cursor: 'pointer',
-                      fontSize: '0.84rem',
+                      fontSize: '0.85rem',
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'space-between',
@@ -700,37 +634,86 @@ const [campuses, setCampuses] = useState(() => {
                 ))}
               </div>
             )}
+          </div>
+
+          {/* Right Header Actions: Theme Toggle, Quick Sell Plus, User Avatar */}
+          <div className="shopmate-header-actions">
+            <ThemeToggleBtn />
+
+            {/* Quick Sell Button */}
+            <button
+              className="shopmate-icon-btn"
+              onClick={handleOpenCreateModal}
+              title="Sell an Item"
+            >
+              <i className="fa-solid fa-plus" />
+            </button>
+
+            {/* User Avatar */}
+            <div 
+              onClick={() => {
+                const token = localStorage.getItem('token');
+                if (!token) {
+                  navigate('/auth');
+                } else {
+                  navigate('/profile');
+                }
+              }}
+              style={{
+                width: '38px',
+                height: '38px',
+                borderRadius: '50%',
+                backgroundColor: 'var(--surface-alt)',
+                border: '2px solid var(--border)',
+                overflow: 'hidden',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                color: 'var(--primary)',
+                flexShrink: 0
+              }}
+              title="My Account"
+            >
+              {currentUser?.avatar_url ? (
+                <img 
+                  src={getImageUrl(currentUser.avatar_url)} 
+                  alt="User" 
+                  style={{ width: '100%', height: '100%', objectFit: 'cover' }} 
+                />
+              ) : (
+                <span style={{ fontWeight: '700', fontSize: '0.95rem' }}>
+                  {currentUser?.email ? currentUser.email.charAt(0).toUpperCase() : <i className="fa-regular fa-user" />}
+                </span>
+              )}
             </div>
           </div>
-        </div>
+        </header>
 
-                        {/* ============================================================== */}
-        {/* EDITORIAL SERIF HEADLINE                                        */}
         {/* ============================================================== */}
-        <h1 className="aesthetic-headline" style={{ margin: '0 0 1.25rem 0', lineHeight: 1.15 }}>
-          Find what you need<br />today, {activeCampusAcronym || 'Campus'} 🎓
+        {/* SHOPMATE HERO HEADLINE                                         */}
+        {/* ============================================================== */}
+        <h1 className="shopmate-hero-headline">
+          Everything you need,<br />
+          <span className="shopmate-hero-accent">on campus.</span>
         </h1>
 
-{/* ============================================================== */}
-        {/* AESTHETIC ROUNDED PILL SEARCH BAR                              */}
         {/* ============================================================== */}
-        <div className="aesthetic-search-container">
-          <i className="fa-solid fa-magnifying-glass aesthetic-search-icon" />
+        {/* SHOPMATE ROUNDED PILL SEARCH BAR                               */}
+        {/* ============================================================== */}
+        <div className="shopmate-search-bar">
+          <i className="fa-solid fa-magnifying-glass" style={{ color: 'var(--text-muted)', fontSize: '0.95rem', marginRight: '0.4rem' }} />
           <input 
             type="text"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Search textbooks, calculators, tech..."
-            className="aesthetic-search-input"
+            placeholder="Search textbooks, gadgets, stores..."
+            className="shopmate-search-input"
           />
-          {searchQuery && (
+          {searchQuery ? (
             <button 
               onClick={() => setSearchQuery('')}
               style={{
-                position: 'absolute',
-                right: '1rem',
-                top: '50%',
-                transform: 'translateY(-50%)',
                 background: 'none',
                 border: 'none',
                 color: 'var(--text-muted)',
@@ -742,72 +725,68 @@ const [campuses, setCampuses] = useState(() => {
             >
               <i className="fa-solid fa-xmark" />
             </button>
+          ) : (
+            <button 
+              className="shopmate-search-filter-btn"
+              onClick={() => {
+                setPriceRangeIndex(prev => (prev + 1) % PRICE_RANGES.length);
+              }}
+              title={`Price Filter: ${PRICE_RANGES[priceRangeIndex].label}`}
+            >
+              <i className="fa-solid fa-sliders" />
+            </button>
           )}
         </div>
 
         {/* ============================================================== */}
-        {/* "TRENDING ON CAMPUS" CAROUSEL                                  */}
+        {/* SHOPMATE 6-TILE CATEGORY GRID (2 ROWS x 3 COLUMNS)              */}
         {/* ============================================================== */}
-        <div style={{ marginTop: '0.5rem', marginBottom: '2rem' }}>
-          <div className="trending-header">
-            <h2 className="trending-header-title">Trending on Campus</h2>
-            <div className="trending-nav-arrows">
-              <button 
-                className="trending-arrow-btn"
-                onClick={() => handleScrollCarousel('left')}
-                title="Scroll Left"
-                disabled={!canScrollLeft}
-                style={{
-                  opacity: canScrollLeft ? 1 : 0.3,
-                  cursor: canScrollLeft ? 'pointer' : 'default',
-                  pointerEvents: canScrollLeft ? 'auto' : 'none'
+        <div className="shopmate-cat-grid">
+          {SHOPMATE_CATEGORIES.map(cat => {
+            const isActive = selectedCategory === cat.name;
+            return (
+              <div
+                key={cat.id}
+                className={`shopmate-cat-card ${isActive ? 'active' : ''}`}
+                onClick={() => {
+                  if (cat.name === 'Stores') {
+                    navigate('/discover');
+                  } else {
+                    setSelectedCategory(prev => prev === cat.name ? 'All' : cat.name);
+                  }
                 }}
               >
-                <i className="fa-solid fa-chevron-left" />
-              </button>
-              <button 
-                className="trending-arrow-btn"
-                onClick={() => handleScrollCarousel('right')}
-                title="Scroll Right"
-                disabled={!canScrollRight}
-                style={{
-                  opacity: canScrollRight ? 1 : 0.3,
-                  cursor: canScrollRight ? 'pointer' : 'default',
-                  pointerEvents: canScrollRight ? 'auto' : 'none'
-                }}
-              >
-                <i className="fa-solid fa-chevron-right" />
-              </button>
-            </div>
-          </div>
+                <div className="shopmate-cat-icon">{cat.icon}</div>
+                <span className="shopmate-cat-name">{cat.label}</span>
+              </div>
+            );
+          })}
+        </div>
 
-          <div className="trending-scroll-row" ref={carouselRef}>
-            {TRENDING_CATEGORIES.map(cat => {
-              const isActive = selectedCategory === cat.name;
-              return (
-                <div 
-                  key={cat.name}
-                  onClick={() => setSelectedCategory(prev => prev === cat.name ? 'All' : cat.name)}
-                  className={`trending-card ${isActive ? 'active' : ''}`}
-                >
-                  <img 
-                    src={cat.image} 
-                    alt={cat.label} 
-                    className="trending-card-img" 
-                  />
-                  <div className="trending-card-overlay">
-                    <span className="trending-card-title">{cat.label}</span>
-                  </div>
-                </div>
-              );
-            })}
+        {/* ============================================================== */}
+        {/* SHOPMATE FRESH PICKS / CAMPUS DEALS BANNER                     */}
+        {/* ============================================================== */}
+        <div className="shopmate-promo-banner">
+          <div className="shopmate-promo-content">
+            <span className="shopmate-promo-badge">100% Student Verified</span>
+            <h3 className="shopmate-promo-title">This week's fresh stash</h3>
+            <p className="shopmate-promo-sub">Direct hand-to-hand pickup across hostels and lecture halls.</p>
+            <button 
+              className="shopmate-promo-btn"
+              onClick={handleOpenCreateModal}
+            >
+              <i className="fa-solid fa-plus" /> List an Item
+            </button>
+          </div>
+          <div className="shopmate-promo-graphic">
+            🎒
           </div>
         </div>
 
         {/* ============================================================== */}
-        {/* MARKETPLACE SECTION & SUBTLE FEED TOGGLE                       */}
+        {/* FEED SECTION HEADER & TABS                                     */}
         {/* ============================================================== */}
-        <div className="marketplace-header-row">
+        <div className="shopmate-section-header">
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
             <button
               onClick={() => setActiveTab('items')}
@@ -815,15 +794,15 @@ const [campuses, setCampuses] = useState(() => {
                 background: 'none',
                 border: 'none',
                 padding: 0,
-                fontSize: '1.25rem',
-                fontWeight: '700',
+                fontSize: '1.15rem',
+                fontWeight: '800',
                 color: activeTab === 'items' ? 'var(--text-main)' : 'var(--text-light)',
                 cursor: 'pointer',
                 fontFamily: 'var(--font-sans)',
-                letterSpacing: '-0.01em'
+                letterSpacing: '-0.015em'
               }}
             >
-              Marketplace
+              {selectedCategory === 'All' ? 'Popular near you' : selectedCategory}
             </button>
             <span style={{ color: 'var(--border)' }}>•</span>
             <button
@@ -832,35 +811,35 @@ const [campuses, setCampuses] = useState(() => {
                 background: 'none',
                 border: 'none',
                 padding: 0,
-                fontSize: '1.1rem',
-                fontWeight: '600',
-                color: activeTab === 'requests' ? 'var(--terracotta)' : 'var(--text-light)',
+                fontSize: '1rem',
+                fontWeight: '700',
+                color: activeTab === 'requests' ? 'var(--primary)' : 'var(--text-light)',
                 cursor: 'pointer',
                 fontFamily: 'var(--font-sans)'
               }}
             >
-              Daily Requests ({requests.length})
+              Wanted Board ({requests.length})
             </button>
           </div>
 
-          {activeTab === 'items' && selectedCategory !== 'All' && (
+          {activeTab === 'items' && (
             <button 
-              className="marketplace-see-all"
+              className="shopmate-section-link"
               onClick={() => setSelectedCategory('All')}
             >
-              See all
+              {selectedCategory !== 'All' ? 'See all' : `${filteredListings.length} items`}
             </button>
           )}
         </div>
 
         {/* ============================================================== */}
-        {/* VIEW 1: AESTHETIC MINIMAL MARKETPLACE GRID (2-COLUMN)          */}
+        {/* VIEW 1: SHOPMATE 2-COLUMN PRODUCT CARDS                        */}
         {/* ============================================================== */}
         {activeTab === 'items' && (
           <>
             {loading ? (
               <div style={{ textAlign: 'center', padding: '4rem 1rem', color: 'var(--text-muted)' }}>
-                <i className="fa-solid fa-circle-notch fa-spin" style={{ fontSize: '2rem', color: 'var(--terracotta)', marginBottom: '0.75rem' }} />
+                <i className="fa-solid fa-circle-notch fa-spin" style={{ fontSize: '2rem', color: 'var(--primary)', marginBottom: '0.75rem' }} />
                 <p style={{ fontWeight: '600', fontSize: '0.95rem', color: 'var(--text-main)' }}>Loading campus listings...</p>
               </div>
             ) : filteredListings.length === 0 ? (
@@ -878,7 +857,7 @@ const [campuses, setCampuses] = useState(() => {
                   height: '56px',
                   borderRadius: '50%',
                   backgroundColor: 'var(--surface-alt)',
-                  color: 'var(--terracotta)',
+                  color: 'var(--primary)',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
@@ -887,7 +866,7 @@ const [campuses, setCampuses] = useState(() => {
                 }}>
                   <i className="fa-solid fa-store-slash" />
                 </div>
-                <h3 style={{ fontSize: '1.2rem', fontWeight: '700', marginBottom: '0.35rem', color: 'var(--text-main)' }}>
+                <h3 style={{ fontSize: '1.2rem', fontWeight: '800', marginBottom: '0.35rem', color: 'var(--text-main)' }}>
                   No Items Listed Here Yet
                 </h3>
                 <p style={{ color: 'var(--text-muted)', fontSize: '0.88rem', maxWidth: '380px', margin: '0 auto 1.25rem auto' }}>
@@ -902,7 +881,7 @@ const [campuses, setCampuses] = useState(() => {
                 </button>
               </div>
             ) : (
-              <div className="aesthetic-grid-2col">
+              <div className="shopmate-grid-2col">
                 {filteredListings.map(listing => {
                   const isSold = listing.status === 'sold';
                   const rawPrice = listing.price_kobo ? (listing.price_kobo / 100) : (listing.price || 0);
@@ -916,17 +895,17 @@ const [campuses, setCampuses] = useState(() => {
                   return (
                     <article 
                       key={listing.id}
-                      className="aesthetic-card"
+                      className="shopmate-card"
                       onClick={() => setSelectedListing(listing)}
                     >
                       {/* Image Box */}
-                      <div className="aesthetic-card-image-box">
+                      <div className="shopmate-card-image-wrap">
                         {listing.image_url ? (
                           <img 
                             src={getImageUrl(listing.image_url)} 
                             alt={listing.title} 
                             loading="lazy"
-                            style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                            className="shopmate-card-img"
                             onError={(e) => {
                               e.currentTarget.style.display = 'none';
                               const fb = e.currentTarget.parentElement?.querySelector('.listing-fallback');
@@ -949,33 +928,10 @@ const [campuses, setCampuses] = useState(() => {
                           <i className="fa-regular fa-image" />
                         </div>
 
-                        {/* Top-Left: Dedicated Seller Pill -> Click to view Storefront */}
-                        <div 
-                          className="aesthetic-card-seller-pill" 
-                          title={isStore ? `View ${sellerName}'s Storefront` : `View @${sellerName}'s Campus Shop`}
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setStorefrontSeller({
-                              seller_id: listing.seller_id,
-                              seller_handle: listing.seller_handle || listing.seller?.burner_handle,
-                              seller_name: sellerName
-                            });
-                          }}
-                        >
-                          <i className={isStore ? "fa-solid fa-store" : "fa-regular fa-user"} style={{ fontSize: '0.65rem', opacity: 0.85 }} />
-                          <span>{isStore ? sellerName : `by ${sellerName}`}</span>
-                        </div>
-
-                        {/* Bottom-Left: Dedicated Status Pill (Separate from Seller Name) */}
-                        <div className={`aesthetic-card-status-pill ${isSold ? 'sold' : 'active'}`}>
-                          <span className={`aesthetic-status-dot ${isSold ? 'sold' : 'active'}`} />
-                          <span>{isSold ? 'Sold' : 'Active'}</span>
-                        </div>
-
-                        {/* Top-Right Heart Button */}
+                        {/* Top-Right Heart Bookmark Button */}
                         <button
                           type="button"
-                          className={`aesthetic-card-heart-btn ${isBookmarked ? 'active' : ''}`}
+                          className={`shopmate-card-heart-btn ${isBookmarked ? 'active' : ''}`}
                           onClick={(e) => toggleBookmark(e, listing.id)}
                           title={isBookmarked ? "Remove Bookmark" : "Save Item"}
                         >
@@ -983,14 +939,38 @@ const [campuses, setCampuses] = useState(() => {
                         </button>
                       </div>
 
-                      {/* Card Details */}
-                      <div className="aesthetic-card-details">
-                        <h3 className="aesthetic-card-title">
-                          {listing.title}
-                        </h3>
-                        <div className="aesthetic-card-price">
+                      {/* Card Tag Pill */}
+                      <span className="shopmate-card-tag">
+                        {listing.category || 'General'}
+                      </span>
+
+                      {/* Card Title */}
+                      <h3 className="shopmate-card-title" title={listing.title}>
+                        {listing.title}
+                      </h3>
+
+                      {/* Card Meta / Delivery */}
+                      <div className="shopmate-card-meta">
+                        <i className="fa-regular fa-clock" style={{ fontSize: '0.65rem' }} />
+                        <span>Hostel Pickup • by {sellerName}</span>
+                      </div>
+
+                      {/* Footer: Price + Circular Green Plus Action Button */}
+                      <div className="shopmate-card-footer">
+                        <div className="shopmate-card-price">
                           ₦{priceFormatted}
                         </div>
+                        <button
+                          type="button"
+                          className="shopmate-card-plus-btn"
+                          title="View & Chat"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setSelectedListing(listing);
+                          }}
+                        >
+                          <i className="fa-solid fa-plus" />
+                        </button>
                       </div>
                     </article>
                   );

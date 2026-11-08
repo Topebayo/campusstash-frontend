@@ -148,19 +148,46 @@ function Navbar({ onPrimaryAction, primaryActionText }) {
 
   return (
     <>
-      {/* Aesthetic Minimal Floating Bottom Navigation Dock (All Devices) */}
-      <nav className="aesthetic-bottom-dock">
+      {/* ShopMate Inspired Floating Bottom Navigation Dock */}
+      <nav className="shopmate-floating-dock">
         {/* 1. Home */}
         <button
           onClick={() => navigate('/dashboard')}
-          className={`aesthetic-dock-btn ${isHome ? 'active' : ''}`}
+          className={`shopmate-dock-item ${isHome ? 'active' : ''}`}
           title="Marketplace Home"
         >
           <i className="fa-solid fa-house" />
-          {isHome && <span className="aesthetic-dock-dot" />}
+          {isHome && <span className="shopmate-dock-label">Home</span>}
         </button>
 
-        {/* 2. Messages */}
+        {/* 2. Stores */}
+        <button
+          onClick={() => navigate('/discover')}
+          className={`shopmate-dock-item ${isDiscover ? 'active' : ''}`}
+          title="Campus Stores & Brands"
+        >
+          <i className="fa-solid fa-store" />
+          {isDiscover && <span className="shopmate-dock-label">Stores</span>}
+        </button>
+
+        {/* 3. Center Elevated Action Button (+) */}
+        <button 
+          className="shopmate-dock-center-action"
+          onClick={() => {
+            if (!token) {
+              navigate('/auth');
+            } else if (onPrimaryAction) {
+              onPrimaryAction();
+            } else {
+              navigate('/dashboard', { state: { openCreateModal: true } });
+            }
+          }}
+          title="List an Item"
+        >
+          <i className="fa-solid fa-plus" />
+        </button>
+
+        {/* 4. Messages / Chat */}
         <button
           onClick={() => {
             if (!token) {
@@ -169,7 +196,7 @@ function Navbar({ onPrimaryAction, primaryActionText }) {
               navigate('/messages');
             }
           }}
-          className={`aesthetic-dock-btn ${isMessages ? 'active' : ''}`}
+          className={`shopmate-dock-item ${isMessages ? 'active' : ''}`}
           title="Campus Messages"
         >
           <div style={{ position: 'relative', display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -180,37 +207,10 @@ function Navbar({ onPrimaryAction, primaryActionText }) {
               </span>
             )}
           </div>
-          {isMessages && <span className="aesthetic-dock-dot" />}
+          {isMessages && <span className="shopmate-dock-label">Chat</span>}
         </button>
 
-        {/* 3. Center Elevated Action Button (+) */}
-        <button 
-          className="aesthetic-dock-center-plus"
-          onClick={() => {
-            if (!token) {
-              navigate('/auth');
-            } else if (onPrimaryAction) {
-              onPrimaryAction();
-            } else {
-              navigate('/dashboard', { state: { openCreateModal: true } });
-            }
-          }}
-          title="Sell an Item"
-        >
-          <i className="fa-solid fa-plus" />
-        </button>
-
-        {/* 4. Discover Campus Stores & Student Brands */}
-        <button
-          onClick={() => navigate('/discover')}
-          className={`aesthetic-dock-btn ${isDiscover ? 'active' : ''}`}
-          title="Discover Stores"
-        >
-          <i className="fa-solid fa-store" />
-          {isDiscover && <span className="aesthetic-dock-dot" />}
-        </button>
-
-        {/* 5. My Profile Page */}
+        {/* 5. Profile */}
         <button
           onClick={() => {
             if (!token) {
@@ -219,11 +219,11 @@ function Navbar({ onPrimaryAction, primaryActionText }) {
               navigate('/profile');
             }
           }}
-          className={`aesthetic-dock-btn ${isProfile ? 'active' : ''}`}
+          className={`shopmate-dock-item ${isProfile ? 'active' : ''}`}
           title="My Profile"
         >
           <i className={isProfile ? "fa-solid fa-user" : "fa-regular fa-user"} />
-          {isProfile && <span className="aesthetic-dock-dot" />}
+          {isProfile && <span className="shopmate-dock-label">Profile</span>}
         </button>
       </nav>
 
