@@ -65,8 +65,14 @@ function Landing() {
           <div 
             onClick={() => navigate('/')} 
             className="landing-logo"
+            style={{ display: 'flex', alignItems: 'center', gap: '0.65rem', cursor: 'pointer' }}
           >
-            Campus<span style={{ color: 'var(--lightgreen)' }}>Stash</span>
+            <img 
+              src="/logo.svg" 
+              alt="CampusStash Logo" 
+              style={{ width: '38px', height: '38px', borderRadius: '10px', boxShadow: '0 4px 12px rgba(0,0,0,0.2)' }} 
+            />
+            <span>Campus<span style={{ color: 'var(--lightgreen)' }}>Stash</span></span>
           </div>
           
           <div className="landing-nav-links">

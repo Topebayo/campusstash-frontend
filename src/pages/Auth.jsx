@@ -441,8 +441,19 @@ function Auth() {
       {/* Brand Header */}
       <div 
         onClick={() => navigate('/dashboard')} 
-        style={{ cursor: 'pointer', marginBottom: '1.5rem', textAlign: 'center', marginTop: '2.5rem' }}
+        style={{ cursor: 'pointer', marginBottom: '1.5rem', textAlign: 'center', marginTop: '2.5rem', display: 'flex', flexDirection: 'column', alignItems: 'center' }}
       >
+        <img 
+          src="/logo.svg" 
+          alt="CampusStash Logo" 
+          style={{ 
+            width: '68px', 
+            height: '68px', 
+            borderRadius: '18px', 
+            marginBottom: '0.85rem', 
+            boxShadow: '0 8px 25px rgba(200, 122, 91, 0.28)' 
+          }} 
+        />
         <div style={{
           fontFamily: 'var(--font-display)',
           fontWeight: '800',
@@ -451,7 +462,7 @@ function Auth() {
           color: 'var(--text-main)',
           marginBottom: '0.35rem'
         }}>
-          Campus<span className="text-brandblue">Stash</span>
+          Campus<span style={{ color: 'var(--terracotta)' }}>Stash</span>
         </div>
         <span className="badge-pill">
           <i className="fa-solid fa-shield-halved" /> Verified Student Commerce
