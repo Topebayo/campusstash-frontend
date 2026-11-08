@@ -8,6 +8,8 @@
   },
   "scripts": {
     "dev": "vite",
+    "preview:tunnel": "node scripts/start-preview.js",
+    "tunnel": "ngrok http 5173",
     "build": "vite build",
     "start": "serve -s dist -l $PORT",
     "lint": "oxlint",
