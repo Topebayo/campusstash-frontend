@@ -8,6 +8,9 @@ export const CLOUD_HOST = 'https://web-production-85cbf.up.railway.app';
 
 // Standard Nigerian Tertiary Institutions (Ibadan Cluster & Launch Hubs)
 export const DEFAULT_CAMPUSES = [
+  // ==========================================
+  // IBADAN CLUSTER
+  // ==========================================
   { id: 'af705f54-8603-46c7-8282-dba21e92d614', name: 'Lead City University', acronym: 'LCU', state: 'Ibadan', lat: 7.3328, lon: 3.8824 },
   { id: '8636a3e5-dd7f-41cb-9687-f9178e3d832a', name: 'University of Ibadan', acronym: 'UI', state: 'Ibadan', lat: 7.4443, lon: 3.9003 },
   { id: '7b38d39f-2f78-4389-980e-3fa5e9b9281a', name: 'The Polytechnic, Ibadan', acronym: 'Poly Ibadan', state: 'Ibadan', lat: 7.4338, lon: 3.8742 },
@@ -18,12 +21,51 @@ export const DEFAULT_CAMPUSES = [
   { id: '8e7421cb-4ef9-4971-8bc4-c6899451de70', name: 'Federal College of Animal Health and Production Technology', acronym: 'FCAH&PT', state: 'Ibadan', lat: 7.3780, lon: 3.8430 },
   { id: 'a6d39478-f7b9-4089-9132-723eb8f27802', name: 'Federal College of Forestry', acronym: 'FCF', state: 'Ibadan', lat: 7.3980, lon: 3.8670 },
   { id: 'd5c78912-320e-4ab8-8b54-914068f23471', name: 'Federal School of Statistics', acronym: 'FSS', state: 'Ibadan', lat: 7.4260, lon: 3.8880 },
-  { id: '8c47396b-5188-41b0-93e3-e9104b72ab83', name: 'University of Lagos', acronym: 'UNILAG', state: 'Lagos', lat: 6.5173, lon: 3.3986 },
+
+  // ==========================================
+  // OSUN STATE (ALL UNIVERSITIES & HUBS)
+  // ==========================================
   { id: '5c701cef-35a9-4f29-9232-ed8cd3afeba1', name: 'Obafemi Awolowo University', acronym: 'OAU', state: 'Osun', lat: 7.5186, lon: 4.5262 },
-  { id: 'e8e285fa-a7b1-4b52-a170-0807db95afd7', name: 'Federal University of Technology, Akure', acronym: 'FUTA', state: 'Ondo', lat: 7.3039, lon: 5.1384 },
+  { id: '6a812345-bcde-4f01-2345-6789abcdef01', name: 'Osun State University', acronym: 'UNIOSUN', state: 'Osun', lat: 7.7650, lon: 4.5680 },
+  { id: '6a812345-bcde-4f01-2345-6789abcdef02', name: 'Federal University of Health Sciences, Ila-Orangun', acronym: 'FUHSI', state: 'Osun', lat: 8.0160, lon: 4.9040 },
+  { id: '6a812345-bcde-4f01-2345-6789abcdef03', name: 'University of Ilesa', acronym: 'UNILESA', state: 'Osun', lat: 7.6250, lon: 4.7410 },
+  { id: '6a812345-bcde-4f01-2345-6789abcdef04', name: 'Bowen University', acronym: 'Bowen', state: 'Osun', lat: 7.6290, lon: 4.1870 },
+  { id: '6a812345-bcde-4f01-2345-6789abcdef05', name: "Redeemer's University", acronym: 'RUN', state: 'Osun', lat: 7.7420, lon: 4.4390 },
+  { id: '6a812345-bcde-4f01-2345-6789abcdef06', name: 'Adeleke University', acronym: 'AU', state: 'Osun', lat: 7.7280, lon: 4.4510 },
+  { id: '6a812345-bcde-4f01-2345-6789abcdef07', name: 'Fountain University', acronym: 'Fountain', state: 'Osun', lat: 7.7810, lon: 4.5820 },
+  { id: '6a812345-bcde-4f01-2345-6789abcdef08', name: 'Oduduwa University', acronym: 'OUI', state: 'Osun', lat: 7.5020, lon: 4.4500 },
+  { id: '6a812345-bcde-4f01-2345-6789abcdef09', name: 'Joseph Ayo Babalola University', acronym: 'JABU', state: 'Osun', lat: 7.4220, lon: 4.9650 },
+  { id: '6a812345-bcde-4f01-2345-6789abcdef0a', name: 'Kings University', acronym: 'Kings Uni', state: 'Osun', lat: 7.5310, lon: 4.4020 },
+  { id: '6a812345-bcde-4f01-2345-6789abcdef0b', name: 'Westland University', acronym: 'Westland', state: 'Osun', lat: 7.6350, lon: 4.1950 },
+  { id: '6a812345-bcde-4f01-2345-6789abcdef0c', name: 'Mercy Medical University', acronym: 'MMU', state: 'Osun', lat: 7.6310, lon: 4.1830 },
+  { id: '6a812345-bcde-4f01-2345-6789abcdef0d', name: 'Federal Polytechnic, Ede', acronym: 'Federal Poly Ede', state: 'Osun', lat: 7.7380, lon: 4.4450 },
+  { id: '6a812345-bcde-4f01-2345-6789abcdef0e', name: 'Osun State Polytechnic, Iree', acronym: 'OSPOLY', state: 'Osun', lat: 7.9150, lon: 4.7950 },
+  { id: '6a812345-bcde-4f01-2345-6789abcdef0f', name: 'Osun State College of Technology, Esa-Oke', acronym: 'OSCOTECH', state: 'Osun', lat: 7.7480, lon: 4.8870 },
+
+  // ==========================================
+  // LAGOS STATE (ALL UNIVERSITIES & HUBS)
+  // ==========================================
+  { id: '8c47396b-5188-41b0-93e3-e9104b72ab83', name: 'University of Lagos', acronym: 'UNILAG', state: 'Lagos', lat: 6.5173, lon: 3.3986 },
   { id: '9a112233-4455-6677-8899-aabbccddeeff', name: 'Lagos State University', acronym: 'LASU', state: 'Lagos', lat: 6.4673, lon: 3.1979 },
+  { id: '7b923456-cdef-4012-3456-789abcdef001', name: 'Lagos State University of Science and Technology', acronym: 'LASUSTECH', state: 'Lagos', lat: 6.6190, lon: 3.5110 },
+  { id: '7b923456-cdef-4012-3456-789abcdef002', name: 'Lagos State University of Education', acronym: 'LASUED', state: 'Lagos', lat: 6.4890, lon: 3.1420 },
+  { id: '7b923456-cdef-4012-3456-789abcdef003', name: 'Pan-Atlantic University', acronym: 'PAU', state: 'Lagos', lat: 6.4910, lon: 3.8240 },
+  { id: '7b923456-cdef-4012-3456-789abcdef004', name: 'Caleb University', acronym: 'Caleb', state: 'Lagos', lat: 6.6620, lon: 3.6730 },
+  { id: '7b923456-cdef-4012-3456-789abcdef005', name: 'Anchor University', acronym: 'Anchor', state: 'Lagos', lat: 6.6080, lon: 3.2560 },
+  { id: '7b923456-cdef-4012-3456-789abcdef006', name: 'Augustine University', acronym: 'AUL', state: 'Lagos', lat: 6.6010, lon: 3.9720 },
+  { id: '7b923456-cdef-4012-3456-789abcdef007', name: 'Eko University of Medicine and Health Sciences', acronym: 'EKOUNIMED', state: 'Lagos', lat: 6.4850, lon: 3.1490 },
+  { id: '7b923456-cdef-4012-3456-789abcdef008', name: 'James Hope University', acronym: 'JHU', state: 'Lagos', lat: 6.4420, lon: 3.4880 },
+  { id: '7b923456-cdef-4012-3456-789abcdef009', name: 'Maranatha University', acronym: 'Maranatha', state: 'Lagos', lat: 6.4520, lon: 3.5510 },
+  { id: '7b923456-cdef-4012-3456-789abcdef00a', name: 'Nigerian University of Technology and Management', acronym: 'NUTM', state: 'Lagos', lat: 6.4710, lon: 3.3720 },
+  { id: '7b923456-cdef-4012-3456-789abcdef00b', name: 'Yaba College of Technology', acronym: 'YABATECH', state: 'Lagos', lat: 6.5180, lon: 3.3720 },
+  { id: '7b923456-cdef-4012-3456-789abcdef00c', name: 'Federal College of Education (Technical), Akoka', acronym: 'FCET Akoka', state: 'Lagos', lat: 6.5260, lon: 3.3850 },
+
+  // ==========================================
+  // REGIONAL CAMPUSES & LAUNCH HUBS
+  // ==========================================
   { id: '1b223344-5566-7788-99aa-bbccddeeff00', name: 'Covenant University', acronym: 'CU', state: 'Ogun', lat: 6.6725, lon: 3.1593 },
   { id: '2c334455-6677-8899-aabb-ccddeeff0011', name: 'Babcock University', acronym: 'BU', state: 'Ogun', lat: 6.8925, lon: 3.7225 },
+  { id: 'e8e285fa-a7b1-4b52-a170-0807db95afd7', name: 'Federal University of Technology, Akure', acronym: 'FUTA', state: 'Ondo', lat: 7.3039, lon: 5.1384 },
   { id: '3d445566-7788-99aa-bbcc-ddeeff001122', name: 'University of Ilorin', acronym: 'UNILORIN', state: 'Kwara', lat: 8.4799, lon: 4.6716 },
   { id: '4e556677-8899-aabb-ccdd-eeff00112233', name: 'University of Benin', acronym: 'UNIBEN', state: 'Edo', lat: 6.3995, lon: 5.6148 },
 ];
@@ -88,7 +130,7 @@ if (typeof window !== 'undefined') {
       } catch (e) {}
     }
     const cachedCampuses = localStorage.getItem('campusstash_cached_campuses');
-    if (cachedCampuses && (cachedCampuses.includes('"state":"Oyo"') || !cachedCampuses.includes('Poly Ibadan'))) {
+    if (cachedCampuses && (!cachedCampuses.includes('UNIOSUN') || !cachedCampuses.includes('LASUSTECH'))) {
       localStorage.removeItem('campusstash_cached_campuses');
     }
   } catch (e) {}

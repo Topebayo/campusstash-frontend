@@ -1,9 +1,9 @@
 import React, { useState, useMemo } from 'react';
 import { findNearestCampus } from '../api';
 
-function CampusOnboardingModal({ 
-  isOpen, 
-  campuses = [], 
+function CampusOnboardingModal({
+  isOpen,
+  campuses = [],
   onSelectCampus,
   currentCampusId = '',
   onClose
@@ -16,7 +16,7 @@ function CampusOnboardingModal({
   const filteredCampuses = useMemo(() => {
     const q = searchQuery.trim().toLowerCase();
     if (!q) return campuses;
-    return campuses.filter(c => 
+    return campuses.filter(c =>
       c.name?.toLowerCase().includes(q) ||
       c.acronym?.toLowerCase().includes(q) ||
       c.state?.toLowerCase().includes(q)
@@ -61,8 +61,8 @@ function CampusOnboardingModal({
   };
 
   return (
-    <div 
-      className="modal-overlay" 
+    <div
+      className="modal-overlay"
       onClick={onClose ? onClose : undefined}
       style={{
         zIndex: 2000,
@@ -75,7 +75,7 @@ function CampusOnboardingModal({
         padding: '1rem'
       }}
     >
-      <div 
+      <div
         className="modal-content animate-fade-in"
         onClick={(e) => e.stopPropagation()}
         style={{
@@ -290,8 +290,8 @@ function CampusOnboardingModal({
 
           {/* Search Input */}
           <div style={{ position: 'relative', marginBottom: '1rem' }}>
-            <i 
-              className="fa-solid fa-magnifying-glass" 
+            <i
+              className="fa-solid fa-magnifying-glass"
               style={{
                 position: 'absolute',
                 left: '1rem',
@@ -410,12 +410,12 @@ function CampusOnboardingModal({
                       </div>
                     </div>
 
-                    <i 
-                      className="fa-solid fa-chevron-right" 
-                      style={{ 
-                        color: isSelected ? 'var(--terracotta)' : 'var(--text-light)', 
-                        fontSize: '0.8rem' 
-                      }} 
+                    <i
+                      className="fa-solid fa-chevron-right"
+                      style={{
+                        color: isSelected ? 'var(--terracotta)' : 'var(--text-light)',
+                        fontSize: '0.8rem'
+                      }}
                     />
                   </button>
                 );
