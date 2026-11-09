@@ -93,6 +93,12 @@ class ErrorBoundary extends React.Component {
 
 function App() {
   useEffect(() => {
+    // Canonical Domain Guard: always route users to https://www.campusstash.com.ng
+    if (window.location.hostname === 'campusstash.com.ng') {
+      window.location.replace(`https://www.campusstash.com.ng${window.location.pathname}${window.location.search}${window.location.hash}`);
+      return;
+    }
+
     // Theme Sync: defaults to Aesthetic Minimal (light cream) unless explicitly set to dark
     // Suppress browser automatic install banners (e.g. Android Chrome infobar)
     const handleBeforeInstall = (e) => {

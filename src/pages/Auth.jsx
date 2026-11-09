@@ -150,6 +150,12 @@ function Auth() {
   const handleTriggerGoogleAuth = () => {
     setError('');
 
+    // Canonical Domain Guard: ensure user is on www.campusstash.com.ng before opening Google OAuth
+    if (window.location.hostname === 'campusstash.com.ng') {
+      window.location.replace(`https://www.campusstash.com.ng${window.location.pathname}${window.location.search}${window.location.hash}`);
+      return;
+    }
+
     if (!isGoogleConfigured) {
       setError('Google Sign-In is awaiting your Google Cloud Client ID. Please sign in with your email or phone below!');
       return;

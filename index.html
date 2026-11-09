@@ -4,6 +4,13 @@
     <meta charset="UTF-8" />
     <script>
       (function() {
+        // Enforce canonical www.campusstash.com.ng domain & HTTPS everywhere
+        var h = window.location.hostname;
+        var p = window.location.protocol;
+        if (h === 'campusstash.com.ng' || (p === 'http:' && h.indexOf('campusstash.com.ng') !== -1)) {
+          window.location.replace('https://www.campusstash.com.ng' + window.location.pathname + window.location.search + window.location.hash);
+          return;
+        }
         try {
           var saved = localStorage.getItem('theme');
           var theme = saved === 'dark' ? 'dark' : 'light';
