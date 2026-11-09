@@ -362,7 +362,8 @@ export const adminApi = {
     body: JSON.stringify({ identifier })
   }),
   getRecentOtps: (limit = 25) => apiFetch(`/admin/recent-otps?limit=${limit}`),
-  getPendingKyc: () => apiFetch('/admin/kyc/pending'),
+  getRecentSignups: (limit = 25) => apiFetch(`/admin/recent-signups?limit=${limit}`),
+  getPendingKyc: (status = 'all') => apiFetch(`/admin/kyc?status_filter=${status}`),
   approveKyc: (userId) => apiFetch(`/admin/kyc/${userId}/approve`, { method: 'POST' }),
   rejectKyc: (userId, reason = '') => apiFetch(`/admin/kyc/${userId}/reject`, {
     method: 'POST',
