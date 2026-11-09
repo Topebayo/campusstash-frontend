@@ -20,6 +20,17 @@ function decodeJwt(token) {
   }
 }
 
+function formatMessageTime(dateStr) {
+  if (!dateStr) return '';
+  try {
+    const d = new Date(dateStr);
+    if (isNaN(d.getTime())) return '';
+    return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  } catch (e) {
+    return '';
+  }
+}
+
 function ChatModal({ isOpen = true, onClose, listing }) {
   const [messages, setMessages] = useState([]);
   const [inputValue, setInputValue] = useState('');
@@ -72,6 +83,12 @@ function ChatModal({ isOpen = true, onClose, listing }) {
         setCurrentUserId(decoded.sub);
       }
     }
+    try {
+      const u = JSON.parse(localStorage.getItem('user') || '{}');
+      if (u.id) {
+        setCurrentUserId(u.id);
+      }
+    } catch (e) {}
   }, []);
 
   useEffect(() => {
@@ -238,9 +255,32 @@ function ChatModal({ isOpen = true, onClose, listing }) {
     const textToSend = inputValue.trim();
     if (!textToSend) return;
 
-    const activeConvId = conversationId || listing.conversation_id;
-    const targetRecipientId = listing.seller_id || listing.recipient_id;
+    let activeConvId = conversationId || listing?.conversation_id;
+    const targetRecipientId = listing?.seller_id || listing?.recipient_id || listing?.user_id || listing?.seller?.id || listing?.other_user?.id;
     setInputValue('');
+
+    // Ensure conversation exists before sending if missing
+    if (!activeConvId) {
+      try {
+        const validListingId = listing?.listing_id || (listing?.id && listing.id !== listing.conversation_id && !listing.is_shop_chat && !listing.is_request_chat ? listing.id : null);
+        const bodyPayload = listing?.request_id 
+          ? { request_id: listing.request_id }
+          : validListingId 
+            ? { listing_id: validListingId, recipient_id: targetRecipientId }
+            : { recipient_id: targetRecipientId };
+
+        const conv = await apiFetch('/conversations/', {
+          method: 'POST',
+          body: JSON.stringify(bodyPayload)
+        });
+        if (conv && conv.id) {
+          activeConvId = conv.id;
+          setConversationId(conv.id);
+        }
+      } catch (cErr) {
+        console.warn("Conversation creation fallback:", cErr);
+      }
+    }
 
     // INSTANT OPTIMISTIC RENDERING (0ms delay)
     const tempId = 'opt-' + Date.now() + '-' + Math.random().toString(36).substring(2, 6);
@@ -250,6 +290,7 @@ function ChatModal({ isOpen = true, onClose, listing }) {
       sender_id: currentUserId,
       text: textToSend,
       timestamp: new Date().toISOString(),
+      created_at: new Date().toISOString(),
       is_optimistic: true
     };
     setMessages((prev) => [...prev, optimisticMsg]);
@@ -268,7 +309,8 @@ function ChatModal({ isOpen = true, onClose, listing }) {
       }
     }
 
-    if (!sentViaWs && activeConvId) {
+    // Always ensure message is persisted via REST fallback if WebSocket not open or as backup
+    if (activeConvId) {
       try {
         const savedMsg = await apiFetch(`/conversations/${activeConvId}/messages`, {
           method: 'POST',
@@ -287,9 +329,11 @@ function ChatModal({ isOpen = true, onClose, listing }) {
           });
         }
       } catch (postErr) {
-        console.error("HTTP send message failed:", postErr);
-        setError("Failed to send: " + (postErr.message || 'Network error'));
-        setMessages((prev) => prev.filter(m => m.id !== tempId));
+        if (!sentViaWs) {
+          console.error("HTTP send message failed:", postErr);
+          setError("Failed to send: " + (postErr.message || 'Network error'));
+          setMessages((prev) => prev.filter(m => m.id !== tempId));
+        }
       }
     }
 
@@ -815,32 +859,53 @@ function ChatModal({ isOpen = true, onClose, listing }) {
                 );
               }
 
+              const isMineCalculated = msg.sender_id 
+                ? (currentUserId && String(msg.sender_id) === String(currentUserId)) 
+                : false;
+              const formattedTime = formatMessageTime(msg.timestamp || msg.created_at);
+
               return (
                 <div 
                   key={msg.id || index} 
                   style={{
-                    alignSelf: isMine ? 'flex-end' : 'flex-start',
-                    maxWidth: '80%'
+                    alignSelf: isMineCalculated ? 'flex-end' : 'flex-start',
+                    maxWidth: '82%',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: isMineCalculated ? 'flex-end' : 'flex-start'
                   }}
                 >
                   <div style={{
-                    padding: '0.7rem 1rem',
-                    borderRadius: '18px',
-                    backgroundColor: isMine ? 'var(--terracotta)' : 'var(--surface-alt)',
-                    color: isMine ? '#FFFFFF' : 'var(--text-main)',
-                    border: isMine ? 'none' : '1px solid var(--border)',
+                    padding: '0.75rem 1.05rem',
+                    borderRadius: isMineCalculated ? '18px 18px 4px 18px' : '18px 18px 18px 4px',
+                    backgroundColor: isMineCalculated ? 'var(--primary, #0E4434)' : 'var(--surface-alt)',
+                    color: isMineCalculated ? '#FFFFFF' : 'var(--text-main)',
+                    border: isMineCalculated ? 'none' : '1px solid var(--border)',
                     boxShadow: 'var(--shadow-sm)',
-                    fontSize: '0.9rem',
+                    fontSize: '0.92rem',
                     lineHeight: '1.45',
                     wordBreak: 'break-word',
                     opacity: msg.is_optimistic ? 0.82 : 1,
                     transition: 'opacity 0.2s ease'
                   }}>
                     {msgText}
-                    {msg.is_optimistic && (
-                      <span style={{ fontSize: '0.72rem', opacity: 0.75, marginLeft: '0.4rem' }}>
-                        <i className="fa-regular fa-clock" />
-                      </span>
+                  </div>
+                  {/* Timestamp and Delivery Status */}
+                  <div style={{
+                    fontSize: '0.68rem',
+                    color: 'var(--text-muted)',
+                    marginTop: '3px',
+                    padding: '0 4px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '4px'
+                  }}>
+                    <span>{formattedTime}</span>
+                    {isMineCalculated && (
+                      <i 
+                        className={msg.is_optimistic ? "fa-regular fa-clock" : (msg.is_read ? "fa-solid fa-check-double" : "fa-solid fa-check")} 
+                        style={{ fontSize: '0.64rem', color: msg.is_read ? '#10B981' : 'var(--text-muted)' }} 
+                      />
                     )}
                   </div>
                 </div>

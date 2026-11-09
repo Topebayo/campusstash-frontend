@@ -5,7 +5,8 @@ function CampusOnboardingModal({
   isOpen, 
   campuses = [], 
   onSelectCampus,
-  currentCampusId = ''
+  currentCampusId = '',
+  onClose
 }) {
   const [isLocating, setIsLocating] = useState(false);
   const [detectedResult, setDetectedResult] = useState(null);
@@ -62,6 +63,7 @@ function CampusOnboardingModal({
   return (
     <div 
       className="modal-overlay" 
+      onClick={onClose ? onClose : undefined}
       style={{
         zIndex: 2000,
         backgroundColor: 'rgba(28, 25, 23, 0.78)',
@@ -75,6 +77,7 @@ function CampusOnboardingModal({
     >
       <div 
         className="modal-content animate-fade-in"
+        onClick={(e) => e.stopPropagation()}
         style={{
           maxWidth: '560px',
           width: '100%',
@@ -85,7 +88,8 @@ function CampusOnboardingModal({
           boxShadow: '0 20px 50px rgba(0, 0, 0, 0.35)',
           display: 'flex',
           flexDirection: 'column',
-          overflow: 'hidden'
+          overflow: 'hidden',
+          position: 'relative'
         }}
       >
         {/* Modal Header */}
@@ -93,8 +97,35 @@ function CampusOnboardingModal({
           padding: '1.75rem 1.5rem 1.25rem 1.5rem',
           textAlign: 'center',
           borderBottom: '1px solid var(--border)',
-          backgroundColor: 'var(--surface-alt)'
+          backgroundColor: 'var(--surface-alt)',
+          position: 'relative'
         }}>
+          {onClose && (
+            <button
+              type="button"
+              onClick={onClose}
+              style={{
+                position: 'absolute',
+                top: '1.25rem',
+                right: '1.25rem',
+                width: '34px',
+                height: '34px',
+                borderRadius: '50%',
+                backgroundColor: 'var(--surface)',
+                border: '1px solid var(--border)',
+                color: 'var(--text-main)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                cursor: 'pointer',
+                fontSize: '0.9rem',
+                zIndex: 10
+              }}
+              aria-label="Close"
+            >
+              <i className="fa-solid fa-xmark" />
+            </button>
+          )}
           <div style={{
             width: '54px',
             height: '54px',

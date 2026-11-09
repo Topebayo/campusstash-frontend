@@ -310,9 +310,11 @@ function SettingsModal({ isOpen, onClose, onLogout, userProfile, onUpdateUser, d
           borderBottom: '1px solid var(--border)',
           backgroundColor: 'var(--surface-alt)',
           overflowX: 'auto',
+          WebkitOverflowScrolling: 'touch',
           scrollbarWidth: 'none',
-          padding: '4px 8px',
-          gap: '4px'
+          msOverflowStyle: 'none',
+          padding: '6px 12px',
+          gap: '6px'
         }}>
           {[
             { id: 'appearance', label: 'Theme & Sync', icon: 'fa-palette' },
@@ -365,67 +367,82 @@ function SettingsModal({ isOpen, onClose, onLogout, userProfile, onUpdateUser, d
         }}>
           {/* TAB 0: THEME / APPEARANCE (SYSTEM DARK MODE SYNC) */}
           {activeTab === 'appearance' && (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '1.2rem' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
               <div>
-                <h4 style={{ fontFamily: 'var(--font-display)', fontSize: '1.05rem', fontWeight: '800', color: 'var(--text-main)', margin: '0 0 0.35rem 0' }}>
-                  Interface Mode & Phone Sync
+                <h4 style={{ 
+                  fontFamily: 'var(--font-display)', 
+                  fontSize: '1.1rem', 
+                  fontWeight: '800', 
+                  color: 'var(--text-main)', 
+                  margin: '0 0 0.35rem 0' 
+                }}>
+                  Appearance & Theme Sync
                 </h4>
-                <p style={{ fontSize: '0.82rem', color: 'var(--text-muted)', margin: 0, lineHeight: '1.45' }}>
-                  Choose whether CampusStash automatically syncs with your phone's dark mode or stays locked in light or dark mode.
+                <p style={{ fontSize: '0.82rem', color: 'var(--text-muted)', margin: 0, lineHeight: '1.5' }}>
+                  Sync CampusStash seamlessly with your device's light or dark mode, or lock in your preferred look.
                 </p>
               </div>
 
-              {/* 3 Theme Options */}
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-                {/* 1. System / Phone Default (Recommended) */}
+              {/* Theme Options Deck */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
+                {/* 1. System Auto Sync */}
                 <div
                   onClick={() => handleThemeChange('system')}
                   style={{
-                    padding: '1.1rem 1.2rem',
-                    borderRadius: '18px',
-                    border: '2px solid',
-                    borderColor: themePref === 'system' ? 'var(--primary)' : 'var(--border)',
-                    backgroundColor: themePref === 'system' ? 'var(--primary-light)' : 'var(--surface-alt)',
+                    padding: '1.1rem 1.15rem',
+                    borderRadius: '20px',
+                    border: themePref === 'system' ? '1.5px solid var(--primary)' : '1px solid var(--border)',
+                    backgroundColor: themePref === 'system' ? 'var(--primary-light)' : 'var(--surface)',
                     cursor: 'pointer',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'space-between',
                     gap: '1rem',
-                    transition: 'all 0.15s ease'
+                    transition: 'all 0.2s cubic-bezier(0.16, 1, 0.3, 1)',
+                    boxShadow: themePref === 'system' ? '0 4px 16px rgba(16, 185, 129, 0.12)' : 'none'
                   }}
                 >
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.85rem' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.9rem' }}>
                     <div style={{
-                      width: '42px',
-                      height: '42px',
-                      borderRadius: '50%',
-                      backgroundColor: themePref === 'system' ? 'var(--primary)' : 'var(--surface)',
-                      color: themePref === 'system' ? '#FFFFFF' : 'var(--text-main)',
+                      width: '44px',
+                      height: '44px',
+                      borderRadius: '14px',
+                      backgroundColor: themePref === 'system' ? 'var(--primary)' : 'var(--surface-alt)',
+                      color: themePref === 'system' ? '#FFFFFF' : 'var(--primary)',
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',
-                      fontSize: '1.2rem',
-                      flexShrink: 0
+                      fontSize: '1.25rem',
+                      flexShrink: 0,
+                      boxShadow: 'var(--shadow-sm)'
                     }}>
                       <i className="fa-solid fa-circle-half-stroke" />
                     </div>
                     <div>
-                      <div style={{ fontWeight: '800', fontSize: '0.92rem', color: 'var(--text-main)', display: 'flex', alignItems: 'center', gap: '0.45rem' }}>
-                        <span>Auto (Follow Phone System)</span>
+                      <div style={{ 
+                        fontWeight: '800', 
+                        fontSize: '0.94rem', 
+                        color: 'var(--text-main)', 
+                        display: 'flex', 
+                        alignItems: 'center', 
+                        gap: '0.5rem' 
+                      }}>
+                        <span>System Auto Sync</span>
                         <span style={{
                           backgroundColor: '#10B981',
                           color: '#FFFFFF',
-                          fontSize: '0.65rem',
+                          fontSize: '0.62rem',
                           fontWeight: '800',
-                          padding: '1px 6px',
+                          padding: '2px 7px',
                           borderRadius: '9999px',
+                          letterSpacing: '0.04em',
                           textTransform: 'uppercase'
                         }}>
                           Recommended
                         </span>
                       </div>
-                      <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)', marginTop: '2px' }}>
-                        Automatically changes whenever you toggle dark mode on your phone
+                      <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)', marginTop: '3px', lineHeight: '1.4' }}>
+                        Automatically adapts when your phone toggles dark or light mode
                       </div>
                     </div>
                   </div>
@@ -439,109 +456,52 @@ function SettingsModal({ isOpen, onClose, onLogout, userProfile, onUpdateUser, d
                     alignItems: 'center',
                     justifyContent: 'center',
                     color: '#FFFFFF',
-                    fontSize: '0.75rem',
+                    fontSize: '0.72rem',
                     flexShrink: 0
                   }}>
                     {themePref === 'system' && <i className="fa-solid fa-check" />}
                   </div>
                 </div>
 
-                {/* 2. Light Mode */}
+                {/* 2. Dark Mode */}
                 <div
-                  onClick={() => handleThemeChange('light')}
+                  onClick={() => handleThemeChange('dark')}
                   style={{
-                    padding: '1.1rem 1.2rem',
-                    borderRadius: '18px',
-                    border: '2px solid',
-                    borderColor: themePref === 'light' ? 'var(--primary)' : 'var(--border)',
-                    backgroundColor: themePref === 'light' ? 'var(--primary-light)' : 'var(--surface-alt)',
+                    padding: '1.1rem 1.15rem',
+                    borderRadius: '20px',
+                    border: themePref === 'dark' ? '1.5px solid var(--primary)' : '1px solid var(--border)',
+                    backgroundColor: themePref === 'dark' ? 'var(--primary-light)' : 'var(--surface)',
                     cursor: 'pointer',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'space-between',
                     gap: '1rem',
-                    transition: 'all 0.15s ease'
+                    transition: 'all 0.2s cubic-bezier(0.16, 1, 0.3, 1)',
+                    boxShadow: themePref === 'dark' ? '0 4px 16px rgba(16, 185, 129, 0.12)' : 'none'
                   }}
                 >
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.85rem' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.9rem' }}>
                     <div style={{
-                      width: '42px',
-                      height: '42px',
-                      borderRadius: '50%',
-                      backgroundColor: themePref === 'light' ? 'var(--primary)' : 'var(--surface)',
-                      color: themePref === 'light' ? '#FFFFFF' : '#F59E0B',
+                      width: '44px',
+                      height: '44px',
+                      borderRadius: '14px',
+                      backgroundColor: themePref === 'dark' ? 'var(--primary)' : 'var(--surface-alt)',
+                      color: themePref === 'dark' ? '#FFFFFF' : 'var(--primary)',
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',
                       fontSize: '1.25rem',
-                      flexShrink: 0
-                    }}>
-                      <i className="fa-solid fa-sun" />
-                    </div>
-                    <div>
-                      <div style={{ fontWeight: '800', fontSize: '0.92rem', color: 'var(--text-main)' }}>
-                        Light Mode
-                      </div>
-                      <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)', marginTop: '2px' }}>
-                        Fresh mint & clean white aesthetic
-                      </div>
-                    </div>
-                  </div>
-                  <div style={{
-                    width: '24px',
-                    height: '24px',
-                    borderRadius: '50%',
-                    border: `2px solid ${themePref === 'light' ? 'var(--primary)' : 'var(--border)'}`,
-                    backgroundColor: themePref === 'light' ? 'var(--primary)' : 'transparent',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    color: '#FFFFFF',
-                    fontSize: '0.75rem',
-                    flexShrink: 0
-                  }}>
-                    {themePref === 'light' && <i className="fa-solid fa-check" />}
-                  </div>
-                </div>
-
-                {/* 3. Dark Mode */}
-                <div
-                  onClick={() => handleThemeChange('dark')}
-                  style={{
-                    padding: '1.1rem 1.2rem',
-                    borderRadius: '18px',
-                    border: '2px solid',
-                    borderColor: themePref === 'dark' ? 'var(--primary)' : 'var(--border)',
-                    backgroundColor: themePref === 'dark' ? 'var(--primary-light)' : 'var(--surface-alt)',
-                    cursor: 'pointer',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'space-between',
-                    gap: '1rem',
-                    transition: 'all 0.15s ease'
-                  }}
-                >
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.85rem' }}>
-                    <div style={{
-                      width: '42px',
-                      height: '42px',
-                      borderRadius: '50%',
-                      backgroundColor: themePref === 'dark' ? 'var(--primary)' : 'var(--surface)',
-                      color: themePref === 'dark' ? '#0E1210' : 'var(--primary)',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      fontSize: '1.2rem',
-                      flexShrink: 0
+                      flexShrink: 0,
+                      boxShadow: 'var(--shadow-sm)'
                     }}>
                       <i className="fa-solid fa-moon" />
                     </div>
                     <div>
-                      <div style={{ fontWeight: '800', fontSize: '0.92rem', color: 'var(--text-main)' }}>
+                      <div style={{ fontWeight: '800', fontSize: '0.94rem', color: 'var(--text-main)' }}>
                         Dark Mode
                       </div>
-                      <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)', marginTop: '2px' }}>
-                        Deep obsidian forest & emerald glow
+                      <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)', marginTop: '3px', lineHeight: '1.4' }}>
+                        Deep obsidian forest theme with emerald glow
                       </div>
                     </div>
                   </div>
@@ -555,10 +515,69 @@ function SettingsModal({ isOpen, onClose, onLogout, userProfile, onUpdateUser, d
                     alignItems: 'center',
                     justifyContent: 'center',
                     color: '#FFFFFF',
-                    fontSize: '0.75rem',
+                    fontSize: '0.72rem',
                     flexShrink: 0
                   }}>
                     {themePref === 'dark' && <i className="fa-solid fa-check" />}
+                  </div>
+                </div>
+
+                {/* 3. Light Mode */}
+                <div
+                  onClick={() => handleThemeChange('light')}
+                  style={{
+                    padding: '1.1rem 1.15rem',
+                    borderRadius: '20px',
+                    border: themePref === 'light' ? '1.5px solid var(--primary)' : '1px solid var(--border)',
+                    backgroundColor: themePref === 'light' ? 'var(--primary-light)' : 'var(--surface)',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    gap: '1rem',
+                    transition: 'all 0.2s cubic-bezier(0.16, 1, 0.3, 1)',
+                    boxShadow: themePref === 'light' ? '0 4px 16px rgba(16, 185, 129, 0.12)' : 'none'
+                  }}
+                >
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.9rem' }}>
+                    <div style={{
+                      width: '44px',
+                      height: '44px',
+                      borderRadius: '14px',
+                      backgroundColor: themePref === 'light' ? 'var(--primary)' : 'var(--surface-alt)',
+                      color: themePref === 'light' ? '#FFFFFF' : '#F59E0B',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      fontSize: '1.25rem',
+                      flexShrink: 0,
+                      boxShadow: 'var(--shadow-sm)'
+                    }}>
+                      <i className="fa-solid fa-sun" />
+                    </div>
+                    <div>
+                      <div style={{ fontWeight: '800', fontSize: '0.94rem', color: 'var(--text-main)' }}>
+                        Light Mode
+                      </div>
+                      <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)', marginTop: '3px', lineHeight: '1.4' }}>
+                        Clean ivory canvas with fresh mint highlights
+                      </div>
+                    </div>
+                  </div>
+                  <div style={{
+                    width: '24px',
+                    height: '24px',
+                    borderRadius: '50%',
+                    border: `2px solid ${themePref === 'light' ? 'var(--primary)' : 'var(--border)'}`,
+                    backgroundColor: themePref === 'light' ? 'var(--primary)' : 'transparent',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    color: '#FFFFFF',
+                    fontSize: '0.72rem',
+                    flexShrink: 0
+                  }}>
+                    {themePref === 'light' && <i className="fa-solid fa-check" />}
                   </div>
                 </div>
               </div>
@@ -1077,12 +1096,9 @@ function SettingsModal({ isOpen, onClose, onLogout, userProfile, onUpdateUser, d
           backgroundColor: 'var(--surface)',
           borderTop: '1px solid var(--border)',
           display: 'flex',
-          justifyContent: 'space-between',
+          justifyContent: 'flex-end',
           alignItems: 'center'
         }}>
-          <span style={{ fontSize: '0.78rem', color: 'var(--text-muted)', fontWeight: '600' }}>
-            CampusStash v2.4 • Student Verified
-          </span>
 
           <button
             type="button"

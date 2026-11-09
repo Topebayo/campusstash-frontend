@@ -645,36 +645,6 @@ function Profile() {
               </div>
             </div>
 
-            {/* Row 2: Saved Items / Wishlist */}
-            <div
-              onClick={() => setActiveSection('saved')}
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'space-between',
-                padding: '1rem 1.1rem',
-                borderBottom: '1px solid var(--border)',
-                cursor: 'pointer'
-              }}
-            >
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.85rem' }}>
-                <div style={{ width: '32px', height: '32px', borderRadius: '50%', backgroundColor: 'var(--surface-alt)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#EF4444', fontSize: '0.9rem' }}>
-                  <i className="fa-solid fa-heart" />
-                </div>
-                <div>
-                  <div style={{ fontSize: '0.92rem', fontWeight: '700', color: 'var(--text-main)' }}>
-                    Saved Items
-                  </div>
-                </div>
-              </div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem' }}>
-                <span style={{ fontSize: '0.78rem', color: 'var(--text-muted)', fontWeight: '600' }}>
-                  {savedListings.length}
-                </span>
-                <i className="fa-solid fa-chevron-right" style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }} />
-              </div>
-            </div>
-
             {/* Row 3: Store Owner Complete KYC */}
             <div
               onClick={() => setShowStoreKycModal(true)}

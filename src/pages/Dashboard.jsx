@@ -615,11 +615,11 @@ const [campuses, setCampuses] = useState(() => {
         {/* SHOPMATE TOP BAR: LOCATION & HEADER (TEMPLATE FIDELITY)         */}
         {/* ============================================================== */}
         <header className="shopmate-header">
-          {/* Location Delivery Selector (Left Phone in Template) */}
+          {/* Location Delivery Selector (Opens Full Campus Selector Modal with Search & GPS) */}
           <div 
             className="shopmate-location-group"
-            onClick={() => setShowCampusPicker(prev => !prev)}
-            ref={campusPickerRef}
+            onClick={() => setShowCampusPicker(true)}
+            style={{ cursor: 'pointer' }}
             title={`Select Campus (Current: ${activeCampusName})`}
           >
             <div className="shopmate-pin-circle">
@@ -632,133 +632,11 @@ const [campuses, setCampuses] = useState(() => {
                 <i className="fa-solid fa-chevron-down" style={{ fontSize: '0.62rem', opacity: 0.65 }} />
               </div>
             </div>
-
-            {/* Campus Dropdown Popover */}
-            {showCampusPicker && (
-              <div 
-                style={{
-                  position: 'absolute',
-                  top: '100%',
-                  left: 0,
-                  marginTop: '0.5rem',
-                  backgroundColor: 'var(--surface)',
-                  border: '1px solid var(--border)',
-                  borderRadius: '20px',
-                  boxShadow: 'var(--shadow-xl)',
-                  zIndex: 200,
-                  minWidth: '270px',
-                  maxWidth: '320px',
-                  maxHeight: '340px',
-                  overflowY: 'auto',
-                  padding: '0.5rem',
-                  display: 'flex',
-                  flexDirection: 'column',
-                  gap: '0.25rem'
-                }}
-                onClick={(e) => e.stopPropagation()}
-              >
-                <button
-                  onClick={() => handleSelectCampus('')}
-                  style={{
-                    padding: '0.6rem 0.85rem',
-                    borderRadius: '12px',
-                    border: 'none',
-                    backgroundColor: !selectedCampusId ? 'var(--primary-light)' : 'transparent',
-                    color: !selectedCampusId ? 'var(--primary)' : 'var(--text-main)',
-                    fontWeight: !selectedCampusId ? '700' : '500',
-                    textAlign: 'left',
-                    cursor: 'pointer',
-                    fontSize: '0.86rem',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'space-between'
-                  }}
-                >
-                  <span>🌐 All Campuses</span>
-                </button>
-                {campuses.map(c => (
-                  <button
-                    key={c.id}
-                    onClick={() => handleSelectCampus(c.id)}
-                    style={{
-                      padding: '0.6rem 0.85rem',
-                      borderRadius: '12px',
-                      border: 'none',
-                      backgroundColor: selectedCampusId === c.id ? 'var(--primary-light)' : 'transparent',
-                      color: selectedCampusId === c.id ? 'var(--primary)' : 'var(--text-main)',
-                      fontWeight: selectedCampusId === c.id ? '700' : '500',
-                      textAlign: 'left',
-                      cursor: 'pointer',
-                      fontSize: '0.85rem',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'space-between',
-                      gap: '0.5rem'
-                    }}
-                  >
-                    <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                      🎓 {c.name} ({c.acronym})
-                    </span>
-                    <span style={{ fontSize: '0.72rem', opacity: 0.6, flexShrink: 0, fontWeight: '600' }}>
-                      {c.state}
-                    </span>
-                  </button>
-                ))}
-              </div>
-            )}
           </div>
 
-          {/* Right Header Actions: Theme Toggle & Avatar */}
+          {/* Right Header Actions: Theme Toggle */}
           <div className="shopmate-header-actions">
             <ThemeToggleBtn />
-
-            {/* Saved Items Quick Heart */}
-            <button
-              className="shopmate-header-btn"
-              onClick={() => navigate('/profile?tab=saved')}
-              title="Saved Items"
-            >
-              <i className="fa-regular fa-heart" />
-            </button>
-
-            {/* User Avatar */}
-            <div 
-              onClick={() => {
-                const token = localStorage.getItem('token');
-                if (!token) {
-                  navigate('/auth');
-                } else {
-                  navigate('/profile');
-                }
-              }}
-              style={{
-                width: '36px',
-                height: '36px',
-                borderRadius: '50%',
-                backgroundColor: 'var(--surface-alt)',
-                border: '1px solid var(--border)',
-                overflow: 'hidden',
-                cursor: 'pointer',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                color: 'var(--primary)',
-                flexShrink: 0
-              }}
-              title="My Account"
-            >
-              {currentUser?.avatar_url ? (
-                <img 
-                  src={getImageUrl(currentUser.avatar_url)} 
-                  alt="User" 
-                  style={{ width: '100%', height: '100%', objectFit: 'cover' }} 
-                />
-              ) : (
-                <span style={{ fontWeight: '700', fontSize: '0.92rem' }}>
-                  {currentUser?.email ? currentUser.email.charAt(0).toUpperCase() : <i className="fa-regular fa-user" />}
-                </span>
-              )}
-            </div>
           </div>
         </header>
 

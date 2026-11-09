@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { apiFetch, getCampuses, DEFAULT_CAMPUSES } from '../api';
+import { apiFetch, getCampuses, DEFAULT_CAMPUSES, setActiveCampusId } from '../api';
 
 function Auth() {
   const navigate = useNavigate();
@@ -54,6 +54,42 @@ function Auth() {
     return () => { if (timer) clearInterval(timer); };
   }, [forgotCooldown]);
 
+  // Check for Google OAuth redirect callback (#access_token=...)
+  useEffect(() => {
+    if (window.location.hash.includes('access_token=')) {
+      try {
+        const hashParams = new URLSearchParams(window.location.hash.replace('#', '?'));
+        const accessToken = hashParams.get('access_token');
+        if (accessToken) {
+          window.history.replaceState({}, document.title, window.location.pathname);
+          setIsLoading(true);
+          fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
+            headers: { Authorization: `Bearer ${accessToken}` }
+          })
+            .then(res => res.json())
+            .then(async (googleProfile) => {
+              if (googleProfile?.email) {
+                const res = await apiFetch('/auth/google', {
+                  method: 'POST',
+                  body: JSON.stringify({
+                    email: googleProfile.email,
+                    name: googleProfile.name || googleProfile.email.split('@')[0],
+                    picture: googleProfile.picture,
+                    google_id: googleProfile.sub
+                  })
+                });
+                handleAuthSuccess(res);
+              }
+            })
+            .catch(err => {
+              setError('Google login failed: ' + (err.message || 'Please try email sign in.'));
+            })
+            .finally(() => setIsLoading(false));
+        }
+      } catch (e) {}
+    }
+  }, []);
+
   // Initialize Google One-Tap / Google Identity Services
   useEffect(() => {
     const initGsi = () => {
@@ -104,40 +140,71 @@ function Auth() {
 
   const handleTriggerGoogleAuth = () => {
     setError('');
+
+    // 1. If Google Identity Services OAuth2 token client is available, trigger official popup
+    if (window.google?.accounts?.oauth2) {
+      try {
+        const client = window.google.accounts.oauth2.initTokenClient({
+          client_id: "713498836545-campusstash.apps.googleusercontent.com",
+          scope: "email profile openid",
+          callback: async (tokenResponse) => {
+            if (tokenResponse?.access_token) {
+              setIsLoading(true);
+              try {
+                const userInfoRes = await fetch("https://www.googleapis.com/oauth2/v3/userinfo", {
+                  headers: { Authorization: `Bearer ${tokenResponse.access_token}` }
+                });
+                const googleProfile = await userInfoRes.json();
+                if (googleProfile?.email) {
+                  const res = await apiFetch('/auth/google', {
+                    method: 'POST',
+                    body: JSON.stringify({
+                      email: googleProfile.email,
+                      name: googleProfile.name || googleProfile.email.split('@')[0],
+                      picture: googleProfile.picture,
+                      google_id: googleProfile.sub
+                    })
+                  });
+                  handleAuthSuccess(res);
+                  return;
+                }
+              } catch (e) {
+                console.error("Google userinfo fetch failed:", e);
+                setError("Google sign-in could not complete profile retrieval.");
+              } finally {
+                setIsLoading(false);
+              }
+            }
+          }
+        });
+        client.requestAccessToken();
+        return;
+      } catch (e) {
+        console.warn("initTokenClient fallback:", e);
+      }
+    }
+
+    // 2. If GIS One-Tap prompt is ready, display it
     if (window.google?.accounts?.id) {
       try {
         window.google.accounts.id.prompt((notification) => {
           if (notification.isNotDisplayed() || notification.isSkippedMoment()) {
-            // If One-Tap is suppressed by browser, provide fast Gmail dialog
-            handleDirectGoogleFallback();
+            handleGoogleOAuthRedirect();
           }
         });
         return;
       } catch (e) {}
     }
-    handleDirectGoogleFallback();
+
+    // 3. Official Google OAuth 2.0 Web Redirect (Redirects to Google Sign-In page)
+    handleGoogleOAuthRedirect();
   };
 
-  const handleDirectGoogleFallback = async () => {
-    const promptEmail = window.prompt("Enter your Google / Gmail address for instant sign in:");
-    if (!promptEmail || !promptEmail.includes('@')) return;
-    
-    setIsLoading(true);
-    setError('');
-    try {
-      const res = await apiFetch('/auth/google', {
-        method: 'POST',
-        body: JSON.stringify({ 
-          email: promptEmail.trim().toLowerCase(),
-          name: promptEmail.split('@')[0]
-        })
-      });
-      handleAuthSuccess(res);
-    } catch (err) {
-      setError(err.message || 'Google authentication failed.');
-    } finally {
-      setIsLoading(false);
-    }
+  const handleGoogleOAuthRedirect = () => {
+    const clientId = "713498836545-campusstash.apps.googleusercontent.com";
+    const redirectUri = window.location.origin + "/auth";
+    const googleAuthUrl = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${encodeURIComponent(clientId)}&redirect_uri=${encodeURIComponent(redirectUri)}&response_type=token&scope=email%20profile%20openid&prompt=select_account`;
+    window.location.href = googleAuthUrl;
   };
 
   const handleAuthSuccess = (res) => {
@@ -146,7 +213,11 @@ function Auth() {
       if (res.user) {
         localStorage.setItem('user', JSON.stringify(res.user));
         setTempUser(res.user);
-        if (!res.user.campus_id) {
+        if (res.user.campus_id) {
+          setActiveCampusId(res.user.campus_id);
+          localStorage.setItem('campusstash_campus_id', res.user.campus_id);
+          localStorage.setItem('campusstash_campus_selected', 'true');
+        } else {
           setShowCampusOnboarding(true);
           return;
         }
@@ -160,17 +231,22 @@ function Auth() {
     setError('');
     setIsLoading(true);
 
+    const identifier = email.trim();
+    const isEmail = identifier.includes('@');
+
     try {
       const res = await apiFetch('/auth/login', {
         method: 'POST',
         body: JSON.stringify({
-          email: email.trim().toLowerCase(),
+          email: isEmail ? identifier.toLowerCase() : identifier,
+          phone: !isEmail ? identifier : undefined,
+          username: identifier,
           password
         })
       });
       handleAuthSuccess(res);
     } catch (err) {
-      setError(err.message || 'Invalid email or password. Please try again.');
+      setError(err.message || 'Invalid email/phone number or password. Please try again.');
     } finally {
       setIsLoading(false);
     }
@@ -266,19 +342,26 @@ function Auth() {
     if (!selectedCampusId) return;
     setIsLoading(true);
     try {
+      // Set active campus globally and persist keys
+      setActiveCampusId(selectedCampusId);
+      localStorage.setItem('campusstash_campus_id', selectedCampusId);
+      localStorage.setItem('campusstash_user_campus', selectedCampusId);
+      localStorage.setItem('campusstash_campus_selected', 'true');
+
       const updated = await apiFetch('/users/me', {
         method: 'PUT',
         body: JSON.stringify({ campus_id: selectedCampusId })
       });
-      if (updated) {
-        localStorage.setItem('user', JSON.stringify(updated));
-        localStorage.setItem('campusstash_user_campus', selectedCampusId);
-      }
+      const cur = JSON.parse(localStorage.getItem('user') || '{}');
+      localStorage.setItem('user', JSON.stringify({ ...cur, ...(updated || {}), campus_id: selectedCampusId }));
+
       setShowCampusOnboarding(false);
       navigate('/dashboard', { replace: true });
     } catch (err) {
-      // Fallback
+      setActiveCampusId(selectedCampusId);
+      localStorage.setItem('campusstash_campus_id', selectedCampusId);
       localStorage.setItem('campusstash_user_campus', selectedCampusId);
+      localStorage.setItem('campusstash_campus_selected', 'true');
       setShowCampusOnboarding(false);
       navigate('/dashboard', { replace: true });
     } finally {
@@ -397,7 +480,7 @@ function Auth() {
         {/* MODE 1: SIGN IN */}
         {mode === 'login' && (
           <form onSubmit={handleLoginSubmit} style={{ width: '100%', display: 'flex', flexDirection: 'column', gap: '0.95rem' }}>
-            {/* Email Address */}
+            {/* Email or Phone Number */}
             <div style={{
               position: 'relative',
               display: 'flex',
@@ -408,13 +491,15 @@ function Auth() {
               padding: '0 1rem',
               transition: 'border-color 0.2s ease'
             }}>
-              <i className="fa-regular fa-envelope" style={{ color: 'rgba(255, 255, 255, 0.4)', fontSize: '1rem', marginRight: '0.75rem' }} />
+              <i className="fa-regular fa-user" style={{ color: 'rgba(255, 255, 255, 0.4)', fontSize: '0.95rem', marginRight: '0.75rem' }} />
               <input
-                type="email"
+                type="text"
                 required
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                placeholder="Email Address"
+                placeholder="Email or Phone Number"
+                autoCapitalize="none"
+                autoCorrect="off"
                 style={{
                   width: '100%',
                   background: 'transparent',
