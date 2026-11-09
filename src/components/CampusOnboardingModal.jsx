@@ -130,14 +130,14 @@ function CampusOnboardingModal({
             width: '54px',
             height: '54px',
             borderRadius: '16px',
-            backgroundColor: 'var(--terracotta)',
+            backgroundColor: '#10B981',
             color: '#FFFFFF',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
             fontSize: '1.65rem',
             margin: '0 auto 0.85rem auto',
-            boxShadow: '0 8px 20px rgba(200, 122, 91, 0.3)'
+            boxShadow: '0 8px 20px rgba(16, 185, 129, 0.25)'
           }}>
             🎓
           </div>
@@ -176,9 +176,9 @@ function CampusOnboardingModal({
                 width: '100%',
                 padding: '0.85rem 1.25rem',
                 borderRadius: '16px',
-                border: '1.5px dashed var(--terracotta)',
-                backgroundColor: 'rgba(200, 122, 91, 0.08)',
-                color: 'var(--terracotta)',
+                border: '1.5px dashed #10B981',
+                backgroundColor: 'rgba(16, 185, 129, 0.08)',
+                color: '#10B981',
                 fontWeight: '700',
                 fontSize: '0.92rem',
                 display: 'flex',
@@ -360,28 +360,33 @@ function CampusOnboardingModal({
               </div>
             ) : (
               filteredCampuses.map((c) => {
-                const isSelected = currentCampusId === c.id;
+                const isSelected = currentCampusId === c.id || (Boolean(currentCampusId) && c.name?.toLowerCase() === currentCampusId?.toLowerCase());
                 return (
                   <button
                     key={c.id}
                     type="button"
-                    onClick={() => onSelectCampus(c.id)}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onSelectCampus(c.id);
+                    }}
                     style={{
                       width: '100%',
-                      padding: '0.85rem 1rem',
+                      padding: '0.9rem 1.1rem',
                       borderRadius: '16px',
-                      border: isSelected ? '2px solid var(--terracotta)' : '1px solid var(--border)',
-                      backgroundColor: isSelected ? 'rgba(200, 122, 91, 0.08)' : 'var(--surface)',
+                      border: isSelected ? '2px solid #10B981' : '1px solid var(--border)',
+                      backgroundColor: isSelected ? 'rgba(16, 185, 129, 0.1)' : 'var(--surface)',
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'space-between',
                       gap: '0.75rem',
                       cursor: 'pointer',
                       textAlign: 'left',
-                      transition: 'all 0.15s ease'
+                      transition: 'all 0.15s ease',
+                      WebkitTapHighlightColor: 'transparent',
+                      outline: 'none'
                     }}
                   >
-                    <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ flex: 1, minWidth: 0, pointerEvents: 'none' }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
                         <span style={{
                           fontWeight: '700',
@@ -397,26 +402,33 @@ function CampusOnboardingModal({
                           backgroundColor: 'var(--surface-alt)',
                           border: '1px solid var(--border)',
                           borderRadius: '9999px',
-                          padding: '1px 7px',
+                          padding: '2px 8px',
                           fontSize: '0.72rem',
-                          fontWeight: '700',
-                          color: 'var(--terracotta)'
+                          fontWeight: '800',
+                          color: '#10B981'
                         }}>
                           {c.acronym}
                         </span>
                       </div>
-                      <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)', marginTop: '2px' }}>
+                      <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)', marginTop: '3px' }}>
                         📍 {c.state} • Local Campus Marketplace
                       </div>
                     </div>
 
-                    <i
-                      className="fa-solid fa-chevron-right"
-                      style={{
-                        color: isSelected ? 'var(--terracotta)' : 'var(--text-light)',
-                        fontSize: '0.8rem'
-                      }}
-                    />
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', pointerEvents: 'none' }}>
+                      {isSelected && (
+                        <span style={{ fontSize: '0.72rem', fontWeight: '800', color: '#10B981', backgroundColor: 'rgba(16, 185, 129, 0.15)', padding: '2px 7px', borderRadius: '9999px' }}>
+                          Active
+                        </span>
+                      )}
+                      <i
+                        className="fa-solid fa-chevron-right"
+                        style={{
+                          color: isSelected ? '#10B981' : 'var(--text-light)',
+                          fontSize: '0.8rem'
+                        }}
+                      />
+                    </div>
                   </button>
                 );
               })
@@ -443,7 +455,7 @@ function CampusOnboardingModal({
               background: 'none',
               border: 'none',
               padding: 0,
-              color: 'var(--terracotta)',
+              color: '#10B981',
               fontWeight: '600',
               cursor: 'pointer',
               fontSize: '0.78rem'

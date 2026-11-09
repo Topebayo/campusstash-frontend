@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { apiFetch, getCampuses, DEFAULT_CAMPUSES, setActiveCampusId } from '../api';
+import CampusOnboardingModal from '../components/CampusOnboardingModal';
 
 function Auth() {
   const navigate = useNavigate();
@@ -338,29 +339,35 @@ function Auth() {
     }
   };
 
-  const handleSaveCampusOnboarding = async () => {
-    if (!selectedCampusId) return;
+  const handleSaveCampusOnboarding = async (campusId) => {
+    const targetCampusId = campusId || selectedCampusId || campuses[0]?.id || '';
+    if (!targetCampusId) {
+      setShowCampusOnboarding(false);
+      navigate('/dashboard', { replace: true });
+      return;
+    }
+    setSelectedCampusId(targetCampusId);
     setIsLoading(true);
     try {
       // Set active campus globally and persist keys
-      setActiveCampusId(selectedCampusId);
-      localStorage.setItem('campusstash_campus_id', selectedCampusId);
-      localStorage.setItem('campusstash_user_campus', selectedCampusId);
+      setActiveCampusId(targetCampusId);
+      localStorage.setItem('campusstash_campus_id', targetCampusId);
+      localStorage.setItem('campusstash_user_campus', targetCampusId);
       localStorage.setItem('campusstash_campus_selected', 'true');
 
       const updated = await apiFetch('/users/me', {
         method: 'PUT',
-        body: JSON.stringify({ campus_id: selectedCampusId })
+        body: JSON.stringify({ campus_id: targetCampusId })
       });
       const cur = JSON.parse(localStorage.getItem('user') || '{}');
-      localStorage.setItem('user', JSON.stringify({ ...cur, ...(updated || {}), campus_id: selectedCampusId }));
+      localStorage.setItem('user', JSON.stringify({ ...cur, ...(updated || {}), campus_id: targetCampusId }));
 
       setShowCampusOnboarding(false);
       navigate('/dashboard', { replace: true });
     } catch (err) {
-      setActiveCampusId(selectedCampusId);
-      localStorage.setItem('campusstash_campus_id', selectedCampusId);
-      localStorage.setItem('campusstash_user_campus', selectedCampusId);
+      setActiveCampusId(targetCampusId);
+      localStorage.setItem('campusstash_campus_id', targetCampusId);
+      localStorage.setItem('campusstash_user_campus', targetCampusId);
       localStorage.setItem('campusstash_campus_selected', 'true');
       setShowCampusOnboarding(false);
       navigate('/dashboard', { replace: true });
@@ -1047,111 +1054,17 @@ function Auth() {
         )}
       </div>
 
-      {/* POST-LOGIN CAMPUS ONBOARDING MODAL (FOR GOOGLE & NEW USERS) */}
-      {showCampusOnboarding && (
-        <div style={{
-          position: 'fixed',
-          inset: 0,
-          backgroundColor: 'rgba(0, 0, 0, 0.85)',
-          backdropFilter: 'blur(8px)',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          padding: '1.25rem',
-          zIndex: 10000
-        }}>
-          <div style={{
-            backgroundColor: '#111714',
-            border: '1px solid rgba(255, 255, 255, 0.15)',
-            borderRadius: '26px',
-            padding: '1.75rem',
-            maxWidth: '440px',
-            width: '100%',
-            textAlign: 'center',
-            boxShadow: '0 20px 40px rgba(0, 0, 0, 0.6)'
-          }}>
-            <div style={{
-              width: '56px',
-              height: '56px',
-              borderRadius: '50%',
-              backgroundColor: 'rgba(16, 185, 129, 0.15)',
-              color: '#34D399',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              fontSize: '1.5rem',
-              margin: '0 auto 1.1rem auto'
-            }}>
-              🎓
-            </div>
-
-            <h3 style={{
-              fontSize: '1.4rem',
-              fontWeight: '800',
-              fontFamily: 'var(--font-display)',
-              margin: '0 0 0.4rem 0',
-              color: '#FFFFFF'
-            }}>
-              Which Campus Are You At?
-            </h3>
-            <p style={{
-              fontSize: '0.85rem',
-              color: 'rgba(255, 255, 255, 0.65)',
-              margin: '0 0 1.25rem 0',
-              lineHeight: 1.45
-            }}>
-              Personalize your campus marketplace to see student listings and hostel dropzones near you.
-            </p>
-
-            <div style={{ marginBottom: '1.5rem', textAlign: 'left' }}>
-              <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: '700', marginBottom: '0.4rem', color: 'rgba(255, 255, 255, 0.8)' }}>
-                Select Your University
-              </label>
-              <select
-                value={selectedCampusId}
-                onChange={(e) => setSelectedCampusId(e.target.value)}
-                style={{
-                  width: '100%',
-                  padding: '0.85rem 1rem',
-                  borderRadius: '14px',
-                  backgroundColor: 'rgba(255, 255, 255, 0.08)',
-                  border: '1px solid rgba(255, 255, 255, 0.2)',
-                  color: '#FFFFFF',
-                  fontSize: '0.92rem',
-                  outline: 'none',
-                  cursor: 'pointer'
-                }}
-              >
-                {campuses.map(c => (
-                  <option key={c.id} value={c.id} style={{ backgroundColor: '#111714', color: '#FFFFFF' }}>
-                    {c.acronym} — {c.name} ({c.state})
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            <button
-              type="button"
-              onClick={handleSaveCampusOnboarding}
-              disabled={isLoading || !selectedCampusId}
-              style={{
-                width: '100%',
-                padding: '0.95rem',
-                borderRadius: '9999px',
-                border: 'none',
-                backgroundColor: '#10B981',
-                color: '#062419',
-                fontSize: '0.95rem',
-                fontWeight: '800',
-                cursor: 'pointer',
-                boxShadow: '0 4px 16px rgba(16, 185, 129, 0.4)'
-              }}
-            >
-              {isLoading ? 'Saving...' : 'Enter Campus Marketplace →'}
-            </button>
-          </div>
-        </div>
-      )}
+      {/* POST-LOGIN CAMPUS ONBOARDING MODAL (Searchable, GPS-enabled, All 45 Universities) */}
+      <CampusOnboardingModal
+        isOpen={showCampusOnboarding}
+        campuses={campuses}
+        currentCampusId={selectedCampusId}
+        onSelectCampus={handleSaveCampusOnboarding}
+        onClose={() => {
+          const fallback = selectedCampusId || campuses[0]?.id || '';
+          handleSaveCampusOnboarding(fallback);
+        }}
+      />
     </div>
   );
 }

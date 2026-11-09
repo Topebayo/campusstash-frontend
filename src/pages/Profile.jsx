@@ -1,8 +1,9 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { Capacitor } from '@capacitor/core';
-import { apiFetch, getImageUrl } from '../api';
+import { apiFetch, getImageUrl, getCampuses, DEFAULT_CAMPUSES, setActiveCampusId, getActiveCampusId } from '../api';
 import Navbar from '../components/Navbar';
+import CampusOnboardingModal from '../components/CampusOnboardingModal';
 import EditListingModal from '../components/EditListingModal';
 import CreateListingModal from '../components/CreateListingModal';
 import SettingsModal from '../components/SettingsModal';
@@ -68,6 +69,39 @@ function Profile() {
   // Modals
   const [editingListing, setEditingListing] = useState(null);
   const [selectedDetailListing, setSelectedDetailListing] = useState(null);
+  const [showCampusModal, setShowCampusModal] = useState(false);
+  const [campuses, setCampuses] = useState(() => {
+    try {
+      const cached = localStorage.getItem('campusstash_cached_campuses');
+      return cached ? JSON.parse(cached) : DEFAULT_CAMPUSES;
+    } catch (e) {
+      return DEFAULT_CAMPUSES;
+    }
+  });
+
+  useEffect(() => {
+    getCampuses().then(data => {
+      if (Array.isArray(data) && data.length > 0) setCampuses(data);
+    }).catch(() => {});
+  }, []);
+
+  const handleProfileChangeCampus = async (newCampusId) => {
+    setShowCampusModal(false);
+    if (!newCampusId) return;
+    setActiveCampusId(newCampusId);
+    try {
+      const updated = await apiFetch('/users/me', {
+        method: 'PUT',
+        body: JSON.stringify({ campus_id: newCampusId })
+      });
+      const cur = JSON.parse(localStorage.getItem('user') || '{}');
+      const merged = { ...cur, ...(updated || {}), campus_id: newCampusId };
+      localStorage.setItem('user', JSON.stringify(merged));
+      setProfile(merged);
+    } catch (e) {
+      setProfile(prev => ({ ...prev, campus_id: newCampusId }));
+    }
+  };
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [settingsDefaultTab, setSettingsDefaultTab] = useState('account');
   const [isCreateOpen, setIsCreateOpen] = useState(false);
@@ -261,9 +295,10 @@ function Profile() {
     ? `@${profile.profile.burner_handle}`
     : (profile?.name || profile?.email?.split('@')[0] || (isLoading ? 'Loading...' : 'Student'));
 
-  const campusLocation = profile?.campus_name 
-    ? `${profile.campus_name}${profile.business_address ? ` • ${profile.business_address}` : ''}`
-    : (profile?.campus_acronym || 'Campus Student');
+  const activeCampusObj = campuses.find(c => c.id === (profile?.campus_id || getActiveCampusId()));
+  const campusLocation = activeCampusObj?.name 
+    ? `${activeCampusObj.name}${profile?.business_address ? ` • ${profile.business_address}` : ''}`
+    : (profile?.campus_name || profile?.campus_acronym || 'Lead City University');
 
   const soldCount = myListings.filter(l => l.status === 'sold').length;
   const activeCount = myListings.filter(l => l.status !== 'sold').length;
@@ -440,18 +475,29 @@ function Profile() {
             {isStore && profile?.business_name ? profile.business_name : (profile?.name || displayName)}
           </h2>
 
-          {/* Location Pin */}
-          <div style={{
-            display: 'inline-flex',
-            alignItems: 'center',
-            gap: '0.35rem',
-            fontSize: '0.82rem',
-            color: 'var(--text-muted)',
-            marginBottom: '1rem',
-            fontWeight: '600'
-          }}>
-            <i className="fa-solid fa-location-dot" style={{ color: 'var(--primary)', fontSize: '0.8rem' }} />
-            <span>{campusLocation}</span>
+          {/* Location Pin & Campus Switcher */}
+          <div 
+            onClick={() => setShowCampusModal(true)}
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '0.45rem',
+              fontSize: '0.82rem',
+              color: 'var(--text-muted)',
+              marginBottom: '1rem',
+              fontWeight: '600',
+              cursor: 'pointer',
+              padding: '0.35rem 0.85rem',
+              borderRadius: '9999px',
+              backgroundColor: 'var(--surface-alt)',
+              border: '1px solid var(--border)',
+              transition: 'all 0.15s ease'
+            }}
+            title="Click to change your university"
+          >
+            <i className="fa-solid fa-location-dot" style={{ color: 'var(--primary)', fontSize: '0.82rem' }} />
+            <span style={{ color: 'var(--text-main)', fontWeight: '700' }}>{campusLocation}</span>
+            <i className="fa-solid fa-chevron-down" style={{ fontSize: '0.62rem', opacity: 0.65 }} />
           </div>
 
           {/* Edit Profile Pill Button */}
@@ -1088,6 +1134,15 @@ function Profile() {
           localStorage.removeItem('user');
           navigate('/auth');
         }}
+      />
+
+      {/* Profile Campus Switcher Modal */}
+      <CampusOnboardingModal
+        isOpen={showCampusModal}
+        campuses={campuses}
+        currentCampusId={profile?.campus_id || getActiveCampusId()}
+        onSelectCampus={handleProfileChangeCampus}
+        onClose={() => setShowCampusModal(false)}
       />
 
       {/* ============================================================== */}

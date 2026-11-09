@@ -295,6 +295,7 @@ const [campuses, setCampuses] = useState(() => {
     setSelectedCampusId(campusId);
     setActiveCampusId(campusId);
     setShowCampusPicker(false);
+    setShowCampusOnboarding(false);
     try {
       localStorage.setItem('campusstash_campus_selected', 'true');
     } catch (e) {}
@@ -302,7 +303,6 @@ const [campuses, setCampuses] = useState(() => {
 
   const handleOnboardingSelectCampus = (campusId) => {
     handleSelectCampus(campusId);
-    setShowCampusOnboarding(false);
   };
 
   const toggleBookmark = (e, listingId) => {
@@ -595,9 +595,9 @@ const [campuses, setCampuses] = useState(() => {
         flex: 1,
         display: 'flex',
         flexDirection: 'column',
-        filter: showCampusOnboarding ? 'blur(8px)' : 'none',
-        pointerEvents: showCampusOnboarding ? 'none' : 'auto',
-        userSelect: showCampusOnboarding ? 'none' : 'auto',
+        filter: (showCampusOnboarding && !showCampusPicker) ? 'blur(8px)' : 'none',
+        pointerEvents: (showCampusOnboarding && !showCampusPicker) ? 'none' : 'auto',
+        userSelect: (showCampusOnboarding && !showCampusPicker) ? 'none' : 'auto',
         transition: 'filter 0.3s ease'
       }}>
         <main 
@@ -1247,12 +1247,20 @@ const [campuses, setCampuses] = useState(() => {
         </div>
       )}
 
-      {/* Mandatory Campus Selection Onboarding Gate (GPS Auto-Detect or Manual Select) */}
+      {/* Campus Selector & Onboarding Modal (GPS Auto-Detect & Search all 45 Universities) */}
       <CampusOnboardingModal
-        isOpen={showCampusOnboarding}
+        isOpen={showCampusOnboarding || showCampusPicker}
         campuses={campuses}
         currentCampusId={selectedCampusId}
-        onSelectCampus={handleOnboardingSelectCampus}
+        onSelectCampus={(campusId) => {
+          handleSelectCampus(campusId);
+          setShowCampusOnboarding(false);
+          setShowCampusPicker(false);
+        }}
+        onClose={() => {
+          setShowCampusPicker(false);
+          setShowCampusOnboarding(false);
+        }}
       />
     </div>
   );
