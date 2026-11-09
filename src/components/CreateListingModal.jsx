@@ -54,6 +54,35 @@ function CreateListingModal({ isOpen, onClose, onCreated, onSuccess }) {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [isOpen, onClose]);
 
+  // Phone Verification Gate State
+  const [currentUser, setCurrentUser] = useState(() => {
+    try {
+      const saved = localStorage.getItem('user');
+      return saved ? JSON.parse(saved) : null;
+    } catch (e) {
+      return null;
+    }
+  });
+  const [isPhoneVerified, setIsPhoneVerified] = useState(() => {
+    try {
+      const saved = localStorage.getItem('user');
+      const u = saved ? JSON.parse(saved) : null;
+      return !!u?.is_phone_verified;
+    } catch (e) {
+      return false;
+    }
+  });
+
+  const [verifyPhoneInput, setVerifyPhoneInput] = useState('');
+  const [verifyOtpInput, setVerifyOtpInput] = useState('');
+  const [verifyChannel, setVerifyChannel] = useState('whatsapp'); // 'whatsapp' | 'sms' | 'email'
+  const [isVerifyOtpSent, setIsVerifyOtpSent] = useState(false);
+  const [verifyCooldown, setVerifyCooldown] = useState(0);
+  const [isSendingPhoneOtp, setIsSendingPhoneOtp] = useState(false);
+  const [isVerifyingPhone, setIsVerifyingPhone] = useState(false);
+  const [verifyMessage, setVerifyMessage] = useState('');
+
+  // Form Fields
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [price, setPrice] = useState('');
@@ -83,6 +112,109 @@ function CreateListingModal({ isOpen, onClose, onCreated, onSuccess }) {
   const [batchItems, setBatchItems] = useState([]);
   const [batchResultCount, setBatchResultCount] = useState(0);
   const batchFileInputRef = useRef(null);
+
+  // Cooldown timer for phone verification OTP
+  useEffect(() => {
+    let timer = null;
+    if (verifyCooldown > 0) {
+      timer = setInterval(() => setVerifyCooldown(prev => prev - 1), 1000);
+    }
+    return () => { if (timer) clearInterval(timer); };
+  }, [verifyCooldown]);
+
+  useEffect(() => {
+    if (isOpen) {
+      setCreatedItem(null);
+      setCopiedLink(false);
+      setError('');
+      setVerifyMessage('');
+
+      // Refresh current user verification status
+      apiFetch('/users/me').then(u => {
+        if (u) {
+          setCurrentUser(u);
+          setIsPhoneVerified(!!u.is_phone_verified);
+          if (u.phone) setVerifyPhoneInput(u.phone);
+          localStorage.setItem('user', JSON.stringify(u));
+        }
+      }).catch(() => {});
+
+      getCampuses().then(data => {
+        if (Array.isArray(data)) {
+          setCampuses(data);
+          const active = getActiveCampusId();
+          const userSaved = localStorage.getItem('campusstash_user_campus');
+          if (active) {
+            setCampusId(active);
+          } else if (userSaved) {
+            setCampusId(userSaved);
+          } else {
+            setCampusId('');
+          }
+        }
+      }).catch(() => {});
+    }
+  }, [isOpen]);
+
+  if (!isOpen) return null;
+
+  // Phone Verification Handlers
+  const handleSendVerificationCode = async () => {
+    const rawPhone = verifyPhoneInput.trim();
+    if (!rawPhone || rawPhone.length < 9) {
+      setError('Please enter a valid Nigerian phone number (e.g. 08012345678).');
+      return;
+    }
+    setError('');
+    setVerifyMessage('');
+    setIsSendingPhoneOtp(true);
+
+    try {
+      const res = await apiFetch('/auth/phone/send-otp', {
+        method: 'POST',
+        body: JSON.stringify({
+          phone: rawPhone,
+          channel: verifyChannel
+        })
+      });
+      setIsVerifyOtpSent(true);
+      setVerifyMessage(res.message || 'Verification code dispatched to your phone!');
+      setVerifyCooldown(60);
+    } catch (err) {
+      setError(err.message || 'Failed to dispatch verification code. Please check your number.');
+    } finally {
+      setIsSendingPhoneOtp(false);
+    }
+  };
+
+  const handleVerifyPhoneCode = async () => {
+    const code = verifyOtpInput.trim();
+    if (!code) {
+      setError('Please enter the 6-digit verification code.');
+      return;
+    }
+    setError('');
+    setVerifyMessage('');
+    setIsVerifyingPhone(true);
+
+    try {
+      const updated = await apiFetch('/users/me/verify-phone', {
+        method: 'POST',
+        body: JSON.stringify({
+          phone: verifyPhoneInput.trim(),
+          otp_code: code
+        })
+      });
+      setCurrentUser(updated);
+      setIsPhoneVerified(true);
+      localStorage.setItem('user', JSON.stringify(updated));
+      setVerifyMessage('Phone verified successfully! You can now post your item.');
+    } catch (err) {
+      setError(err.message || 'Invalid or expired verification code.');
+    } finally {
+      setIsVerifyingPhone(false);
+    }
+  };
 
   const handleBatchFiles = (e) => {
     const files = Array.from(e.target.files || []);
@@ -170,29 +302,6 @@ function CreateListingModal({ isOpen, onClose, onCreated, onSuccess }) {
       setIsSubmitting(false);
     }
   };
-
-  useEffect(() => {
-    if (isOpen) {
-      setCreatedItem(null);
-      setCopiedLink(false);
-      getCampuses().then(data => {
-        if (Array.isArray(data)) {
-          setCampuses(data);
-          const active = getActiveCampusId();
-          const userSaved = localStorage.getItem('campusstash_user_campus');
-          if (active) {
-            setCampusId(active);
-          } else if (userSaved) {
-            setCampusId(userSaved);
-          } else {
-            setCampusId('');
-          }
-        }
-      }).catch(() => {});
-    }
-  }, [isOpen]);
-
-  if (!isOpen) return null;
 
   const handleImage1Change = (e) => {
     const file = e.target.files[0];
@@ -358,7 +467,7 @@ function CreateListingModal({ isOpen, onClose, onCreated, onSuccess }) {
               <i className="fa-solid fa-tag" /> Sell on Campus
             </span>
             <h2 style={{ fontFamily: 'var(--font-display)', fontSize: '1.55rem', fontWeight: '800', letterSpacing: '-0.02em', color: 'var(--text-main)', margin: 0 }}>
-              Post an Item
+              {!isPhoneVerified ? 'Phone Verification Required' : 'Post an Item'}
             </h2>
           </div>
           <button 
@@ -382,7 +491,194 @@ function CreateListingModal({ isOpen, onClose, onCreated, onSuccess }) {
           </button>
         </div>
 
-        {createdItem ? (
+        {/* ============================================================== */}
+        {/* STEP A: IN-APP PHONE NUMBER VERIFICATION (REQUIRED BEFORE LISTING) */}
+        {/* ============================================================== */}
+        {!isPhoneVerified ? (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem', padding: '0.5rem 0' }}>
+            <div style={{
+              backgroundColor: 'var(--primary-light)',
+              borderRadius: '20px',
+              padding: '1.2rem',
+              border: '1px solid var(--border)',
+              display: 'flex',
+              gap: '0.85rem',
+              alignItems: 'center'
+            }}>
+              <div style={{
+                width: '44px',
+                height: '44px',
+                borderRadius: '50%',
+                backgroundColor: 'var(--primary)',
+                color: '#FFFFFF',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                fontSize: '1.25rem',
+                flexShrink: 0
+              }}>
+                <i className="fa-solid fa-shield-halved" />
+              </div>
+              <div>
+                <div style={{ fontWeight: '800', fontSize: '0.94rem', color: 'var(--text-main)' }}>
+                  Campus Trust & Anti-Scam Protection
+                </div>
+                <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginTop: '2px', lineHeight: '1.4' }}>
+                  To keep the campus safe, sellers must verify their Nigerian phone number once before publishing items.
+                </div>
+              </div>
+            </div>
+
+            {error && (
+              <div style={{
+                color: '#EF4444',
+                backgroundColor: 'rgba(239, 68, 68, 0.12)',
+                border: '1px solid rgba(239, 68, 68, 0.3)',
+                padding: '0.75rem 1rem',
+                borderRadius: '14px',
+                fontSize: '0.84rem',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.5rem'
+              }}>
+                <i className="fa-solid fa-circle-exclamation" />
+                <span>{error}</span>
+              </div>
+            )}
+
+            {verifyMessage && (
+              <div style={{
+                color: '#10B981',
+                backgroundColor: 'rgba(16, 185, 129, 0.12)',
+                border: '1px solid rgba(16, 185, 129, 0.3)',
+                padding: '0.75rem 1rem',
+                borderRadius: '14px',
+                fontSize: '0.84rem',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.5rem'
+              }}>
+                <i className="fa-solid fa-circle-check" />
+                <span>{verifyMessage}</span>
+              </div>
+            )}
+
+            <div>
+              <label style={{ display: 'block', fontWeight: '700', fontSize: '0.85rem', marginBottom: '0.4rem', color: 'var(--text-main)' }}>
+                Nigerian Phone Number
+              </label>
+              <input
+                type="tel"
+                value={verifyPhoneInput}
+                onChange={(e) => setVerifyPhoneInput(e.target.value)}
+                placeholder="e.g. 08012345678 or +234..."
+                className="form-input"
+                style={{ fontSize: '0.92rem' }}
+              />
+            </div>
+
+            {/* Verification Channel Picker */}
+            <div>
+              <label style={{ display: 'block', fontWeight: '700', fontSize: '0.82rem', marginBottom: '0.4rem', color: 'var(--text-muted)' }}>
+                Send Code Via:
+              </label>
+              <div style={{ display: 'flex', gap: '0.5rem' }}>
+                {[
+                  { id: 'whatsapp', label: 'WhatsApp', icon: 'fa-brands fa-whatsapp' },
+                  { id: 'sms', label: 'SMS Alert', icon: 'fa-solid fa-comment-sms' },
+                  { id: 'email', label: 'Email OTP', icon: 'fa-regular fa-envelope' }
+                ].map(ch => (
+                  <button
+                    key={ch.id}
+                    type="button"
+                    onClick={() => setVerifyChannel(ch.id)}
+                    style={{
+                      flex: 1,
+                      padding: '0.55rem',
+                      borderRadius: '9999px',
+                      border: verifyChannel === ch.id ? '1.5px solid var(--primary)' : '1px solid var(--border)',
+                      backgroundColor: verifyChannel === ch.id ? 'var(--primary-light)' : 'var(--surface-alt)',
+                      color: verifyChannel === ch.id ? 'var(--primary)' : 'var(--text-muted)',
+                      fontWeight: '700',
+                      fontSize: '0.8rem',
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: '0.35rem'
+                    }}
+                  >
+                    <i className={ch.icon} />
+                    <span>{ch.label}</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Send Code Action */}
+            <button
+              type="button"
+              onClick={handleSendVerificationCode}
+              disabled={isSendingPhoneOtp || verifyCooldown > 0}
+              style={{
+                padding: '0.85rem',
+                borderRadius: '9999px',
+                border: 'none',
+                backgroundColor: 'var(--surface-alt)',
+                color: 'var(--text-main)',
+                border: '1px solid var(--border)',
+                fontWeight: '700',
+                fontSize: '0.88rem',
+                cursor: (isSendingPhoneOtp || verifyCooldown > 0) ? 'not-allowed' : 'pointer'
+              }}
+            >
+              {isSendingPhoneOtp 
+                ? 'Sending Code...' 
+                : (verifyCooldown > 0 ? `Resend Code in ${verifyCooldown}s` : (isVerifyOtpSent ? 'Resend Code' : 'Send Verification Code'))}
+            </button>
+
+            {isVerifyOtpSent && (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem', marginTop: '0.5rem' }}>
+                <div>
+                  <label style={{ display: 'block', fontWeight: '700', fontSize: '0.85rem', marginBottom: '0.4rem', color: 'var(--text-main)' }}>
+                    Enter 6-Digit Code
+                  </label>
+                  <input
+                    type="text"
+                    maxLength={6}
+                    value={verifyOtpInput}
+                    onChange={(e) => setVerifyOtpInput(e.target.value)}
+                    placeholder="123456"
+                    className="form-input"
+                    style={{ fontSize: '1.2rem', textAlign: 'center', letterSpacing: '0.25em', fontWeight: '800' }}
+                  />
+                </div>
+
+                <button
+                  type="button"
+                  onClick={handleVerifyPhoneCode}
+                  disabled={isVerifyingPhone}
+                  style={{
+                    padding: '0.85rem',
+                    borderRadius: '9999px',
+                    border: 'none',
+                    backgroundColor: 'var(--primary)',
+                    color: '#FFFFFF',
+                    fontWeight: '800',
+                    fontSize: '0.92rem',
+                    cursor: isVerifyingPhone ? 'not-allowed' : 'pointer',
+                    boxShadow: '0 4px 14px var(--primary-light)'
+                  }}
+                >
+                  {isVerifyingPhone ? 'Verifying...' : 'Verify Phone & Continue to Post'}
+                </button>
+              </div>
+            )}
+          </div>
+        ) : createdItem ? (
+          /* ============================================================== */
+          /* SUCCESS SCREEN                                                 */
+          /* ============================================================== */
           <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center', padding: '1.25rem 0', gap: '1.25rem' }}>
             <div style={{
               width: '72px',
@@ -498,8 +794,10 @@ function CreateListingModal({ isOpen, onClose, onCreated, onSuccess }) {
             </button>
           </div>
         ) : (
+        /* ============================================================== */
+        /* LISTING CREATION FORMS (SINGLE vs BATCH)                       */
+        /* ============================================================== */
         <>
-          {/* Mode Switcher: Single Item vs Vendor Batch Drop */}
           <div style={{
             display: 'flex',
             backgroundColor: 'var(--surface-alt)',

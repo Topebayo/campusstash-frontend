@@ -2,8 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { setAppTheme, getAppTheme, getThemePreference } from './ThemeToggleBtn';
 import { apiFetch } from '../api';
 
-function SettingsModal({ isOpen, onClose, onLogout, userProfile, onUpdateUser }) {
-  const [activeTab, setActiveTab] = useState('appearance'); // Open with appearance / theme for instant visibility, or 'account'
+function SettingsModal({ isOpen, onClose, onLogout, userProfile, onUpdateUser, defaultTab = 'appearance' }) {
+  const [activeTab, setActiveTab] = useState(defaultTab);
 
   // Account Profile state
   const [handle, setHandle] = useState('');
@@ -52,6 +52,7 @@ function SettingsModal({ isOpen, onClose, onLogout, userProfile, onUpdateUser })
 
   useEffect(() => {
     if (isOpen) {
+      if (defaultTab) setActiveTab(defaultTab);
       setPwMessage({ text: '', type: '' });
       setAccountMessage({ text: '', type: '' });
       setCurrentPassword('');

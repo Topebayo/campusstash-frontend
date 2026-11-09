@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { Capacitor } from '@capacitor/core';
 import { apiFetch, getImageUrl } from '../api';
@@ -6,7 +6,6 @@ import Navbar from '../components/Navbar';
 import EditListingModal from '../components/EditListingModal';
 import CreateListingModal from '../components/CreateListingModal';
 import SettingsModal from '../components/SettingsModal';
-import ThemeToggleBtn from '../components/ThemeToggleBtn';
 import ItemDetailModal from '../components/ItemDetailModal';
 import SellerStorefrontModal from '../components/SellerStorefrontModal';
 
@@ -49,18 +48,20 @@ function Profile() {
     return null;
   }
 
-  // Active tab: 'listings' (My Active Listings) vs 'saved' (My Saved)
-  const [activeTab, setActiveTab] = useState(() => {
+  // Active view: 'menu' | 'listings' | 'saved'
+  const [activeSection, setActiveSection] = useState(() => {
     const params = new URLSearchParams(window.location.search);
-    return params.get('tab') === 'saved' ? 'saved' : 'listings';
+    if (params.get('tab') === 'saved') return 'saved';
+    if (params.get('tab') === 'listings') return 'listings';
+    return 'menu';
   });
 
   useEffect(() => {
     const params = new URLSearchParams(location.search);
     if (params.get('tab') === 'saved') {
-      setActiveTab('saved');
+      setActiveSection('saved');
     } else if (params.get('tab') === 'listings') {
-      setActiveTab('listings');
+      setActiveSection('listings');
     }
   }, [location.search]);
 
@@ -68,35 +69,41 @@ function Profile() {
   const [editingListing, setEditingListing] = useState(null);
   const [selectedDetailListing, setSelectedDetailListing] = useState(null);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const [settingsDefaultTab, setSettingsDefaultTab] = useState('account');
   const [isCreateOpen, setIsCreateOpen] = useState(false);
 
   // Store Management & Storefront Modals
   const [showStorefrontModal, setShowStorefrontModal] = useState(false);
-  const [showStoreManagerModal, setShowStoreManagerModal] = useState(false);
-  const [isSavingStore, setIsSavingStore] = useState(false);
-  const [storeFormError, setStoreFormError] = useState('');
+  const [showStoreKycModal, setShowStoreKycModal] = useState(false);
+  const [isSavingStoreKyc, setIsSavingStoreKyc] = useState(false);
+  const [storeKycError, setStoreKycError] = useState('');
+  const [idCardPreview, setIdCardPreview] = useState(null);
+  const idCardInputRef = useRef(null);
+
   const [storeForm, setStoreForm] = useState(() => {
     try {
       const saved = localStorage.getItem('user');
       const u = saved ? JSON.parse(saved) : null;
       return {
-        account_type: u?.account_type || 'individual',
         business_name: u?.business_name || '',
         business_category: u?.business_category || 'Fashion & Thrift',
+        student_id_number: u?.kyc_student_id || '',
         business_description: u?.business_description || '',
         business_address: u?.business_address || '',
         business_whatsapp: u?.business_whatsapp || '',
-        business_instagram: u?.business_instagram || ''
+        business_instagram: u?.business_instagram || '',
+        id_card_image: u?.kyc_id_card_url || null
       };
     } catch (e) {
       return {
-        account_type: 'individual',
         business_name: '',
         business_category: 'Fashion & Thrift',
+        student_id_number: '',
         business_description: '',
         business_address: '',
         business_whatsapp: '',
-        business_instagram: ''
+        business_instagram: '',
+        id_card_image: null
       };
     }
   });
@@ -109,14 +116,18 @@ function Profile() {
       if (data) {
         localStorage.setItem('user', JSON.stringify(data));
         setStoreForm({
-          account_type: data.account_type || 'individual',
           business_name: data.business_name || '',
           business_category: data.business_category || 'Fashion & Thrift',
+          student_id_number: data.kyc_student_id || '',
           business_description: data.business_description || '',
           business_address: data.business_address || '',
           business_whatsapp: data.business_whatsapp || '',
-          business_instagram: data.business_instagram || ''
+          business_instagram: data.business_instagram || '',
+          id_card_image: data.kyc_id_card_url || null
         });
+        if (data.kyc_id_card_url) {
+          setIdCardPreview(data.kyc_id_card_url);
+        }
       }
     } catch (err) {
       console.error("Failed to load profile:", err);
@@ -178,13 +189,6 @@ function Profile() {
     fetchSavedListings();
   }, [navigate]);
 
-  useEffect(() => {
-    const params = new URLSearchParams(location.search);
-    if (params.get('tab') === 'saved') {
-      setActiveTab('saved');
-    }
-  }, [location.search]);
-
   const handleToggleStatus = async (listingId, currentStatus) => {
     const newStatus = currentStatus === 'sold' ? 'active' : 'sold';
     try {
@@ -198,64 +202,69 @@ function Profile() {
     }
   };
 
-  const handleDeleteListing = async (listingId) => {
-    if (!window.confirm('Are you sure you want to delete this listing?')) {
-      return;
-    }
-    try {
-      await apiFetch(`/listings/${listingId}`, {
-        method: 'DELETE'
-      });
-      setMyListings(prev => prev.filter(item => item.id !== listingId));
-    } catch (err) {
-      alert(err.message || 'Failed to delete listing.');
+  const handleIdCardFile = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = (uploadEvent) => {
+        const base64 = uploadEvent.target.result;
+        setIdCardPreview(base64);
+        setStoreForm(prev => ({ ...prev, id_card_image: base64 }));
+      };
+      reader.readAsDataURL(file);
     }
   };
 
-  const handleSaveStore = async (e) => {
+  const handleSaveStoreKyc = async (e) => {
     if (e) e.preventDefault();
-    setStoreFormError('');
+    setStoreKycError('');
+
     if (!storeForm.business_name || !storeForm.business_name.trim()) {
-      setStoreFormError('Business / Store Name is required.');
+      setStoreKycError('Real Business / Store Name is required.');
       return;
     }
-    setIsSavingStore(true);
+    if (!storeForm.student_id_number || !storeForm.student_id_number.trim()) {
+      setStoreKycError('Student Matriculation / Student ID Number is required for KYC.');
+      return;
+    }
+
+    setIsSavingStoreKyc(true);
     try {
-      const updated = await apiFetch('/users/me', {
-        method: 'PUT',
+      const updated = await apiFetch('/users/me/store-kyc', {
+        method: 'POST',
         body: JSON.stringify({
-          account_type: 'store',
           business_name: storeForm.business_name.trim(),
           business_category: storeForm.business_category,
+          student_id_number: storeForm.student_id_number.trim(),
           business_description: storeForm.business_description ? storeForm.business_description.trim() : '',
           business_address: storeForm.business_address ? storeForm.business_address.trim() : '',
           business_whatsapp: storeForm.business_whatsapp ? storeForm.business_whatsapp.trim() : '',
-          business_instagram: storeForm.business_instagram ? storeForm.business_instagram.trim() : ''
+          business_instagram: storeForm.business_instagram ? storeForm.business_instagram.trim() : '',
+          id_card_image: storeForm.id_card_image || null
         })
       });
       setProfile(updated);
       localStorage.setItem('user', JSON.stringify(updated));
-      setShowStoreManagerModal(false);
+      setShowStoreKycModal(false);
     } catch (err) {
-      console.error('Failed to update store:', err);
-      setStoreFormError(err.message || 'Failed to save store profile.');
+      console.error('Failed to submit store KYC:', err);
+      setStoreKycError(err.message || 'Failed to submit store KYC verification.');
     } finally {
-      setIsSavingStore(false);
+      setIsSavingStoreKyc(false);
     }
   };
 
   const isStore = profile?.account_type === 'store';
+  const isKycVerified = profile?.kyc_status === 'verified';
 
   const displayName = profile?.profile?.burner_handle 
     ? `@${profile.profile.burner_handle}`
-    : (profile?.full_name || profile?.email?.split('@')[0] || (isLoading ? 'Loading...' : 'Student'));
+    : (profile?.name || profile?.email?.split('@')[0] || (isLoading ? 'Loading...' : 'Student'));
 
-  const campusMajor = profile?.campus_name 
-    ? `${profile.campus_name}${profile.major ? ` • ${profile.major}` : ''}`
+  const campusLocation = profile?.campus_name 
+    ? `${profile.campus_name}${profile.business_address ? ` • ${profile.business_address}` : ''}`
     : (profile?.campus_acronym || 'Campus Student');
 
-  const userBio = profile?.bio || 'Verified student on CampusStash.';
-  
   const soldCount = myListings.filter(l => l.status === 'sold').length;
   const activeCount = myListings.filter(l => l.status !== 'sold').length;
 
@@ -269,7 +278,7 @@ function Profile() {
       <main 
         className="animate-fade-in"
         style={{ 
-          maxWidth: '720px', 
+          maxWidth: '520px', 
           margin: '0 auto', 
           width: '100%', 
           padding: Capacitor.isNativePlatform() ? '0.75rem 1rem 7.5rem 1rem' : '0.75rem 1rem 3.5rem 1rem', 
@@ -278,105 +287,116 @@ function Profile() {
         }}
       >
         {/* ============================================================== */}
-        {/* TOP BAR: CLEAN SHOPMATE HEADER & SETTINGS GEAR                 */}
+        {/* TOP BAR: BACK ARROW + SETTINGS BUTTON (RIGHT SCREEN IN MOCKUP) */}
         {/* ============================================================== */}
         <div style={{
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
-          marginBottom: '1.25rem',
+          marginBottom: '0.75rem',
           padding: '0 0.25rem'
         }}>
-          <div>
-            <span style={{
+          <button
+            type="button"
+            onClick={() => {
+              if (activeSection !== 'menu') {
+                setActiveSection('menu');
+              } else {
+                navigate(-1);
+              }
+            }}
+            style={{
+              background: 'none',
+              border: 'none',
+              color: 'var(--text-main)',
+              fontSize: '1.25rem',
+              cursor: 'pointer',
+              padding: '6px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center'
+            }}
+            title="Go Back"
+          >
+            <i className="fa-solid fa-arrow-left" />
+          </button>
+
+          <button
+            type="button"
+            onClick={() => {
+              setSettingsDefaultTab('account');
+              setIsSettingsOpen(true);
+            }}
+            style={{
+              background: 'none',
+              border: 'none',
+              color: 'var(--text-main)',
+              fontSize: '0.9rem',
+              fontWeight: '700',
+              cursor: 'pointer',
               display: 'inline-flex',
               alignItems: 'center',
-              gap: '0.35rem',
-              fontSize: '0.74rem',
-              fontWeight: '700',
-              textTransform: 'uppercase',
-              letterSpacing: '0.04em',
-              color: 'var(--primary)',
-              marginBottom: '0.15rem'
-            }}>
-              <i className="fa-solid fa-circle-user" /> Student Account
-            </span>
-            <h1 style={{
-              fontFamily: 'var(--font-display)',
-              fontSize: '1.75rem',
-              fontWeight: '800',
-              color: 'var(--text-main)',
-              letterSpacing: '-0.02em',
-              margin: 0
-            }}>
-              Profile
-            </h1>
-          </div>
-
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
-            <ThemeToggleBtn />
-            <button
-              onClick={() => setIsSettingsOpen(true)}
-              style={{
-                width: '40px',
-                height: '40px',
-                borderRadius: '50%',
-                backgroundColor: 'var(--surface)',
-                border: '1px solid var(--border)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                cursor: 'pointer',
-                color: 'var(--text-main)',
-                fontSize: '1.05rem',
-                boxShadow: 'var(--shadow-sm)',
-                transition: 'all 0.15s ease'
-              }}
-              title="Settings & Preferences"
-            >
-              <i className="fa-solid fa-gear" />
-            </button>
-          </div>
+              gap: '0.45rem',
+              padding: '6px 10px',
+              borderRadius: '9999px',
+              backgroundColor: 'var(--surface)'
+            }}
+          >
+            <i className="fa-solid fa-gear" />
+            <span>Settings</span>
+          </button>
         </div>
 
+        {/* PROFILE TITLE */}
+        <h1 style={{
+          fontFamily: 'var(--font-display)',
+          fontSize: '1.65rem',
+          fontWeight: '800',
+          letterSpacing: '-0.02em',
+          color: 'var(--text-main)',
+          margin: '0 0 1.25rem 0.25rem'
+        }}>
+          Profile
+        </h1>
+
         {/* ============================================================== */}
-        {/* USER PROFILE CARD (CLEAN SHOPMATE AESTHETIC)                   */}
+        {/* FLOATING USER IDENTITY CARD (SHOPMATE TEMPLATE FIDELITY)       */}
         {/* ============================================================== */}
         <div style={{
           backgroundColor: 'var(--surface)',
-          borderRadius: '24px',
-          padding: '1.75rem 1.25rem',
+          borderRadius: '26px',
+          padding: '1.75rem 1.25rem 1.5rem 1.25rem',
           border: '1px solid var(--border)',
           boxShadow: 'var(--shadow-card)',
           textAlign: 'center',
           marginBottom: '1.25rem',
           position: 'relative'
         }}>
-          {/* Circular Avatar with Verified Badge */}
+          {/* Circular Avatar with Green Border and Verified Badge */}
           <div style={{
             position: 'relative',
-            width: '96px',
-            height: '96px',
-            margin: '0 auto 1.1rem auto'
+            width: '92px',
+            height: '92px',
+            margin: '0 auto 1rem auto'
           }}>
             <div style={{
               width: '100%',
               height: '100%',
               borderRadius: '50%',
               backgroundColor: 'var(--surface-alt)',
-              border: '3px solid var(--border)',
-              boxShadow: '0 6px 20px rgba(14, 68, 52, 0.12)',
+              border: '3px solid #10B981',
+              boxShadow: '0 6px 18px rgba(16, 185, 129, 0.22)',
               overflow: 'hidden',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
               color: 'var(--primary)',
-              fontSize: '2.1rem',
+              fontSize: '2rem',
               fontWeight: '800'
             }}>
-              {profile?.avatar_url ? (
+              {profile?.avatar_url || profile?.profile?.avatar_slug ? (
                 <img 
-                  src={getImageUrl(profile.avatar_url)} 
+                  src={getImageUrl(profile.avatar_url || profile.profile.avatar_slug)} 
                   alt={displayName} 
                   style={{ width: '100%', height: '100%', objectFit: 'cover' }} 
                 />
@@ -385,334 +405,428 @@ function Profile() {
               )}
             </div>
 
-            {/* Verified / Store Badge */}
-            {profile && (
-              <div style={{
-                position: 'absolute',
-                bottom: '-2px',
-                right: '-8px',
-                backgroundColor: isStore ? 'var(--primary)' : '#10B981',
-                color: '#FFFFFF',
-                borderRadius: '9999px',
-                padding: '3px 9px',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '4px',
-                fontSize: '0.72rem',
-                fontWeight: '800',
-                boxShadow: '0 3px 8px rgba(0,0,0,0.18)',
-                letterSpacing: '0.01em'
-              }}>
-                <i className={isStore ? "fa-solid fa-store" : "fa-solid fa-check"} />
-                {isStore ? 'Store' : 'Verified'}
-              </div>
-            )}
+            {/* Attached Verified Badge Pill */}
+            <div style={{
+              position: 'absolute',
+              bottom: '-6px',
+              left: '50%',
+              transform: 'translateX(-50%)',
+              backgroundColor: '#10B981',
+              color: '#FFFFFF',
+              borderRadius: '9999px',
+              padding: '2px 9px',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '3px',
+              fontSize: '0.68rem',
+              fontWeight: '800',
+              boxShadow: '0 2px 8px rgba(0,0,0,0.18)',
+              whiteSpace: 'nowrap'
+            }}>
+              <i className="fa-solid fa-check" style={{ fontSize: '0.62rem' }} />
+              <span>{isStore ? (isKycVerified ? 'Verified Store' : 'Store KYC') : 'Verified'}</span>
+            </div>
           </div>
 
-          {/* User Full Name / Handle or Business Name */}
+          {/* User Full Name / Business Name */}
           <h2 style={{
             fontFamily: 'var(--font-display)',
-            fontSize: '1.4rem',
+            fontSize: '1.35rem',
             fontWeight: '800',
             letterSpacing: '-0.02em',
             color: 'var(--text-main)',
             margin: '0 0 0.35rem 0'
           }}>
-            {isStore && profile?.business_name ? profile.business_name : displayName}
+            {isStore && profile?.business_name ? profile.business_name : (profile?.name || displayName)}
           </h2>
 
-          {/* Owner Credit & Category (for Stores) */}
-          {isStore && (
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.45rem', flexWrap: 'wrap', marginBottom: '0.5rem' }}>
-              <span style={{ fontSize: '0.82rem', color: 'var(--text-muted)' }}>
-                Owned by <strong style={{ color: 'var(--text-main)' }}>{profile?.name || displayName}</strong>
-              </span>
-              {profile?.business_category && (
-                <span style={{
-                  backgroundColor: 'var(--primary-light)',
-                  border: '1px solid var(--border)',
-                  borderRadius: '9999px',
-                  padding: '2px 10px',
-                  fontSize: '0.75rem',
-                  fontWeight: '700',
-                  color: 'var(--primary)'
-                }}>
-                  🏷️ {profile.business_category}
-                </span>
-              )}
-            </div>
-          )}
-
-          {/* Subtitle: Campus Location Pin */}
+          {/* Location Pin */}
           <div style={{
             display: 'inline-flex',
             alignItems: 'center',
-            gap: '0.4rem',
+            gap: '0.35rem',
             fontSize: '0.82rem',
-            fontWeight: '600',
             color: 'var(--text-muted)',
-            marginBottom: '0.85rem'
+            marginBottom: '1rem',
+            fontWeight: '600'
           }}>
             <i className="fa-solid fa-location-dot" style={{ color: 'var(--primary)', fontSize: '0.8rem' }} />
-            <span>{campusMajor}{isStore && profile?.business_address ? ` • ${profile.business_address}` : ''}</span>
+            <span>{campusLocation}</span>
           </div>
 
-          {/* User Bio or Business Description */}
-          <p style={{
-            fontSize: '0.88rem',
-            color: 'var(--text-main)',
-            lineHeight: 1.5,
-            maxWidth: '440px',
-            margin: '0 auto 1.1rem auto',
-            opacity: 0.92
-          }}>
-            {isStore && profile?.business_description ? profile.business_description : userBio}
-          </p>
-
-          {/* Social Stats Pill */}
-          <div style={{
-            display: 'inline-flex',
-            alignItems: 'center',
-            gap: '0.65rem',
-            backgroundColor: 'var(--surface-alt)',
-            border: '1px solid var(--border)',
-            borderRadius: '9999px',
-            padding: '0.4rem 1.15rem',
-            fontSize: '0.82rem',
-            fontWeight: '700',
-            color: 'var(--text-main)'
-          }}>
-            <span style={{ color: '#F59E0B' }}>★ {profile?.rating ? profile.rating.toFixed(1) : '5.0'}</span>
-            <span style={{ opacity: 0.35 }}>•</span>
-            <span>{profile?.reviews_count || 0} reviews</span>
-            <span style={{ opacity: 0.35 }}>•</span>
-            <span style={{ color: 'var(--primary)' }}>{soldCount} Sold</span>
+          {/* Edit Profile Pill Button */}
+          <div>
+            <button
+              type="button"
+              onClick={() => {
+                setSettingsDefaultTab('account');
+                setIsSettingsOpen(true);
+              }}
+              style={{
+                padding: '0.55rem 1.35rem',
+                borderRadius: '9999px',
+                border: '1px solid var(--border)',
+                backgroundColor: 'var(--surface-alt)',
+                color: 'var(--text-main)',
+                fontSize: '0.82rem',
+                fontWeight: '700',
+                cursor: 'pointer',
+                transition: 'all 0.15s ease'
+              }}
+            >
+              Edit Profile
+            </button>
           </div>
+        </div>
 
-          {/* Store Actions or Upgrade to Store Banner */}
-          {isStore ? (
-            <div style={{ display: 'flex', gap: '0.65rem', justifyContent: 'center', marginTop: '1.25rem', flexWrap: 'wrap' }}>
-              <button
-                type="button"
-                onClick={() => setShowStorefrontModal(true)}
-                style={{
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: '0.45rem',
-                  backgroundColor: 'var(--primary)',
-                  color: '#FFFFFF',
-                  border: 'none',
-                  borderRadius: '9999px',
-                  padding: '0.65rem 1.25rem',
-                  fontWeight: '700',
-                  fontSize: '0.85rem',
-                  cursor: 'pointer',
-                  boxShadow: 'var(--shadow-sm)',
-                  transition: 'transform 0.15s ease'
-                }}
-              >
-                <i className="fa-solid fa-store" /> View Public Storefront
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  setStoreForm({
-                    account_type: profile?.account_type || 'store',
-                    business_name: profile?.business_name || '',
-                    business_category: profile?.business_category || 'Fashion & Thrift',
-                    business_description: profile?.business_description || '',
-                    business_address: profile?.business_address || '',
-                    business_whatsapp: profile?.business_whatsapp || '',
-                    business_instagram: profile?.business_instagram || ''
-                  });
-                  setShowStoreManagerModal(true);
-                }}
-                style={{
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: '0.45rem',
-                  backgroundColor: 'var(--surface-alt)',
-                  color: 'var(--text-main)',
-                  border: '1px solid var(--border)',
-                  borderRadius: '9999px',
-                  padding: '0.65rem 1.25rem',
-                  fontWeight: '700',
-                  fontSize: '0.85rem',
-                  cursor: 'pointer'
-                }}
-              >
-                <i className="fa-solid fa-pen-to-square" /> Edit Store Profile
-              </button>
-            </div>
-          ) : (!isLoading && profile) ? (
-            <div style={{
-              marginTop: '1.35rem',
-              padding: '1rem 1.15rem',
+        {/* ============================================================== */}
+        {/* QUICK 3-CARD STATS ROW (MY LISTINGS / STORE KYC / SAVED)       */}
+        {/* ============================================================== */}
+        <div style={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(3, 1fr)',
+          gap: '0.65rem',
+          marginBottom: '1.35rem'
+        }}>
+          {/* Card 1: My Listings */}
+          <div 
+            onClick={() => setActiveSection('listings')}
+            style={{
+              backgroundColor: 'var(--surface)',
+              border: activeSection === 'listings' ? '1.5px solid var(--primary)' : '1px solid var(--border)',
               borderRadius: '20px',
-              backgroundColor: 'var(--surface-alt)',
-              border: '1px dashed var(--primary)',
+              padding: '0.9rem 0.5rem',
+              textAlign: 'center',
+              cursor: 'pointer',
+              boxShadow: 'var(--shadow-sm)',
+              position: 'relative'
+            }}
+          >
+            <div style={{
+              width: '28px',
+              height: '28px',
+              borderRadius: '50%',
+              backgroundColor: 'var(--primary-light)',
+              color: 'var(--primary)',
               display: 'flex',
               alignItems: 'center',
-              justifyContent: 'space-between',
-              gap: '1rem',
-              textAlign: 'left'
+              justifyContent: 'center',
+              fontSize: '0.85rem',
+              margin: '0 auto 0.45rem auto'
             }}>
-              <div>
-                <div style={{ fontWeight: '800', fontSize: '0.9rem', color: 'var(--text-main)', display: 'flex', alignItems: 'center', gap: '0.45rem' }}>
-                  <span style={{ fontSize: '1.1rem' }}>🏪</span>
-                  Running a Student Business?
+              <i className="fa-solid fa-box" />
+            </div>
+            <div style={{ fontSize: '0.75rem', fontWeight: '800', color: 'var(--text-main)' }}>
+              My Listings
+            </div>
+            <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)', marginTop: '2px' }}>
+              {activeCount} active
+            </div>
+          </div>
+
+          {/* Card 2: Store KYC / Merchant */}
+          <div 
+            onClick={() => {
+              if (isStore) {
+                setShowStorefrontModal(true);
+              } else {
+                setShowStoreKycModal(true);
+              }
+            }}
+            style={{
+              backgroundColor: 'var(--surface)',
+              border: '1px solid var(--border)',
+              borderRadius: '20px',
+              padding: '0.9rem 0.5rem',
+              textAlign: 'center',
+              cursor: 'pointer',
+              boxShadow: 'var(--shadow-sm)',
+              position: 'relative'
+            }}
+          >
+            <div style={{
+              width: '28px',
+              height: '28px',
+              borderRadius: '50%',
+              backgroundColor: isKycVerified ? 'rgba(16, 185, 129, 0.15)' : 'var(--primary-light)',
+              color: isKycVerified ? '#10B981' : 'var(--primary)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              fontSize: '0.85rem',
+              margin: '0 auto 0.45rem auto'
+            }}>
+              <i className="fa-solid fa-store" />
+            </div>
+            <div style={{ fontSize: '0.75rem', fontWeight: '800', color: 'var(--text-main)' }}>
+              {isStore ? 'My Store' : 'Store KYC'}
+            </div>
+            <div style={{ fontSize: '0.72rem', color: isKycVerified ? '#10B981' : 'var(--text-muted)', marginTop: '2px', fontWeight: isKycVerified ? '700' : '500' }}>
+              {isKycVerified ? 'Verified ✓' : (isStore ? 'Edit KYC' : 'Verify')}
+            </div>
+          </div>
+
+          {/* Card 3: Total Saved */}
+          <div 
+            onClick={() => setActiveSection('saved')}
+            style={{
+              backgroundColor: 'var(--surface)',
+              border: activeSection === 'saved' ? '1.5px solid var(--primary)' : '1px solid var(--border)',
+              borderRadius: '20px',
+              padding: '0.9rem 0.5rem',
+              textAlign: 'center',
+              cursor: 'pointer',
+              boxShadow: 'var(--shadow-sm)',
+              position: 'relative'
+            }}
+          >
+            <div style={{
+              width: '28px',
+              height: '28px',
+              borderRadius: '50%',
+              backgroundColor: 'rgba(239, 68, 68, 0.1)',
+              color: '#EF4444',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              fontSize: '0.85rem',
+              margin: '0 auto 0.45rem auto'
+            }}>
+              <i className="fa-solid fa-heart" />
+            </div>
+            <div style={{ fontSize: '0.75rem', fontWeight: '800', color: 'var(--text-main)' }}>
+              Total Saved
+            </div>
+            <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)', marginTop: '2px' }}>
+              {savedListings.length} items
+            </div>
+          </div>
+        </div>
+
+        {/* ============================================================== */}
+        {/* NAVIGATION MENU ITEMS WITH CHEVRONS (SHOPMATE TEMPLATE)        */}
+        {/* ============================================================== */}
+        {activeSection === 'menu' && (
+          <div style={{
+            backgroundColor: 'var(--surface)',
+            borderRadius: '24px',
+            border: '1px solid var(--border)',
+            padding: '0.4rem',
+            marginBottom: '1.5rem',
+            boxShadow: 'var(--shadow-card)'
+          }}>
+            {/* Row 1: My Listings & Sales */}
+            <div
+              onClick={() => setActiveSection('listings')}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                padding: '1rem 1.1rem',
+                borderBottom: '1px solid var(--border)',
+                cursor: 'pointer'
+              }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.85rem' }}>
+                <div style={{ width: '32px', height: '32px', borderRadius: '50%', backgroundColor: 'var(--surface-alt)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-main)', fontSize: '0.9rem' }}>
+                  <i className="fa-solid fa-clock-rotate-left" />
                 </div>
-                <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)', marginTop: '3px', lineHeight: '1.4' }}>
-                  Upgrade to an official Campus Store to showcase catalog drops and chat with student buyers.
+                <div>
+                  <div style={{ fontSize: '0.92rem', fontWeight: '700', color: 'var(--text-main)' }}>
+                    My Listings & Sales
+                  </div>
                 </div>
               </div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem' }}>
+                <span style={{ fontSize: '0.78rem', color: 'var(--primary)', fontWeight: '700', backgroundColor: 'var(--primary-light)', padding: '2px 8px', borderRadius: '9999px' }}>
+                  {myListings.length} items
+                </span>
+                <i className="fa-solid fa-chevron-right" style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }} />
+              </div>
+            </div>
+
+            {/* Row 2: Saved Items / Wishlist */}
+            <div
+              onClick={() => setActiveSection('saved')}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                padding: '1rem 1.1rem',
+                borderBottom: '1px solid var(--border)',
+                cursor: 'pointer'
+              }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.85rem' }}>
+                <div style={{ width: '32px', height: '32px', borderRadius: '50%', backgroundColor: 'var(--surface-alt)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#EF4444', fontSize: '0.9rem' }}>
+                  <i className="fa-solid fa-heart" />
+                </div>
+                <div>
+                  <div style={{ fontSize: '0.92rem', fontWeight: '700', color: 'var(--text-main)' }}>
+                    Saved Items
+                  </div>
+                </div>
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem' }}>
+                <span style={{ fontSize: '0.78rem', color: 'var(--text-muted)', fontWeight: '600' }}>
+                  {savedListings.length}
+                </span>
+                <i className="fa-solid fa-chevron-right" style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }} />
+              </div>
+            </div>
+
+            {/* Row 3: Store Owner Complete KYC */}
+            <div
+              onClick={() => setShowStoreKycModal(true)}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                padding: '1rem 1.1rem',
+                borderBottom: '1px solid var(--border)',
+                cursor: 'pointer'
+              }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.85rem' }}>
+                <div style={{ width: '32px', height: '32px', borderRadius: '50%', backgroundColor: 'var(--surface-alt)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--primary)', fontSize: '0.9rem' }}>
+                  <i className="fa-solid fa-id-card" />
+                </div>
+                <div>
+                  <div style={{ fontSize: '0.92rem', fontWeight: '700', color: 'var(--text-main)' }}>
+                    Store Owner KYC Verification
+                  </div>
+                  <div style={{ fontSize: '0.74rem', color: 'var(--text-muted)', marginTop: '1px' }}>
+                    Student ID & Business credentials
+                  </div>
+                </div>
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem' }}>
+                <span style={{
+                  fontSize: '0.75rem',
+                  fontWeight: '800',
+                  color: isKycVerified ? '#10B981' : 'var(--primary)',
+                  backgroundColor: isKycVerified ? 'rgba(16, 185, 129, 0.12)' : 'var(--primary-light)',
+                  padding: '2px 8px',
+                  borderRadius: '9999px'
+                }}>
+                  {isKycVerified ? 'Verified ✓' : 'Complete KYC'}
+                </span>
+                <i className="fa-solid fa-chevron-right" style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }} />
+              </div>
+            </div>
+
+            {/* Row 4: Preferences & Theme */}
+            <div
+              onClick={() => {
+                setSettingsDefaultTab('appearance');
+                setIsSettingsOpen(true);
+              }}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                padding: '1rem 1.1rem',
+                borderBottom: '1px solid var(--border)',
+                cursor: 'pointer'
+              }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.85rem' }}>
+                <div style={{ width: '32px', height: '32px', borderRadius: '50%', backgroundColor: 'var(--surface-alt)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-main)', fontSize: '0.9rem' }}>
+                  <i className="fa-solid fa-sliders" />
+                </div>
+                <div>
+                  <div style={{ fontSize: '0.92rem', fontWeight: '700', color: 'var(--text-main)' }}>
+                    Preferences & Dark Mode Sync
+                  </div>
+                </div>
+              </div>
+              <i className="fa-solid fa-chevron-right" style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }} />
+            </div>
+
+            {/* Row 5: Help & Campus Safety Support */}
+            <div
+              onClick={() => {
+                setSettingsDefaultTab('safety');
+                setIsSettingsOpen(true);
+              }}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                padding: '1rem 1.1rem',
+                cursor: 'pointer'
+              }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.85rem' }}>
+                <div style={{ width: '32px', height: '32px', borderRadius: '50%', backgroundColor: 'var(--surface-alt)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-main)', fontSize: '0.9rem' }}>
+                  <i className="fa-regular fa-circle-question" />
+                </div>
+                <div>
+                  <div style={{ fontSize: '0.92rem', fontWeight: '700', color: 'var(--text-main)' }}>
+                    Help & Campus Safety Support
+                  </div>
+                </div>
+              </div>
+              <i className="fa-solid fa-chevron-right" style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }} />
+            </div>
+          </div>
+        )}
+
+        {/* ============================================================== */}
+        {/* MY LISTINGS SECTION (2-COLUMN GRID)                            */}
+        {/* ============================================================== */}
+        {activeSection === 'listings' && (
+          <div style={{ marginBottom: '1.5rem' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.85rem' }}>
+              <h3 style={{ fontSize: '1.15rem', fontWeight: '800', fontFamily: 'var(--font-display)', margin: 0, color: 'var(--text-main)' }}>
+                My Listings ({myListings.length})
+              </h3>
               <button
                 type="button"
-                onClick={() => {
-                  setStoreForm({
-                    account_type: 'store',
-                    business_name: '',
-                    business_category: 'Fashion & Thrift',
-                    business_description: '',
-                    business_address: '',
-                    business_instagram: ''
-                  });
-                  setShowStoreManagerModal(true);
-                }}
+                onClick={() => setIsCreateOpen(true)}
                 style={{
-                  whiteSpace: 'nowrap',
-                  padding: '0.6rem 1.15rem',
+                  padding: '0.45rem 1rem',
                   borderRadius: '9999px',
+                  border: 'none',
                   backgroundColor: 'var(--primary)',
                   color: '#FFFFFF',
                   fontSize: '0.82rem',
                   fontWeight: '800',
-                  border: 'none',
-                  cursor: 'pointer',
-                  boxShadow: '0 4px 12px var(--primary-light)',
-                  flexShrink: 0
+                  cursor: 'pointer'
                 }}
               >
-                Upgrade to Store
+                + Post New Item
               </button>
             </div>
-          ) : null}
-        </div>
 
-        {/* ============================================================== */}
-        {/* SEGMENTED PILL SWITCHER: MY LISTINGS vs SAVED ITEMS            */}
-        {/* ============================================================== */}
-        <div style={{
-          display: 'flex',
-          backgroundColor: 'var(--surface-alt)',
-          borderRadius: '9999px',
-          padding: '4px',
-          marginBottom: '1.25rem',
-          border: '1px solid var(--border)'
-        }}>
-          <button
-            onClick={() => setActiveTab('listings')}
-            style={{
-              flex: 1,
-              padding: '0.65rem 1rem',
-              borderRadius: '9999px',
-              border: 'none',
-              backgroundColor: activeTab === 'listings' ? 'var(--primary)' : 'transparent',
-              color: activeTab === 'listings' ? '#FFFFFF' : 'var(--text-muted)',
-              fontWeight: '800',
-              fontSize: '0.88rem',
-              fontFamily: 'var(--font-display)',
-              cursor: 'pointer',
-              transition: 'all 0.2s cubic-bezier(0.16, 1, 0.3, 1)',
-              boxShadow: activeTab === 'listings' ? '0 4px 12px var(--primary-light)' : 'none',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              gap: '0.45rem'
-            }}
-          >
-            <i className="fa-solid fa-box" />
-            <span>My Listings ({activeCount})</span>
-          </button>
-
-          <button
-            onClick={() => setActiveTab('saved')}
-            style={{
-              flex: 1,
-              padding: '0.65rem 1rem',
-              borderRadius: '9999px',
-              border: 'none',
-              backgroundColor: activeTab === 'saved' ? 'var(--primary)' : 'transparent',
-              color: activeTab === 'saved' ? '#FFFFFF' : 'var(--text-muted)',
-              fontWeight: '800',
-              fontSize: '0.88rem',
-              fontFamily: 'var(--font-display)',
-              cursor: 'pointer',
-              transition: 'all 0.2s cubic-bezier(0.16, 1, 0.3, 1)',
-              boxShadow: activeTab === 'saved' ? '0 4px 12px var(--primary-light)' : 'none',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              gap: '0.45rem'
-            }}
-          >
-            <i className="fa-regular fa-heart" />
-            <span>Saved Items ({savedListings.length})</span>
-          </button>
-        </div>
-
-        {/* ============================================================== */}
-        {/* TAB 1: MY ACTIVE LISTINGS (SHOPMATE 2-COLUMN GRID)              */}
-        {/* ============================================================== */}
-        {activeTab === 'listings' && (
-          <div>
             {myListings.length === 0 ? (
               <div style={{
                 textAlign: 'center',
                 padding: '3rem 1.5rem',
                 backgroundColor: 'var(--surface)',
                 borderRadius: '24px',
-                border: '1px solid var(--border)',
-                boxShadow: 'var(--shadow-sm)'
+                border: '1px solid var(--border)'
               }}>
-                <div style={{
-                  width: '64px',
-                  height: '64px',
-                  borderRadius: '50%',
-                  backgroundColor: 'var(--primary-light)',
-                  color: 'var(--primary)',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  fontSize: '1.6rem',
-                  margin: '0 auto 1rem auto'
-                }}>
-                  <i className="fa-solid fa-box-open" />
-                </div>
-                <h3 style={{ fontSize: '1.2rem', fontWeight: '800', fontFamily: 'var(--font-display)', marginBottom: '0.35rem', color: 'var(--text-main)' }}>
+                <i className="fa-solid fa-box-open" style={{ fontSize: '2rem', color: 'var(--primary)', opacity: 0.6, marginBottom: '0.75rem', display: 'block' }} />
+                <h4 style={{ fontSize: '1.15rem', fontWeight: '800', marginBottom: '0.3rem' }}>
                   No Listings Posted Yet
-                </h3>
-                <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem', marginBottom: '1.35rem', maxWidth: '360px', margin: '0 auto 1.35rem auto' }}>
-                  Declutter your room! Sell textbooks, phone accessories, clothing, or gear in seconds.
+                </h4>
+                <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem', marginBottom: '1.25rem' }}>
+                  Post textbooks, dorm gear, or tech gadgets in seconds.
                 </p>
                 <button 
                   onClick={() => setIsCreateOpen(true)}
                   style={{
+                    borderRadius: '9999px',
+                    padding: '0.65rem 1.4rem',
+                    border: 'none',
                     backgroundColor: 'var(--primary)',
                     color: '#FFFFFF',
-                    border: 'none',
-                    borderRadius: '9999px',
-                    padding: '0.7rem 1.5rem',
                     fontWeight: '800',
-                    fontSize: '0.88rem',
-                    cursor: 'pointer',
-                    boxShadow: '0 4px 14px var(--primary-light)',
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    gap: '0.45rem'
+                    cursor: 'pointer'
                   }}
                 >
-                  <i className="fa-solid fa-plus" /> Post Your First Item
+                  <i className="fa-solid fa-plus" /> Post First Item
                 </button>
               </div>
             ) : (
@@ -728,7 +842,6 @@ function Profile() {
                       className="shopmate-card"
                       style={{ opacity: isSold ? 0.72 : 1 }}
                     >
-                      {/* Image Box */}
                       <div 
                         className="shopmate-card-image-box"
                         onClick={() => setSelectedDetailListing(listing)}
@@ -745,7 +858,6 @@ function Profile() {
                           </div>
                         )}
 
-                        {/* Status Pill Badge */}
                         <div style={{
                           position: 'absolute',
                           top: '10px',
@@ -758,20 +870,12 @@ function Profile() {
                           fontWeight: '800',
                           display: 'flex',
                           alignItems: 'center',
-                          gap: '4px',
-                          boxShadow: '0 2px 6px rgba(0,0,0,0.18)'
+                          gap: '4px'
                         }}>
-                          <span style={{
-                            width: '6px',
-                            height: '6px',
-                            borderRadius: '50%',
-                            backgroundColor: isSold ? '#94A3B8' : '#A7F3D0'
-                          }} />
                           {isSold ? 'Sold' : 'Active'}
                         </div>
                       </div>
 
-                      {/* Card Body */}
                       <div className="shopmate-card-body">
                         <h4 
                           className="shopmate-card-title"
@@ -779,19 +883,11 @@ function Profile() {
                         >
                           {listing.title}
                         </h4>
-
                         <div className="shopmate-card-price">
                           ₦{priceFormatted}
                         </div>
 
-                        {/* Seller Action Controls */}
-                        <div style={{
-                          display: 'flex',
-                          gap: '0.4rem',
-                          marginTop: '0.6rem',
-                          paddingTop: '0.55rem',
-                          borderTop: '1px solid var(--border)'
-                        }}>
+                        <div style={{ display: 'flex', gap: '0.4rem', marginTop: '0.6rem', borderTop: '1px solid var(--border)', paddingTop: '0.5rem' }}>
                           <button
                             type="button"
                             onClick={() => setEditingListing(listing)}
@@ -804,14 +900,10 @@ function Profile() {
                               color: 'var(--text-main)',
                               fontSize: '0.72rem',
                               fontWeight: '700',
-                              cursor: 'pointer',
-                              display: 'inline-flex',
-                              alignItems: 'center',
-                              justifyContent: 'center',
-                              gap: '3px'
+                              cursor: 'pointer'
                             }}
                           >
-                            <i className="fa-solid fa-pen" /> Edit
+                            Edit
                           </button>
                           <button
                             type="button"
@@ -828,7 +920,7 @@ function Profile() {
                               cursor: 'pointer'
                             }}
                           >
-                            {isSold ? 'Relist' : 'Mark Sold'}
+                            {isSold ? 'Relist' : 'Sold'}
                           </button>
                         </div>
                       </div>
@@ -841,51 +933,39 @@ function Profile() {
         )}
 
         {/* ============================================================== */}
-        {/* TAB 2: MY SAVED ITEMS (SHOPMATE 2-COLUMN GRID)                  */}
+        {/* SAVED ITEMS SECTION (2-COLUMN GRID)                            */}
         {/* ============================================================== */}
-        {activeTab === 'saved' && (
-          <div>
+        {activeSection === 'saved' && (
+          <div style={{ marginBottom: '1.5rem' }}>
+            <h3 style={{ fontSize: '1.15rem', fontWeight: '800', fontFamily: 'var(--font-display)', margin: '0 0 0.85rem 0', color: 'var(--text-main)' }}>
+              Saved Items ({savedListings.length})
+            </h3>
+
             {savedListings.length === 0 ? (
               <div style={{
                 textAlign: 'center',
                 padding: '3rem 1.5rem',
                 backgroundColor: 'var(--surface)',
                 borderRadius: '24px',
-                border: '1px solid var(--border)',
-                boxShadow: 'var(--shadow-sm)'
+                border: '1px solid var(--border)'
               }}>
-                <div style={{
-                  width: '64px',
-                  height: '64px',
-                  borderRadius: '50%',
-                  backgroundColor: 'var(--primary-light)',
-                  color: 'var(--primary)',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  fontSize: '1.6rem',
-                  margin: '0 auto 1rem auto'
-                }}>
-                  <i className="fa-regular fa-heart" />
-                </div>
-                <h3 style={{ fontSize: '1.2rem', fontWeight: '800', fontFamily: 'var(--font-display)', marginBottom: '0.35rem', color: 'var(--text-main)' }}>
+                <i className="fa-regular fa-heart" style={{ fontSize: '2rem', color: 'var(--primary)', opacity: 0.6, marginBottom: '0.75rem', display: 'block' }} />
+                <h4 style={{ fontSize: '1.15rem', fontWeight: '800', marginBottom: '0.3rem' }}>
                   No Saved Items Yet
-                </h3>
-                <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem', marginBottom: '1.35rem', maxWidth: '360px', margin: '0 auto 1.35rem auto' }}>
-                  Tap the heart icon on any campus listing to bookmark items you want to keep an eye on.
+                </h4>
+                <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem', marginBottom: '1.25rem' }}>
+                  Tap the heart icon on any campus listing to bookmark items here.
                 </p>
                 <button 
                   onClick={() => navigate('/dashboard')}
                   style={{
+                    borderRadius: '9999px',
+                    padding: '0.65rem 1.4rem',
+                    border: 'none',
                     backgroundColor: 'var(--primary)',
                     color: '#FFFFFF',
-                    border: 'none',
-                    borderRadius: '9999px',
-                    padding: '0.7rem 1.5rem',
                     fontWeight: '800',
-                    fontSize: '0.88rem',
-                    cursor: 'pointer',
-                    boxShadow: '0 4px 14px var(--primary-light)'
+                    cursor: 'pointer'
                   }}
                 >
                   Explore Marketplace
@@ -927,24 +1007,9 @@ function Profile() {
                           alignItems: 'center',
                           justifyContent: 'center',
                           color: '#EF4444',
-                          fontSize: '0.85rem',
-                          boxShadow: '0 2px 6px rgba(0,0,0,0.1)'
+                          fontSize: '0.85rem'
                         }}>
                           <i className="fa-solid fa-heart" />
-                        </div>
-                        <div style={{
-                          position: 'absolute',
-                          bottom: '8px',
-                          left: '8px',
-                          backgroundColor: 'rgba(15, 23, 42, 0.72)',
-                          backdropFilter: 'blur(4px)',
-                          color: '#FFFFFF',
-                          borderRadius: '9999px',
-                          padding: '2px 8px',
-                          fontSize: '0.68rem',
-                          fontWeight: '700'
-                        }}>
-                          {listing.campus_acronym || 'Campus'}
                         </div>
                       </div>
 
@@ -964,6 +1029,28 @@ function Profile() {
           </div>
         )}
 
+        {/* LOG OUT BUTTON (CENTERED IN RED TEXT) */}
+        <div style={{ textAlign: 'center', marginTop: '1.5rem', marginBottom: '2rem' }}>
+          <button
+            type="button"
+            onClick={() => {
+              localStorage.removeItem('token');
+              localStorage.removeItem('user');
+              navigate('/auth');
+            }}
+            style={{
+              background: 'none',
+              border: 'none',
+              color: '#DC2626',
+              fontSize: '0.92rem',
+              fontWeight: '800',
+              cursor: 'pointer',
+              padding: '0.5rem 1rem'
+            }}
+          >
+            Log Out
+          </button>
+        </div>
       </main>
 
       {/* Item Detail Modal */}
@@ -1018,6 +1105,7 @@ function Profile() {
       {/* Settings Modal */}
       <SettingsModal 
         isOpen={isSettingsOpen}
+        defaultTab={settingsDefaultTab}
         onClose={() => setIsSettingsOpen(false)}
         onLogout={() => {
           localStorage.removeItem('token');
@@ -1026,33 +1114,42 @@ function Profile() {
         }}
       />
 
-      {/* Store Manager & Upgrade Modal */}
-      {showStoreManagerModal && (
-        <div className="modal-overlay" onClick={() => setShowStoreManagerModal(false)} style={{ zIndex: 1200 }}>
+      {/* ============================================================== */}
+      {/* STORE OWNER COMPLETE KYC MODAL                                 */}
+      {/* ============================================================== */}
+      {showStoreKycModal && (
+        <div className="modal-overlay" onClick={() => setShowStoreKycModal(false)} style={{ zIndex: 1200 }}>
           <div 
-            className="modal-content"
+            className="modal-content animate-fade-in"
             onClick={(e) => e.stopPropagation()}
             style={{ 
               maxWidth: '520px', 
               width: '92%', 
               maxHeight: '90vh', 
               overflowY: 'auto',
-              borderRadius: '24px',
-              padding: '1.75rem'
+              borderRadius: '26px',
+              padding: '1.75rem',
+              backgroundColor: 'var(--surface)'
             }}
           >
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem' }}>
               <div>
-                <h3 style={{ fontSize: '1.35rem', fontWeight: '800', fontFamily: 'var(--font-display)', color: 'var(--text-main)', margin: 0 }}>
-                  {profile?.account_type === 'store' ? 'Edit Campus Store' : 'Upgrade to Campus Store'}
+                <span style={{
+                  fontSize: '0.74rem',
+                  fontWeight: '800',
+                  color: 'var(--primary)',
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.04em'
+                }}>
+                  Official Merchant Onboarding
+                </span>
+                <h3 style={{ fontSize: '1.35rem', fontWeight: '800', fontFamily: 'var(--font-display)', color: 'var(--text-main)', margin: '0.2rem 0 0 0' }}>
+                  Store Owner Complete KYC
                 </h3>
-                <p style={{ fontSize: '0.82rem', color: 'var(--text-muted)', margin: '0.25rem 0 0 0' }}>
-                  Set your official campus business identity, contact details, and pickup spot
-                </p>
               </div>
               <button
                 type="button"
-                onClick={() => setShowStoreManagerModal(false)}
+                onClick={() => setShowStoreKycModal(false)}
                 style={{
                   background: 'var(--surface-alt)',
                   border: 'none',
@@ -1071,24 +1168,28 @@ function Profile() {
               </button>
             </div>
 
-            {storeFormError && (
+            {storeKycError && (
               <div style={{
-                backgroundColor: '#FEE2E2',
-                color: '#991B1B',
+                backgroundColor: 'rgba(239, 68, 68, 0.12)',
+                color: '#EF4444',
                 padding: '0.75rem 1rem',
                 borderRadius: '14px',
                 fontSize: '0.84rem',
                 marginBottom: '1rem',
-                fontWeight: '600'
+                fontWeight: '600',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.5rem'
               }}>
-                {storeFormError}
+                <i className="fa-solid fa-circle-exclamation" />
+                <span>{storeKycError}</span>
               </div>
             )}
 
-            <form onSubmit={handleSaveStore} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+            <form onSubmit={handleSaveStoreKyc} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
               <div>
                 <label className="form-label" style={{ fontWeight: '700', fontSize: '0.84rem', display: 'block', marginBottom: '0.35rem' }}>
-                  Store / Brand Name *
+                  Official Store / Brand Name *
                 </label>
                 <input
                   type="text"
@@ -1102,7 +1203,7 @@ function Profile() {
 
               <div>
                 <label className="form-label" style={{ fontWeight: '700', fontSize: '0.84rem', display: 'block', marginBottom: '0.35rem' }}>
-                  Business Category
+                  Business Category *
                 </label>
                 <select
                   className="form-input"
@@ -1116,35 +1217,137 @@ function Profile() {
                 </select>
               </div>
 
+              {/* Student Matriculation / Student ID */}
               <div>
-                <label className="form-label" style={{ fontWeight: '700', fontSize: '0.84rem', display: 'block', marginBottom: '0.35rem' }}>
-                  Store Bio / Tagline (Optional)
-                </label>
-                <textarea
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.35rem' }}>
+                  <label className="form-label" style={{ marginBottom: 0, fontWeight: '700', fontSize: '0.84rem' }}>
+                    Student ID / Matriculation Number *
+                  </label>
+                  <span style={{ fontSize: '0.72rem', color: 'var(--primary)', fontWeight: '800' }}>
+                    KYC Required
+                  </span>
+                </div>
+                <input
+                  type="text"
+                  required
                   className="form-input"
-                  rows={2}
-                  value={storeForm.business_description}
-                  onChange={(e) => setStoreForm(prev => ({ ...prev, business_description: e.target.value }))}
-                  placeholder="e.g. Curated vintage sneakers & graphic tees. Delivery to hostel gates daily."
+                  value={storeForm.student_id_number}
+                  onChange={(e) => setStoreForm(prev => ({ ...prev, student_id_number: e.target.value }))}
+                  placeholder="e.g. LCU/22/10452 or UI/21/9831"
                 />
+                <span style={{ fontSize: '0.74rem', color: 'var(--text-muted)', marginTop: '0.25rem', display: 'block' }}>
+                  Used to verify active student enrollment for your campus merchant badge.
+                </span>
               </div>
 
+              {/* Student ID Card Photo Upload */}
               <div>
                 <label className="form-label" style={{ fontWeight: '700', fontSize: '0.84rem', display: 'block', marginBottom: '0.35rem' }}>
-                  Campus Pickup Spot (Optional)
+                  Upload Student ID Card Photo
+                </label>
+                <input
+                  type="file"
+                  ref={idCardInputRef}
+                  accept="image/*"
+                  onChange={handleIdCardFile}
+                  style={{ display: 'none' }}
+                />
+
+                {idCardPreview ? (
+                  <div style={{
+                    position: 'relative',
+                    borderRadius: '16px',
+                    overflow: 'hidden',
+                    border: '1px solid var(--border)',
+                    height: '140px',
+                    backgroundColor: 'var(--surface-alt)'
+                  }}>
+                    <img 
+                      src={idCardPreview} 
+                      alt="Student ID Preview" 
+                      style={{ width: '100%', height: '100%', objectFit: 'cover' }} 
+                    />
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setIdCardPreview(null);
+                        setStoreForm(prev => ({ ...prev, id_card_image: null }));
+                      }}
+                      style={{
+                        position: 'absolute',
+                        top: '6px',
+                        right: '6px',
+                        backgroundColor: 'rgba(239, 68, 68, 0.9)',
+                        color: '#FFFFFF',
+                        border: 'none',
+                        borderRadius: '50%',
+                        width: '26px',
+                        height: '26px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        cursor: 'pointer',
+                        fontSize: '0.75rem'
+                      }}
+                    >
+                      ✕
+                    </button>
+                  </div>
+                ) : (
+                  <div 
+                    onClick={() => idCardInputRef.current?.click()}
+                    style={{
+                      border: '2px dashed var(--primary)',
+                      borderRadius: '16px',
+                      padding: '1.2rem',
+                      textAlign: 'center',
+                      backgroundColor: 'var(--surface-alt)',
+                      cursor: 'pointer'
+                    }}
+                  >
+                    <i className="fa-solid fa-camera" style={{ fontSize: '1.4rem', color: 'var(--primary)', marginBottom: '0.35rem' }} />
+                    <div style={{ fontWeight: '700', fontSize: '0.86rem', color: 'var(--text-main)' }}>
+                      Tap to Upload Student ID Card Photo
+                    </div>
+                    <div style={{ fontSize: '0.74rem', color: 'var(--text-muted)', marginTop: '2px' }}>
+                      School ID card or student portal screenshot
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Campus Pickup Spot */}
+              <div>
+                <label className="form-label" style={{ fontWeight: '700', fontSize: '0.84rem', display: 'block', marginBottom: '0.35rem' }}>
+                  Hostel / Campus Pickup Spot
                 </label>
                 <input
                   type="text"
                   className="form-input"
                   value={storeForm.business_address}
                   onChange={(e) => setStoreForm(prev => ({ ...prev, business_address: e.target.value }))}
-                  placeholder="e.g. SUB Car Park or Achievers Hall Room B12"
+                  placeholder="e.g. SUB Car Park or Peace Hall Room B12"
                 />
               </div>
 
+              {/* WhatsApp Contact */}
               <div>
                 <label className="form-label" style={{ fontWeight: '700', fontSize: '0.84rem', display: 'block', marginBottom: '0.35rem' }}>
-                  Instagram / Social Handle (Optional)
+                  Business WhatsApp Contact
+                </label>
+                <input
+                  type="tel"
+                  className="form-input"
+                  value={storeForm.business_whatsapp}
+                  onChange={(e) => setStoreForm(prev => ({ ...prev, business_whatsapp: e.target.value }))}
+                  placeholder="e.g. 08012345678"
+                />
+              </div>
+
+              {/* Instagram Handle */}
+              <div>
+                <label className="form-label" style={{ fontWeight: '700', fontSize: '0.84rem', display: 'block', marginBottom: '0.35rem' }}>
+                  Store Instagram Handle (Optional)
                 </label>
                 <input
                   type="text"
@@ -1155,10 +1358,24 @@ function Profile() {
                 />
               </div>
 
+              {/* Store Tagline */}
+              <div>
+                <label className="form-label" style={{ fontWeight: '700', fontSize: '0.84rem', display: 'block', marginBottom: '0.35rem' }}>
+                  Store Bio / Tagline (Optional)
+                </label>
+                <textarea
+                  className="form-input"
+                  rows={2}
+                  value={storeForm.business_description}
+                  onChange={(e) => setStoreForm(prev => ({ ...prev, business_description: e.target.value }))}
+                  placeholder="e.g. Daily hostel deliveries for thrift fits, kicks, and phone accessories."
+                />
+              </div>
+
               <div style={{ display: 'flex', gap: '0.75rem', marginTop: '0.5rem' }}>
                 <button
                   type="button"
-                  onClick={() => setShowStoreManagerModal(false)}
+                  onClick={() => setShowStoreKycModal(false)}
                   style={{
                     flex: 1,
                     padding: '0.8rem',
@@ -1175,7 +1392,7 @@ function Profile() {
                 </button>
                 <button
                   type="submit"
-                  disabled={isSavingStore}
+                  disabled={isSavingStoreKyc}
                   style={{
                     flex: 2,
                     padding: '0.8rem',
@@ -1186,11 +1403,11 @@ function Profile() {
                     fontWeight: '800',
                     fontSize: '0.88rem',
                     cursor: 'pointer',
-                    opacity: isSavingStore ? 0.7 : 1,
+                    opacity: isSavingStoreKyc ? 0.7 : 1,
                     boxShadow: '0 4px 14px var(--primary-light)'
                   }}
                 >
-                  {isSavingStore ? 'Saving...' : (profile?.account_type === 'store' ? 'Save Changes' : 'Activate Campus Store')}
+                  {isSavingStoreKyc ? 'Submitting KYC...' : 'Submit & Complete KYC'}
                 </button>
               </div>
             </form>
@@ -1204,7 +1421,7 @@ function Profile() {
           isOpen={true}
           onClose={() => setShowStorefrontModal(false)}
           sellerId={profile?.id}
-          sellerName={profile?.business_name || profile?.full_name || displayName}
+          sellerName={profile?.business_name || profile?.name || displayName}
           onMessageSeller={() => {
             setShowStorefrontModal(false);
           }}

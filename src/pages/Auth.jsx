@@ -1,38 +1,29 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { apiFetch, getCampuses, DEFAULT_CAMPUSES } from '../api';
 
-const STORE_CATEGORIES = [
-  'Fashion & Thrift',
-  'Phones, Gadgets & Tech',
-  'Food, Snacks & Pastries',
-  'Beauty, Hair & Skincare',
-  'Textbooks & Academics',
-  'Hostel & Dorm Essentials',
-  'Services, Printing & Repairs',
-  'General Variety Store'
-];
-
 function Auth() {
-  const [isLogin, setIsLogin] = useState(true);
-  const [isForgotPassword, setIsForgotPassword] = useState(false);
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [phone, setPhone] = useState('');
-  const [burnerHandle, setBurnerHandle] = useState('');
-  const [error, setError] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
 
-  // Account Type & Store Onboarding States
-  const [accountType, setAccountType] = useState('individual'); // 'individual' | 'store'
-  const [fullName, setFullName] = useState('');
-  const [businessName, setBusinessName] = useState('');
-  const [businessCategory, setBusinessCategory] = useState('Fashion & Thrift');
-  const [businessDescription, setBusinessDescription] = useState('');
-  const [businessAddress, setBusinessAddress] = useState('');
-  const [businessWhatsapp, setBusinessWhatsapp] = useState('');
-  const [businessInstagram, setBusinessInstagram] = useState('');
+  // Mode: 'login' | 'register' | 'forgot'
+  const [mode, setMode] = useState('login');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [name, setName] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+  const [error, setError] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+
+  // Forgot Password State
+  const [forgotEmail, setForgotEmail] = useState('');
+  const [forgotOtp, setForgotOtp] = useState('');
+  const [forgotNewPassword, setForgotNewPassword] = useState('');
+  const [isForgotOtpSent, setIsForgotOtpSent] = useState(false);
+  const [forgotCooldown, setForgotCooldown] = useState(0);
+  const [forgotSuccessMessage, setForgotSuccessMessage] = useState('');
+
+  // Post-Login Campus Onboarding (if new user has no campus yet)
+  const [showCampusOnboarding, setShowCampusOnboarding] = useState(false);
   const [campuses, setCampuses] = useState(() => {
     try {
       const cached = localStorage.getItem('campusstash_cached_campuses');
@@ -41,353 +32,255 @@ function Auth() {
       return DEFAULT_CAMPUSES;
     }
   });
-  const [campusId, setCampusId] = useState('');
+  const [selectedCampusId, setSelectedCampusId] = useState('');
+  const [tempUser, setTempUser] = useState(null);
 
+  // Load campuses
   useEffect(() => {
     getCampuses().then(data => {
       if (Array.isArray(data) && data.length > 0) {
         setCampuses(data);
-        if (!campusId) setCampusId(data[0].id);
+        if (!selectedCampusId) setSelectedCampusId(data[0].id);
       }
     }).catch(() => {});
   }, []);
 
-  // Registration OTP Verification State
-  const [otpChannel, setOtpChannel] = useState('email'); // 'email' | 'whatsapp' | 'sms'
-  const [otpCode, setOtpCode] = useState('');
-  const [isOtpSent, setIsOtpSent] = useState(false);
-  const [isPhoneVerified, setIsPhoneVerified] = useState(false);
-  const [verifiedPhone, setVerifiedPhone] = useState('');
-  const [isSendingOtp, setIsSendingOtp] = useState(false);
-  const [isVerifyingOtp, setIsVerifyingOtp] = useState(false);
-  const [otpMessage, setOtpMessage] = useState('');
-  const [resendCooldown, setResendCooldown] = useState(0);
-
-  // Forgot Password State
-  const [forgotPhone, setForgotPhone] = useState('');
-  const [forgotChannel, setForgotChannel] = useState('email'); // 'email' | 'whatsapp' | 'sms'
-  const [forgotOtp, setForgotOtp] = useState('');
-  const [forgotNewPassword, setForgotNewPassword] = useState('');
-  const [showForgotPw, setShowForgotPw] = useState(false);
-  const [isForgotOtpSent, setIsForgotOtpSent] = useState(false);
-  const [isForgotSending, setIsForgotSending] = useState(false);
-  const [isForgotResetting, setIsForgotResetting] = useState(false);
-  const [forgotCooldown, setForgotCooldown] = useState(0);
-
-  const isAirtelNumber = (num) => {
-    if (!num) return false;
-    const clean = String(num).replace(/\D/g, '');
-    const airtelPrefixes = ['0802', '0808', '0812', '0701', '0708', '0901', '0902', '0904', '0907', '0912', '234802', '234808', '234812', '234701', '234708', '234901', '234902', '234904', '234907', '234912'];
-    return airtelPrefixes.some(p => clean.startsWith(p));
-  };
-
-  // Countdown timer for Registration OTP resend cooldown
-  useEffect(() => {
-    let timer = null;
-    if (resendCooldown > 0) {
-      timer = setInterval(() => {
-        setResendCooldown((prev) => prev - 1);
-      }, 1000);
-    }
-    return () => {
-      if (timer) clearInterval(timer);
-    };
-  }, [resendCooldown]);
-
-  // Countdown timer for Forgot Password OTP resend cooldown
+  // Cooldown timer for forgot password
   useEffect(() => {
     let timer = null;
     if (forgotCooldown > 0) {
-      timer = setInterval(() => {
-        setForgotCooldown((prev) => prev - 1);
-      }, 1000);
+      timer = setInterval(() => setForgotCooldown(prev => prev - 1), 1000);
     }
-    return () => {
-      if (timer) clearInterval(timer);
-    };
+    return () => { if (timer) clearInterval(timer); };
   }, [forgotCooldown]);
 
-  const handleSendOtp = async (targetPhone = phone, channel = otpChannel) => {
-    const rawPhone = (targetPhone || '').trim();
-    const rawEmail = (email || '').trim().toLowerCase();
-
-    if (channel === 'email') {
-      if (!rawEmail || !rawEmail.includes('@')) {
-        setError('Please enter your valid email address above first.');
-        return false;
+  // Initialize Google One-Tap / Google Identity Services
+  useEffect(() => {
+    const initGsi = () => {
+      if (window.google?.accounts?.id) {
+        try {
+          window.google.accounts.id.initialize({
+            // Using a standard client ID or server client
+            client_id: "713498836545-campusstash.apps.googleusercontent.com",
+            callback: handleGoogleCredentialResponse,
+            auto_select: false,
+            cancel_on_tap_outside: true
+          });
+        } catch (e) {
+          console.warn("GSI Init note:", e);
+        }
       }
+    };
+
+    if (window.google?.accounts?.id) {
+      initGsi();
     } else {
-      if (!rawPhone) {
-        setError('Please enter your phone number first.');
-        return false;
+      const interval = setInterval(() => {
+        if (window.google?.accounts?.id) {
+          clearInterval(interval);
+          initGsi();
+        }
+      }, 500);
+      return () => clearInterval(interval);
+    }
+  }, []);
+
+  const handleGoogleCredentialResponse = async (response) => {
+    if (!response?.credential) return;
+    setIsLoading(true);
+    setError('');
+    try {
+      const res = await apiFetch('/auth/google', {
+        method: 'POST',
+        body: JSON.stringify({ credential: response.credential })
+      });
+      handleAuthSuccess(res);
+    } catch (err) {
+      setError(err.message || 'Google Sign-In failed. Please try email sign in.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleTriggerGoogleAuth = () => {
+    setError('');
+    if (window.google?.accounts?.id) {
+      try {
+        window.google.accounts.id.prompt((notification) => {
+          if (notification.isNotDisplayed() || notification.isSkippedMoment()) {
+            // If One-Tap is suppressed by browser, provide fast Gmail dialog
+            handleDirectGoogleFallback();
+          }
+        });
+        return;
+      } catch (e) {}
+    }
+    handleDirectGoogleFallback();
+  };
+
+  const handleDirectGoogleFallback = async () => {
+    const promptEmail = window.prompt("Enter your Google / Gmail address for instant sign in:");
+    if (!promptEmail || !promptEmail.includes('@')) return;
+    
+    setIsLoading(true);
+    setError('');
+    try {
+      const res = await apiFetch('/auth/google', {
+        method: 'POST',
+        body: JSON.stringify({ 
+          email: promptEmail.trim().toLowerCase(),
+          name: promptEmail.split('@')[0]
+        })
+      });
+      handleAuthSuccess(res);
+    } catch (err) {
+      setError(err.message || 'Google authentication failed.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleAuthSuccess = (res) => {
+    if (res?.access_token) {
+      localStorage.setItem('token', res.access_token);
+      if (res.user) {
+        localStorage.setItem('user', JSON.stringify(res.user));
+        setTempUser(res.user);
+        if (!res.user.campus_id) {
+          setShowCampusOnboarding(true);
+          return;
+        }
       }
-    }
-    setError('');
-    setOtpMessage('');
-    setIsSendingOtp(true);
-
-    try {
-      const res = await apiFetch('/auth/phone/send-otp', {
-        method: 'POST',
-        body: JSON.stringify({ 
-          phone: rawPhone || rawEmail, 
-          email: rawEmail || undefined,
-          channel 
-        })
-      });
-      setIsOtpSent(true);
-      const chName = channel === 'email' ? 'Email' : (channel === 'whatsapp' ? 'WhatsApp' : 'SMS');
-      setOtpMessage(res.message || `Verification code sent via ${chName}!`);
-      setResendCooldown(60);
-      return true;
-    } catch (err) {
-      setError(err.message || 'Failed to send verification code.');
-      return false;
-    } finally {
-      setIsSendingOtp(false);
+      navigate('/dashboard', { replace: true });
     }
   };
 
-  const handleVerifyOtp = async () => {
-    const code = otpCode.trim();
-    if (!code) {
-      setError('Please enter the 6-digit verification code.');
-      return false;
-    }
-    setError('');
-    setOtpMessage('');
-    setIsVerifyingOtp(true);
-
-    const rawEmail = (email || '').trim().toLowerCase();
-    const rawPhone = (phone || '').trim();
-
-    try {
-      await apiFetch('/auth/phone/verify-otp', {
-        method: 'POST',
-        body: JSON.stringify({ 
-          phone: rawPhone || rawEmail, 
-          email: rawEmail || undefined,
-          otp_code: code 
-        })
-      });
-      setIsPhoneVerified(true);
-      setVerifiedPhone(rawPhone || rawEmail);
-      setOtpMessage(otpChannel === 'email' ? 'Email verified successfully! You can now finish creating your account.' : 'Phone number verified successfully!');
-      return true;
-    } catch (err) {
-      setError(err.message || 'Invalid or expired verification code.');
-      return false;
-    } finally {
-      setIsVerifyingOtp(false);
-    }
-  };
-
-  const handleResetPhone = () => {
-    setIsPhoneVerified(false);
-    setIsOtpSent(false);
-    setOtpCode('');
-    setOtpMessage('');
-    setResendCooldown(0);
-  };
-
-  const handleForgotSendOtp = async (overrideChannel = null) => {
-    const rawInput = forgotPhone.trim();
-    const activeChannel = (typeof overrideChannel === 'string' && overrideChannel) ? overrideChannel : forgotChannel;
-    if (!rawInput) {
-      setError('Please enter your registered email address or phone number.');
-      return;
-    }
-    setError('');
-    setOtpMessage('');
-    setIsForgotSending(true);
-
-    try {
-      const isEmail = rawInput.includes('@') || activeChannel === 'email';
-      const res = await apiFetch('/auth/forgot-password/send-otp', {
-        method: 'POST',
-        body: JSON.stringify({ 
-          phone: isEmail ? undefined : rawInput,
-          email: isEmail ? rawInput.toLowerCase() : undefined,
-          channel: isEmail ? 'email' : activeChannel 
-        })
-      });
-      setIsForgotOtpSent(true);
-      const chName = isEmail ? 'Email' : (activeChannel === 'whatsapp' ? 'WhatsApp' : 'SMS');
-      setOtpMessage(res.message || `Password reset code sent via ${chName}!`);
-      setForgotCooldown(60);
-    } catch (err) {
-      setError(err.message || 'Failed to send password reset code.');
-    } finally {
-      setIsForgotSending(false);
-    }
-  };
-
-  const handleForgotReset = async (e) => {
-    e.preventDefault();
-    const rawInput = forgotPhone.trim();
-    const code = forgotOtp.trim();
-    const newPass = forgotNewPassword;
-
-    if (!rawInput) {
-      setError('Email or phone number is required.');
-      return;
-    }
-    if (!code || code.length < 4) {
-      setError('Please enter the 6-digit recovery code.');
-      return;
-    }
-    if (!newPass || newPass.length < 8) {
-      setError('New password must be at least 8 characters.');
-      return;
-    }
-
-    setError('');
-    setOtpMessage('');
-    setIsForgotResetting(true);
-
-    const isEmail = rawInput.includes('@');
-
-    try {
-      const data = await apiFetch('/auth/forgot-password/reset', {
-        method: 'POST',
-        body: JSON.stringify({
-          phone: isEmail ? undefined : rawInput,
-          email: isEmail ? rawInput.toLowerCase() : undefined,
-          otp_code: code,
-          new_password: newPass
-        })
-      });
-
-      if (data?.access_token) {
-        localStorage.setItem('token', data.access_token);
-        setOtpMessage('Password updated successfully! Signing you in...');
-        setTimeout(() => {
-          navigate('/dashboard');
-        }, 700);
-      } else {
-        setIsForgotPassword(false);
-        setIsLogin(true);
-        setOtpMessage('Password updated successfully! Please sign in with your new password.');
-      }
-    } catch (err) {
-      setError(err.message || 'Failed to reset password. Please check your verification code.');
-    } finally {
-      setIsForgotResetting(false);
-    }
-  };
-
-  const handleSubmit = async (e) => {
+  const handleLoginSubmit = async (e) => {
     e.preventDefault();
     setError('');
     setIsLoading(true);
 
     try {
-      if (isLogin) {
-        const formData = new FormData();
-        formData.append('username', email.trim());
-        formData.append('password', password);
-
-        const data = await apiFetch('/auth/login/access-token', {
-          method: 'POST',
-          body: formData,
-        });
-
-        localStorage.setItem('token', data.access_token);
-        navigate('/dashboard');
-      } else {
-        if (!phone.trim()) {
-          setError('Phone number is required.');
-          setIsLoading(false);
-          return;
-        }
-
-        // Validate store account requirements: Real business name & owner real name
-        if (accountType === 'store') {
-          if (!businessName.trim()) {
-            setError('Please enter your real business / store name.');
-            setIsLoading(false);
-            return;
-          }
-          if (!fullName.trim()) {
-            setError("Please enter the store owner's real name.");
-            setIsLoading(false);
-            return;
-          }
-        }
-
-        // Check if account has been verified via OTP
-        if (!isPhoneVerified) {
-          // If code was sent and user typed the code, verify it now
-          if (isOtpSent && otpCode.trim()) {
-            const verified = await handleVerifyOtp();
-            if (!verified) {
-              setIsLoading(false);
-              return;
-            }
-          } else if (!isOtpSent) {
-            // Automatically send OTP
-            const sent = await handleSendOtp();
-            if (sent) {
-              const chName = otpChannel === 'email' ? 'Email' : (otpChannel === 'whatsapp' ? 'WhatsApp' : 'SMS');
-              const targetDesc = otpChannel === 'email' ? (email.trim() || 'your email') : 'your phone';
-              setError(`We just sent a 6-digit confirmation code to ${targetDesc} via ${chName}. Enter it below to activate your account.`);
-            }
-            setIsLoading(false);
-            return;
-          } else {
-            const chName = otpChannel === 'email' ? 'Email' : (otpChannel === 'whatsapp' ? 'WhatsApp' : 'SMS');
-            const targetDesc = otpChannel === 'email' ? 'email' : 'phone';
-            setError(`Please enter and verify the 6-digit code sent to your ${targetDesc} via ${chName}.`);
-            setIsLoading(false);
-            return;
-          }
-        }
-
-        let computedHandle = burnerHandle.trim().replace(/^@/, '');
-        if (!computedHandle) {
-          if (accountType === 'store' && businessName.trim()) {
-            computedHandle = businessName.trim().toLowerCase().replace(/[^a-z0-9_]/g, '_').replace(/_+/g, '_').slice(0, 20);
-          } else if (fullName.trim()) {
-            computedHandle = fullName.trim().toLowerCase().replace(/[^a-z0-9_]/g, '_').replace(/_+/g, '_').slice(0, 20);
-          }
-        }
-
-        const payload = {
-          email: email.trim(),
-          password,
-          phone: phone.trim(),
-          account_type: accountType,
-          name: fullName.trim() || undefined,
-          business_name: accountType === 'store' ? businessName.trim() : undefined,
-          business_category: accountType === 'store' ? (businessCategory || 'Other') : undefined,
-          business_description: accountType === 'store' ? businessDescription.trim() : undefined,
-          business_address: accountType === 'store' ? businessAddress.trim() : undefined,
-          business_whatsapp: accountType === 'store' ? (businessWhatsapp.trim() || phone.trim()) : undefined,
-          business_instagram: accountType === 'store' ? businessInstagram.trim().replace(/^@/, '') : undefined,
-          campus_id: campusId || undefined,
-          burner_handle: computedHandle || undefined,
-          profile: { burner_handle: computedHandle || `user_${Math.floor(1000 + Math.random() * 9000)}` }
-        };
-
-        await apiFetch('/auth/register', {
-          method: 'POST',
-          body: JSON.stringify(payload)
-        });
-
-        const formData = new FormData();
-        formData.append('username', email.trim());
-        formData.append('password', password);
-
-        const data = await apiFetch('/auth/login/access-token', {
-          method: 'POST',
-          body: formData,
-        });
-
-        localStorage.setItem('token', data.access_token);
-        navigate('/dashboard');
-      }
+      const res = await apiFetch('/auth/login', {
+        method: 'POST',
+        body: JSON.stringify({
+          email: email.trim().toLowerCase(),
+          password
+        })
+      });
+      handleAuthSuccess(res);
     } catch (err) {
-      setError(err.message || 'An error occurred during authentication');
+      setError(err.message || 'Invalid email or password. Please try again.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleRegisterSubmit = async (e) => {
+    e.preventDefault();
+    setError('');
+    if (password.length < 8) {
+      setError('Password must be at least 8 characters long.');
+      return;
+    }
+    setIsLoading(true);
+
+    try {
+      const cleanEmail = email.trim().toLowerCase();
+      const res = await apiFetch('/auth/register', {
+        method: 'POST',
+        body: JSON.stringify({
+          email: cleanEmail,
+          password,
+          name: name.trim() || cleanEmail.split('@')[0],
+          account_type: 'individual'
+        })
+      });
+      handleAuthSuccess(res);
+    } catch (err) {
+      setError(err.message || 'Registration failed. Email may already be registered.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleSendForgotOtp = async (e) => {
+    e.preventDefault();
+    if (!forgotEmail || !forgotEmail.includes('@')) {
+      setError('Please enter a valid registered email address.');
+      return;
+    }
+    setError('');
+    setForgotSuccessMessage('');
+    setIsLoading(true);
+
+    try {
+      const res = await apiFetch('/auth/forgot-password/send-otp', {
+        method: 'POST',
+        body: JSON.stringify({
+          email: forgotEmail.trim().toLowerCase(),
+          channel: 'email'
+        })
+      });
+      setIsForgotOtpSent(true);
+      setForgotSuccessMessage(res.message || 'Verification code sent to your email.');
+      setForgotCooldown(60);
+    } catch (err) {
+      setError(err.message || 'Could not dispatch password recovery code.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleResetPasswordSubmit = async (e) => {
+    e.preventDefault();
+    if (!forgotOtp.trim()) {
+      setError('Please enter the 6-digit verification code.');
+      return;
+    }
+    if (forgotNewPassword.length < 8) {
+      setError('New password must be at least 8 characters.');
+      return;
+    }
+    setError('');
+    setIsLoading(true);
+
+    try {
+      const res = await apiFetch('/auth/forgot-password/reset', {
+        method: 'POST',
+        body: JSON.stringify({
+          email: forgotEmail.trim().toLowerCase(),
+          otp_code: forgotOtp.trim(),
+          new_password: forgotNewPassword
+        })
+      });
+      handleAuthSuccess(res);
+    } catch (err) {
+      setError(err.message || 'Failed to reset password. Please check your OTP code.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleSaveCampusOnboarding = async () => {
+    if (!selectedCampusId) return;
+    setIsLoading(true);
+    try {
+      const updated = await apiFetch('/users/me', {
+        method: 'PUT',
+        body: JSON.stringify({ campus_id: selectedCampusId })
+      });
+      if (updated) {
+        localStorage.setItem('user', JSON.stringify(updated));
+        localStorage.setItem('campusstash_user_campus', selectedCampusId);
+      }
+      setShowCampusOnboarding(false);
+      navigate('/dashboard', { replace: true });
+    } catch (err) {
+      // Fallback
+      localStorage.setItem('campusstash_user_campus', selectedCampusId);
+      setShowCampusOnboarding(false);
+      navigate('/dashboard', { replace: true });
     } finally {
       setIsLoading(false);
     }
@@ -395,1206 +288,785 @@ function Auth() {
 
   return (
     <div style={{
-      backgroundColor: 'var(--bg-color)',
       minHeight: '100vh',
+      width: '100%',
+      backgroundColor: '#080E0B',
+      backgroundImage: 'radial-gradient(circle at 50% 20%, rgba(14, 68, 52, 0.45) 0%, rgba(8, 14, 11, 0.98) 75%)',
       display: 'flex',
-      flexDirection: 'column',
-      justifyContent: 'center',
       alignItems: 'center',
-      padding: '2rem 1rem',
-      position: 'relative',
-      maxWidth: '100vw',
-      overflowX: 'hidden',
-      boxSizing: 'border-box'
+      justifyContent: 'center',
+      padding: '1.25rem',
+      boxSizing: 'border-box',
+      fontFamily: 'var(--font-sans)',
+      color: '#FFFFFF'
     }}>
-      
-      {/* Top Header Back Button */}
       <div style={{
-        position: 'absolute',
-        top: '1.25rem',
-        left: '1.25rem',
-        zIndex: 10
+        width: '100%',
+        maxWidth: '410px',
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center'
       }}>
-        <button
-          onClick={() => navigate('/dashboard')}
-          style={{
+        {/* Brand Logo with Shopping Bag */}
+        <div style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: '8px',
+          marginBottom: '2rem',
+          userSelect: 'none'
+        }}>
+          <span style={{
+            fontSize: '1.5rem',
+            fontWeight: '800',
+            letterSpacing: '-0.02em',
+            fontFamily: 'var(--font-display)',
+            color: '#FFFFFF'
+          }}>
+            ShopMate
+          </span>
+          <span style={{ fontSize: '1.4rem' }}>🛍️</span>
+        </div>
+
+        {/* Heading & Subtitle */}
+        <div style={{ textAlign: 'center', marginBottom: '1.75rem', width: '100%' }}>
+          <h1 style={{
+            fontSize: '2rem',
+            fontWeight: '800',
+            letterSpacing: '-0.02em',
+            margin: '0 0 0.5rem 0',
+            color: '#FFFFFF',
+            fontFamily: 'var(--font-display)'
+          }}>
+            {mode === 'login' ? 'Welcome Back' : (mode === 'register' ? 'Create Account' : 'Reset Password')}
+          </h1>
+          <p style={{
+            fontSize: '0.88rem',
+            color: 'rgba(255, 255, 255, 0.65)',
+            margin: 0,
+            lineHeight: 1.45
+          }}>
+            {mode === 'login' 
+              ? 'Sign in to continue your curated shopping experience.'
+              : (mode === 'register' 
+                  ? 'Join your campus marketplace to buy and sell gear fast.'
+                  : 'Enter your registered email to reset your account credentials.')}
+          </p>
+        </div>
+
+        {/* Error Notification */}
+        {error && (
+          <div style={{
+            width: '100%',
+            backgroundColor: 'rgba(239, 68, 68, 0.15)',
+            border: '1px solid rgba(239, 68, 68, 0.35)',
+            color: '#FCA5A5',
+            padding: '0.75rem 1rem',
+            borderRadius: '16px',
+            fontSize: '0.84rem',
+            marginBottom: '1.25rem',
             display: 'flex',
             alignItems: 'center',
-            gap: '0.45rem',
-            padding: '0.5rem 0.95rem',
-            borderRadius: '20px',
-            backgroundColor: 'var(--surface)',
-            border: '1px solid var(--border)',
-            color: 'var(--brandblue)',
-            fontFamily: 'var(--font-display)',
-            fontWeight: '700',
+            gap: '0.5rem',
+            boxSizing: 'border-box'
+          }}>
+            <i className="fa-solid fa-circle-exclamation" style={{ flexShrink: 0 }} />
+            <span>{error}</span>
+          </div>
+        )}
+
+        {forgotSuccessMessage && (
+          <div style={{
+            width: '100%',
+            backgroundColor: 'rgba(16, 185, 129, 0.15)',
+            border: '1px solid rgba(16, 185, 129, 0.35)',
+            color: '#6EE7B7',
+            padding: '0.75rem 1rem',
+            borderRadius: '16px',
             fontSize: '0.84rem',
-            cursor: 'pointer',
-            boxShadow: 'var(--shadow-sm)'
-          }}
-        >
-          <i className="fa-solid fa-arrow-left" />
-          <span>Marketplace</span>
-        </button>
-      </div>
+            marginBottom: '1.25rem',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '0.5rem',
+            boxSizing: 'border-box'
+          }}>
+            <i className="fa-solid fa-circle-check" style={{ flexShrink: 0 }} />
+            <span>{forgotSuccessMessage}</span>
+          </div>
+        )}
 
-      {/* Brand Header */}
-      <div 
-        onClick={() => navigate('/dashboard')} 
-        style={{ cursor: 'pointer', marginBottom: '1.5rem', textAlign: 'center', marginTop: '2.5rem', display: 'flex', flexDirection: 'column', alignItems: 'center' }}
-      >
-        <img 
-          src="/logo.svg" 
-          alt="CampusStash Logo" 
-          style={{ 
-            width: '68px', 
-            height: '68px', 
-            borderRadius: '18px', 
-            marginBottom: '0.85rem', 
-            boxShadow: '0 8px 25px rgba(200, 122, 91, 0.28)' 
-          }} 
-        />
-        <div style={{
-          fontFamily: 'var(--font-display)',
-          fontWeight: '800',
-          fontSize: '2.2rem',
-          letterSpacing: '-0.03em',
-          color: 'var(--text-main)',
-          marginBottom: '0.35rem'
-        }}>
-          Campus<span style={{ color: 'var(--terracotta)' }}>Stash</span>
-        </div>
-        <span className="badge-pill">
-          <i className="fa-solid fa-shield-halved" /> Verified Student Commerce
-        </span>
-      </div>
+        {/* MODE 1: SIGN IN */}
+        {mode === 'login' && (
+          <form onSubmit={handleLoginSubmit} style={{ width: '100%', display: 'flex', flexDirection: 'column', gap: '0.95rem' }}>
+            {/* Email Address */}
+            <div style={{
+              position: 'relative',
+              display: 'flex',
+              alignItems: 'center',
+              backgroundColor: 'rgba(255, 255, 255, 0.05)',
+              border: '1px solid rgba(255, 255, 255, 0.12)',
+              borderRadius: '16px',
+              padding: '0 1rem',
+              transition: 'border-color 0.2s ease'
+            }}>
+              <i className="fa-regular fa-envelope" style={{ color: 'rgba(255, 255, 255, 0.4)', fontSize: '1rem', marginRight: '0.75rem' }} />
+              <input
+                type="email"
+                required
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="Email Address"
+                style={{
+                  width: '100%',
+                  background: 'transparent',
+                  border: 'none',
+                  outline: 'none',
+                  color: '#FFFFFF',
+                  padding: '1rem 0',
+                  fontSize: '0.92rem',
+                  fontFamily: 'inherit'
+                }}
+              />
+            </div>
 
-      {/* Auth Card */}
-      <div className="animate-fade-in" style={{
-        width: '100%',
-        maxWidth: '440px',
-        backgroundColor: 'var(--surface)',
-        borderRadius: '24px',
-        border: '1px solid var(--border)',
-        padding: '2rem 1.5rem',
-        boxShadow: '0 20px 40px -10px rgba(0,0,0,0.06)',
-        boxSizing: 'border-box'
-      }}>
-
-        {/* FORGOT PASSWORD VIEW */}
-        {isForgotPassword ? (
-          <div>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1rem' }}>
+            {/* Password */}
+            <div style={{
+              position: 'relative',
+              display: 'flex',
+              alignItems: 'center',
+              backgroundColor: 'rgba(255, 255, 255, 0.05)',
+              border: '1px solid rgba(255, 255, 255, 0.12)',
+              borderRadius: '16px',
+              padding: '0 1rem'
+            }}>
+              <i className="fa-solid fa-lock" style={{ color: 'rgba(255, 255, 255, 0.4)', fontSize: '0.95rem', marginRight: '0.75rem' }} />
+              <input
+                type={showPassword ? 'text' : 'password'}
+                required
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="Password"
+                style={{
+                  width: '100%',
+                  background: 'transparent',
+                  border: 'none',
+                  outline: 'none',
+                  color: '#FFFFFF',
+                  padding: '1rem 0',
+                  fontSize: '0.92rem',
+                  fontFamily: 'inherit'
+                }}
+              />
               <button
                 type="button"
-                onClick={() => {
-                  setIsForgotPassword(false);
-                  setError('');
-                  setOtpMessage('');
-                }}
+                onClick={() => setShowPassword(p => !p)}
                 style={{
                   background: 'none',
                   border: 'none',
-                  color: 'var(--brandblue)',
-                  fontWeight: '700',
-                  fontSize: '0.85rem',
+                  color: 'rgba(255, 255, 255, 0.45)',
                   cursor: 'pointer',
+                  padding: '4px',
+                  fontSize: '0.95rem',
                   display: 'flex',
-                  alignItems: 'center',
-                  gap: '0.35rem',
-                  padding: 0
+                  alignItems: 'center'
                 }}
               >
-                <i className="fa-solid fa-arrow-left" />
-                <span>Back to Login</span>
+                <i className={`fa-regular ${showPassword ? 'fa-eye-slash' : 'fa-eye'}`} />
               </button>
-
-              <span style={{ fontSize: '0.78rem', color: 'var(--text-muted)', fontWeight: '600' }}>
-                Account Recovery
-              </span>
             </div>
 
-            <h2 style={{
-              fontFamily: 'var(--font-display)',
-              fontSize: '1.35rem',
-              fontWeight: '800',
-              letterSpacing: '-0.02em',
-              color: 'var(--text-main)',
-              marginBottom: '0.35rem',
-              textAlign: 'center'
-            }}>
-              Forgot Password?
-            </h2>
-
-            <p style={{
-              color: 'var(--text-muted)',
-              fontSize: '0.86rem',
-              marginBottom: '1.25rem',
-              textAlign: 'center'
-            }}>
-              Enter your registered phone number to receive a 6-digit recovery code via SMS or WhatsApp.
-            </p>
-
-            {error && (
-              <div style={{
-                color: 'var(--text-main)',
-                backgroundColor: 'var(--surface-alt)',
-                border: '1px solid var(--border)',
-                padding: '0.8rem 1rem',
-                borderRadius: '14px',
-                marginBottom: '1.25rem',
-                fontSize: '0.86rem',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '0.65rem',
-                lineHeight: '1.4',
-                boxShadow: 'var(--shadow-sm)'
-              }}>
-                <div style={{
-                  width: '24px',
-                  height: '24px',
-                  borderRadius: '50%',
-                  backgroundColor: 'var(--lightblue)',
-                  color: 'var(--brandblue)',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  fontSize: '0.78rem',
-                  flexShrink: 0
-                }}>
-                  <i className="fa-solid fa-circle-info" />
-                </div>
-                <span style={{ fontWeight: '500' }}>{error}</span>
-              </div>
-            )}
-
-            {otpMessage && (
-              <div style={{
-                color: 'var(--text-main)',
-                backgroundColor: 'var(--surface-alt)',
-                border: '1px solid var(--border)',
-                padding: '0.8rem 1rem',
-                borderRadius: '14px',
-                marginBottom: '1.25rem',
-                fontSize: '0.86rem',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '0.65rem',
-                lineHeight: '1.4',
-                boxShadow: 'var(--shadow-sm)'
-              }}>
-                <div style={{
-                  width: '24px',
-                  height: '24px',
-                  borderRadius: '50%',
-                  backgroundColor: 'rgba(16, 185, 129, 0.15)',
-                  color: '#10b981',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  fontSize: '0.78rem',
-                  flexShrink: 0
-                }}>
-                  <i className="fa-solid fa-check" />
-                </div>
-                <span style={{ fontWeight: '500' }}>{otpMessage}</span>
-              </div>
-            )}
-
-            {/* Step 1: Request Recovery OTP */}
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-              <div>
-                <label className="form-label">Registered Email or Phone Number</label>
-                
-                {/* Channel toggle for forgot password: Email, WhatsApp, SMS */}
-                <div style={{
-                  display: 'flex',
-                  gap: '0.35rem',
-                  marginBottom: '0.65rem',
-                  backgroundColor: 'var(--bg-color)',
-                  padding: '0.25rem',
-                  borderRadius: '12px',
-                  border: '1px solid var(--border)'
-                }}>
-                  <button
-                    type="button"
-                    onClick={() => setForgotChannel('email')}
-                    style={{
-                      flex: 1.2,
-                      padding: '0.45rem 0.4rem',
-                      borderRadius: '9px',
-                      border: 'none',
-                      backgroundColor: forgotChannel === 'email' ? 'var(--brandblue)' : 'transparent',
-                      color: forgotChannel === 'email' ? '#ffffff' : 'var(--text-muted)',
-                      fontWeight: forgotChannel === 'email' ? '700' : '500',
-                      fontSize: '0.75rem',
-                      cursor: 'pointer',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      gap: '0.3rem',
-                      boxShadow: forgotChannel === 'email' ? 'var(--shadow-sm)' : 'none',
-                      transition: 'all 0.15s ease'
-                    }}
-                  >
-                    <i className="fa-solid fa-envelope" style={{ fontSize: '0.85rem' }} />
-                    <span>Email OTP (Instant)</span>
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setForgotChannel('whatsapp')}
-                    style={{
-                      flex: 1,
-                      padding: '0.45rem 0.4rem',
-                      borderRadius: '9px',
-                      border: 'none',
-                      backgroundColor: forgotChannel === 'whatsapp' ? '#25D366' : 'transparent',
-                      color: forgotChannel === 'whatsapp' ? '#ffffff' : 'var(--text-muted)',
-                      fontWeight: forgotChannel === 'whatsapp' ? '700' : '500',
-                      fontSize: '0.75rem',
-                      cursor: 'pointer',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      gap: '0.3rem',
-                      boxShadow: forgotChannel === 'whatsapp' ? '0 2px 8px rgba(37,211,102,0.3)' : 'none',
-                      transition: 'all 0.15s ease'
-                    }}
-                  >
-                    <i className="fa-brands fa-whatsapp" style={{ fontSize: '0.85rem' }} />
-                    <span>WhatsApp</span>
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setForgotChannel('sms')}
-                    style={{
-                      flex: 0.9,
-                      padding: '0.45rem 0.4rem',
-                      borderRadius: '9px',
-                      border: 'none',
-                      backgroundColor: forgotChannel === 'sms' ? 'var(--surface)' : 'transparent',
-                      color: forgotChannel === 'sms' ? 'var(--brandblue)' : 'var(--text-muted)',
-                      fontWeight: forgotChannel === 'sms' ? '700' : '500',
-                      fontSize: '0.75rem',
-                      cursor: 'pointer',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      gap: '0.3rem',
-                      boxShadow: forgotChannel === 'sms' ? 'var(--shadow-sm)' : 'none',
-                      transition: 'all 0.15s ease'
-                    }}
-                  >
-                    <i className="fa-solid fa-comment-sms" />
-                    <span>SMS</span>
-                  </button>
-                </div>
-
-                <div style={{ display: 'flex', gap: '0.5rem' }}>
-                  <input
-                    className="form-input"
-                    type={forgotChannel === 'email' ? 'email' : 'text'}
-                    required
-                    value={forgotPhone}
-                    onChange={(e) => setForgotPhone(e.target.value)}
-                    placeholder={forgotChannel === 'email' ? 'e.g. student@leadcity.edu.ng' : 'e.g. 08012345678 or email'}
-                    style={{ flex: 1 }}
-                  />
-                  <button
-                    type="button"
-                    onClick={handleForgotSendOtp}
-                    disabled={isForgotSending || forgotCooldown > 0}
-                    style={{
-                      padding: '0.55rem 0.95rem',
-                      fontSize: '0.82rem',
-                      fontFamily: 'var(--font-display)',
-                      fontWeight: '700',
-                      borderRadius: '12px',
-                      border: 'none',
-                      backgroundColor: forgotCooldown > 0 ? 'var(--surface-alt)' : (forgotChannel === 'whatsapp' ? '#25D366' : 'var(--brandblue)'),
-                      color: forgotCooldown > 0 ? 'var(--text-muted)' : '#ffffff',
-                      cursor: (isForgotSending || forgotCooldown > 0) ? 'not-allowed' : 'pointer',
-                      whiteSpace: 'nowrap',
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '0.35rem'
-                    }}
-                  >
-                    {isForgotSending ? (
-                      <>
-                        <i className="fa-solid fa-circle-notch fa-spin" />
-                        <span>Sending...</span>
-                      </>
-                    ) : forgotCooldown > 0 ? (
-                      <span>Resend ({forgotCooldown}s)</span>
-                    ) : (
-                      <span>{isForgotOtpSent ? 'Resend' : 'Send Code'}</span>
-                    )}
-                  </button>
-                </div>
-              </div>
-
-              {/* Step 2: Code and New Password Entry */}
-              {isForgotOtpSent && (
-                <form onSubmit={handleForgotReset} style={{ display: 'flex', flexDirection: 'column', gap: '1rem', marginTop: '0.25rem' }}>
-                  <div style={{
-                    padding: '1rem',
-                    borderRadius: '16px',
-                    backgroundColor: 'var(--surface-alt)',
-                    border: '1px solid var(--border)'
-                  }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
-                      <label className="form-label" style={{ marginBottom: 0 }}>
-                        Enter 6-Digit Recovery Code
-                      </label>
-                    </div>
-                    <input
-                      className="form-input"
-                      type="text"
-                      maxLength={6}
-                      value={forgotOtp}
-                      onChange={(e) => setForgotOtp(e.target.value.replace(/\D/g, ''))}
-                      placeholder="123456"
-                      required
-                      style={{
-                        textAlign: 'center',
-                        letterSpacing: '0.3rem',
-                        fontFamily: 'var(--font-display)',
-                        fontWeight: '800',
-                        fontSize: '1.25rem'
-                      }}
-                    />
-
-                  </div>
-
-                  <div>
-                    <label className="form-label">Create New Password</label>
-                    <div style={{ position: 'relative' }}>
-                      <input
-                        className="form-input"
-                        type={showForgotPw ? 'text' : 'password'}
-                        value={forgotNewPassword}
-                        onChange={(e) => setForgotNewPassword(e.target.value)}
-                        placeholder="At least 8 characters"
-                        minLength={8}
-                        required
-                        style={{ paddingRight: '2.5rem' }}
-                      />
-                      <button
-                        type="button"
-                        onClick={() => setShowForgotPw(!showForgotPw)}
-                        style={{
-                          position: 'absolute',
-                          right: '0.85rem',
-                          top: '50%',
-                          transform: 'translateY(-50%)',
-                          background: 'none',
-                          border: 'none',
-                          color: 'var(--text-muted)',
-                          cursor: 'pointer',
-                          fontSize: '0.88rem'
-                        }}
-                      >
-                        <i className={showForgotPw ? "fa-solid fa-eye-slash" : "fa-solid fa-eye"} />
-                      </button>
-                    </div>
-                  </div>
-
-                  {/* Inline Error/Success feedback right above action button */}
-                  {error && (
-                    <div style={{
-                      color: '#ef4444',
-                      backgroundColor: 'rgba(239, 68, 68, 0.12)',
-                      border: '1px solid rgba(239, 68, 68, 0.3)',
-                      padding: '0.75rem 1rem',
-                      borderRadius: '12px',
-                      fontSize: '0.84rem',
-                      fontWeight: '500',
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '0.5rem',
-                      lineHeight: '1.4'
-                    }}>
-                      <i className="fa-solid fa-triangle-exclamation" style={{ flexShrink: 0 }} />
-                      <span>{error}</span>
-                    </div>
-                  )}
-
-                  {otpMessage && (
-                    <div style={{
-                      color: '#10b981',
-                      backgroundColor: 'rgba(16, 185, 129, 0.12)',
-                      border: '1px solid rgba(16, 185, 129, 0.3)',
-                      padding: '0.75rem 1rem',
-                      borderRadius: '12px',
-                      fontSize: '0.84rem',
-                      fontWeight: '600',
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '0.5rem',
-                      lineHeight: '1.4'
-                    }}>
-                      <i className="fa-solid fa-circle-check" style={{ flexShrink: 0 }} />
-                      <span>{otpMessage}</span>
-                    </div>
-                  )}
-
-                  <button
-                    type="submit"
-                    className="btn-primary"
-                    disabled={isForgotResetting}
-                    style={{ width: '100%', padding: '0.85rem' }}
-                  >
-                    {isForgotResetting ? (
-                      <>
-                        <i className="fa-solid fa-circle-notch fa-spin" />
-                        <span>Updating Password...</span>
-                      </>
-                    ) : (
-                      <>
-                        <i className="fa-solid fa-shield-halved" />
-                        <span>Reset Password & Sign In</span>
-                      </>
-                    )}
-                  </button>
-                </form>
-              )}
-            </div>
-          </div>
-        ) : (
-          /* STANDARD LOGIN & SIGN UP VIEW */
-          <>
-            {/* Tab Switcher */}
-            <div style={{
-              display: 'flex',
-              backgroundColor: 'var(--bg-color)',
-              borderRadius: '12px',
-              padding: '0.3rem',
-              marginBottom: '1.5rem',
-              border: '1px solid var(--border)'
-            }}>
+            {/* Forgot Password link */}
+            <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '-0.2rem' }}>
               <button
                 type="button"
-                onClick={() => { setIsLogin(true); setError(''); setOtpMessage(''); }}
+                onClick={() => { setMode('forgot'); setError(''); }}
                 style={{
-                  flex: 1,
-                  padding: '0.65rem',
-                  borderRadius: '9px',
+                  background: 'none',
                   border: 'none',
-                  backgroundColor: isLogin ? 'var(--surface)' : 'transparent',
-                  color: isLogin ? 'var(--brandblue)' : 'var(--text-muted)',
-                  fontFamily: 'var(--font-display)',
-                  fontWeight: isLogin ? '700' : '500',
-                  fontSize: '0.92rem',
+                  color: 'rgba(255, 255, 255, 0.65)',
+                  fontSize: '0.82rem',
                   cursor: 'pointer',
-                  boxShadow: isLogin ? 'var(--shadow-sm)' : 'none',
-                  transition: 'all 0.2s ease'
+                  padding: 0,
+                  fontWeight: '600'
                 }}
               >
-                Log In
-              </button>
-              <button
-                type="button"
-                onClick={() => { setIsLogin(false); setError(''); setOtpMessage(''); }}
-                style={{
-                  flex: 1,
-                  padding: '0.65rem',
-                  borderRadius: '9px',
-                  border: 'none',
-                  backgroundColor: !isLogin ? 'var(--surface)' : 'transparent',
-                  color: !isLogin ? 'var(--brandblue)' : 'var(--text-muted)',
-                  fontFamily: 'var(--font-display)',
-                  fontWeight: !isLogin ? '700' : '500',
-                  fontSize: '0.92rem',
-                  cursor: 'pointer',
-                  boxShadow: !isLogin ? 'var(--shadow-sm)' : 'none',
-                  transition: 'all 0.2s ease'
-                }}
-              >
-                Sign Up
+                Forgot Password?
               </button>
             </div>
 
-            <h2 style={{
-              fontFamily: 'var(--font-display)',
-              fontSize: '1.35rem',
-              fontWeight: '800',
-              letterSpacing: '-0.02em',
-              color: 'var(--text-main)',
-              marginBottom: '0.35rem',
-              textAlign: 'center'
-            }}>
-              {isLogin ? 'Welcome Back!' : 'Create Verified Student Account'}
-            </h2>
-
-            <p style={{
-              color: 'var(--text-muted)',
-              fontSize: '0.86rem',
-              marginBottom: '1.25rem',
-              textAlign: 'center'
-            }}>
-              {isLogin 
-                ? 'Sign in to contact sellers and manage your campus listings.' 
-                : 'Protect the campus marketplace. Verify your phone via SMS or WhatsApp.'}
-            </p>
-
-            {error && (
-              <div style={{
-                color: 'var(--text-main)',
-                backgroundColor: 'var(--surface-alt)',
-                border: '1px solid var(--border)',
-                padding: '0.8rem 1rem',
-                borderRadius: '14px',
-                marginBottom: '1.25rem',
-                fontSize: '0.86rem',
+            {/* Primary Sign In Button */}
+            <button
+              type="submit"
+              disabled={isLoading}
+              style={{
+                width: '100%',
+                padding: '0.95rem',
+                borderRadius: '9999px',
+                border: 'none',
+                backgroundColor: '#153A2C',
+                backgroundImage: 'linear-gradient(180deg, #1A4D3B 0%, #103325 100%)',
+                color: '#FFFFFF',
+                fontSize: '0.98rem',
+                fontWeight: '700',
+                fontFamily: 'var(--font-display)',
+                cursor: isLoading ? 'not-allowed' : 'pointer',
+                boxShadow: '0 6px 20px rgba(16, 51, 37, 0.6), inset 0 1px 1px rgba(255,255,255,0.15)',
+                marginTop: '0.5rem',
+                transition: 'all 0.2s ease',
                 display: 'flex',
                 alignItems: 'center',
-                gap: '0.65rem',
-                lineHeight: '1.4',
-                boxShadow: 'var(--shadow-sm)'
-              }}>
-                <div style={{
-                  width: '24px',
-                  height: '24px',
-                  borderRadius: '50%',
-                  backgroundColor: 'var(--lightblue)',
-                  color: 'var(--brandblue)',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  fontSize: '0.78rem',
-                  flexShrink: 0
-                }}>
-                  <i className="fa-solid fa-circle-info" />
-                </div>
-                <span style={{ fontWeight: '500' }}>{error}</span>
-              </div>
-            )}
-
-            {otpMessage && (
-              <div style={{
-                color: 'var(--text-main)',
-                backgroundColor: 'var(--surface-alt)',
-                border: '1px solid var(--border)',
-                padding: '0.8rem 1rem',
-                borderRadius: '14px',
-                marginBottom: '1.25rem',
-                fontSize: '0.86rem',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '0.65rem',
-                lineHeight: '1.4',
-                boxShadow: 'var(--shadow-sm)'
-              }}>
-                <div style={{
-                  width: '24px',
-                  height: '24px',
-                  borderRadius: '50%',
-                  backgroundColor: 'rgba(16, 185, 129, 0.15)',
-                  color: '#10b981',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  fontSize: '0.78rem',
-                  flexShrink: 0
-                }}>
-                  <i className="fa-solid fa-check" />
-                </div>
-                <span style={{ fontWeight: '500' }}>{otpMessage}</span>
-              </div>
-            )}
-
-            <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1.1rem' }}>
-              {!isLogin && (
-                <div>
-                  <label className="form-label" style={{ marginBottom: '0.45rem' }}>Account Type</label>
-                  <div style={{
-                    display: 'grid',
-                    gridTemplateColumns: '1fr 1fr',
-                    gap: '0.65rem'
-                  }}>
-                    {/* Individual Student Option */}
-                    <button
-                      type="button"
-                      onClick={() => setAccountType('individual')}
-                      style={{
-                        display: 'flex',
-                        flexDirection: 'column',
-                        alignItems: 'flex-start',
-                        padding: '0.85rem 0.95rem',
-                        borderRadius: '16px',
-                        border: accountType === 'individual' ? '2px solid var(--terracotta)' : '1px solid var(--border)',
-                        backgroundColor: accountType === 'individual' ? 'var(--surface)' : 'var(--surface-alt)',
-                        cursor: 'pointer',
-                        textAlign: 'left',
-                        transition: 'all 0.15s ease',
-                        boxShadow: accountType === 'individual' ? '0 4px 12px rgba(200, 122, 91, 0.15)' : 'none'
-                      }}
-                    >
-                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%', marginBottom: '0.25rem' }}>
-                        <span style={{ fontSize: '1.25rem' }}>👤</span>
-                        <span style={{
-                          fontSize: '0.68rem',
-                          fontWeight: '700',
-                          backgroundColor: accountType === 'individual' ? 'var(--terracotta)' : 'var(--border)',
-                          color: accountType === 'individual' ? '#fff' : 'var(--text-muted)',
-                          borderRadius: '9999px',
-                          padding: '2px 7px'
-                        }}>
-                          Student
-                        </span>
-                      </div>
-                      <span style={{ fontWeight: '700', fontSize: '0.92rem', color: 'var(--text-main)' }}>
-                        Individual
-                      </span>
-                      <span style={{ fontSize: '0.74rem', color: 'var(--text-muted)', marginTop: '2px', lineHeight: 1.3 }}>
-                        Sell personal gear, books & pre-owned items
-                      </span>
-                    </button>
-
-                    {/* Campus Store Option */}
-                    <button
-                      type="button"
-                      onClick={() => setAccountType('store')}
-                      style={{
-                        display: 'flex',
-                        flexDirection: 'column',
-                        alignItems: 'flex-start',
-                        padding: '0.85rem 0.95rem',
-                        borderRadius: '16px',
-                        border: accountType === 'store' ? '2px solid var(--terracotta)' : '1px solid var(--border)',
-                        backgroundColor: accountType === 'store' ? 'var(--surface)' : 'var(--surface-alt)',
-                        cursor: 'pointer',
-                        textAlign: 'left',
-                        transition: 'all 0.15s ease',
-                        boxShadow: accountType === 'store' ? '0 4px 12px rgba(200, 122, 91, 0.15)' : 'none'
-                      }}
-                    >
-                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%', marginBottom: '0.25rem' }}>
-                        <span style={{ fontSize: '1.25rem' }}>🏬</span>
-                        <span style={{
-                          fontSize: '0.68rem',
-                          fontWeight: '700',
-                          backgroundColor: accountType === 'store' ? 'var(--terracotta)' : 'var(--border)',
-                          color: accountType === 'store' ? '#fff' : 'var(--text-muted)',
-                          borderRadius: '9999px',
-                          padding: '2px 7px'
-                        }}>
-                          Business
-                        </span>
-                      </div>
-                      <span style={{ fontWeight: '700', fontSize: '0.92rem', color: 'var(--text-main)' }}>
-                        Campus Store
-                      </span>
-                      <span style={{ fontSize: '0.74rem', color: 'var(--text-muted)', marginTop: '2px', lineHeight: 1.3 }}>
-                        Student business, thrift brand, tech or snacks
-                      </span>
-                    </button>
-                  </div>
-                </div>
-              )}
-
-              <div>
-                <label className="form-label">
-                  {isLogin ? "Email or Phone Number" : "Email Address"}
-                </label>
-                <input 
-                  className="form-input"
-                  type={isLogin ? "text" : "email"} 
-                  required
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  placeholder={isLogin ? "e.g. 08012345678 or student@domain.com" : "e.g. student@university.edu.ng"}
-                  autoComplete={isLogin ? "username" : "email"}
-                />
-              </div>
-
-              <div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.35rem' }}>
-                  <label className="form-label" style={{ marginBottom: 0 }}>Password</label>
-                  {isLogin && (
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setIsForgotPassword(true);
-                        setError('');
-                        setOtpMessage('');
-                      }}
-                      style={{
-                        background: 'none',
-                        border: 'none',
-                        color: 'var(--brandblue)',
-                        fontSize: '0.8rem',
-                        fontWeight: '700',
-                        cursor: 'pointer',
-                        padding: 0
-                      }}
-                    >
-                      Forgot password?
-                    </button>
-                  )}
-                </div>
-                <input 
-                  className="form-input"
-                  type="password" 
-                  required
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  placeholder="••••••••"
-                />
-              </div>
-
-              {!isLogin && (
+                justifyContent: 'center',
+                gap: '0.5rem'
+              }}
+            >
+              {isLoading ? (
                 <>
-                  {accountType === 'store' ? (
-                    <div style={{
-                      backgroundColor: 'var(--surface-alt)',
-                      padding: '1.1rem',
-                      borderRadius: '18px',
-                      border: '1px solid var(--border)',
-                      display: 'flex',
-                      flexDirection: 'column',
-                      gap: '0.85rem'
-                    }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem' }}>
-                        <span style={{ fontSize: '1.15rem' }}>🏬</span>
-                        <span style={{ fontWeight: '700', fontSize: '0.94rem', color: 'var(--text-main)' }}>
-                          Campus Store Business Profile
-                        </span>
-                      </div>
-
-                      {/* Real Business Name (Required) */}
-                      <div>
-                        <label className="form-label">
-                          Real Business / Store Name <span style={{ color: 'var(--terracotta)' }}>*</span>
-                        </label>
-                        <input
-                          className="form-input"
-                          type="text"
-                          required
-                          value={businessName}
-                          onChange={(e) => {
-                            setBusinessName(e.target.value);
-                            if (!burnerHandle) {
-                              const autoHandle = e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, '_').replace(/_+/g, '_').slice(0, 20);
-                              setBurnerHandle(autoHandle);
-                            }
-                          }}
-                          placeholder="e.g. Kev's Campus Thrifts, Bella Wears, GadgetPlug"
-                        />
-                      </div>
-
-                      {/* Store Owner Real Name (Required) */}
-                      <div>
-                        <label className="form-label">
-                          Owner&apos;s Real Name (Contact Person) <span style={{ color: 'var(--terracotta)' }}>*</span>
-                        </label>
-                        <input
-                          className="form-input"
-                          type="text"
-                          required
-                          value={fullName}
-                          onChange={(e) => setFullName(e.target.value)}
-                          placeholder="e.g. Tope Bayo (Your full name)"
-                        />
-                      </div>
-
-                      {/* Business Category */}
-                      <div>
-                        <label className="form-label">Store Category</label>
-                        <select
-                          className="form-input"
-                          value={businessCategory}
-                          onChange={(e) => setBusinessCategory(e.target.value)}
-                          style={{ cursor: 'pointer' }}
-                        >
-                          {STORE_CATEGORIES.map(cat => (
-                            <option key={cat} value={cat}>{cat}</option>
-                          ))}
-                        </select>
-                      </div>
-
-                      {/* Store Tagline / Description */}
-                      <div>
-                        <label className="form-label">Store Tagline / Description (Optional)</label>
-                        <input
-                          className="form-input"
-                          type="text"
-                          value={businessDescription}
-                          onChange={(e) => setBusinessDescription(e.target.value)}
-                          placeholder="e.g. Premium thrift fits & shoes. Daily hostel delivery."
-                        />
-                      </div>
-
-                      {/* Store Pickup / Hostel Location */}
-                      <div>
-                        <label className="form-label">Store Pickup / Hostel Spot (Optional)</label>
-                        <input
-                          className="form-input"
-                          type="text"
-                          value={businessAddress}
-                          onChange={(e) => setBusinessAddress(e.target.value)}
-                          placeholder="e.g. Achievers Hall Room B12 or Sub Car Park"
-                        />
-                      </div>
-
-                      {/* Instagram / Social Handle */}
-                      <div>
-                        <label className="form-label">Instagram / TikTok Handle (Optional)</label>
-                        <input
-                          className="form-input"
-                          type="text"
-                          value={businessInstagram}
-                          onChange={(e) => setBusinessInstagram(e.target.value)}
-                          placeholder="e.g. @kevs_thrifts"
-                        />
-                      </div>
-                    </div>
-                  ) : (
-                    /* Individual Student Account Name */
-                    <div>
-                      <label className="form-label">Full Name (Optional)</label>
-                      <input
-                        className="form-input"
-                        type="text"
-                        value={fullName}
-                        onChange={(e) => setFullName(e.target.value)}
-                        placeholder="e.g. Ayomide Adeleke"
-                      />
-                    </div>
-                  )}
-
-                  {/* Campus / University Selector */}
-                  <div>
-                    <label className="form-label">Campus / Institution</label>
-                    <select
-                      className="form-input"
-                      value={campusId}
-                      onChange={(e) => setCampusId(e.target.value)}
-                      style={{ cursor: 'pointer' }}
-                    >
-                      {campuses.map(c => (
-                        <option key={c.id} value={c.id}>
-                          {c.name} ({c.acronym || c.state})
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                  {/* Phone Verification Section */}
-                  <div>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.4rem' }}>
-                      <label className="form-label" style={{ marginBottom: 0 }}>
-                        Phone Number {isPhoneVerified ? '(Verified)' : `(${otpChannel === 'email' ? 'Email OTP' : (otpChannel === 'whatsapp' ? 'WhatsApp' : 'SMS')})`}
-                      </label>
-                      {isPhoneVerified && (
-                        <span style={{ fontSize: '0.75rem', color: '#10b981', fontWeight: '700', display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
-                          <i className="fa-solid fa-circle-check" /> Verified
-                        </span>
-                      )}
-                    </div>
-
-                    {/* Delivery Channel Selector */}
-                    {!isPhoneVerified && (
-                      <div style={{
-                        display: 'flex',
-                        gap: '0.35rem',
-                        marginBottom: '0.5rem',
-                        backgroundColor: 'var(--bg-color)',
-                        padding: '0.25rem',
-                        borderRadius: '12px',
-                        border: '1px solid var(--border)'
-                      }}>
-                        <button
-                          type="button"
-                          onClick={() => setOtpChannel('email')}
-                          style={{
-                            flex: 1.2,
-                            padding: '0.45rem 0.4rem',
-                            borderRadius: '9px',
-                            border: 'none',
-                            backgroundColor: otpChannel === 'email' ? 'var(--brandblue)' : 'transparent',
-                            color: otpChannel === 'email' ? '#ffffff' : 'var(--text-muted)',
-                            fontWeight: otpChannel === 'email' ? '700' : '500',
-                            fontSize: '0.75rem',
-                            cursor: 'pointer',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            gap: '0.3rem',
-                            boxShadow: otpChannel === 'email' ? 'var(--shadow-sm)' : 'none',
-                            transition: 'all 0.15s ease'
-                          }}
-                        >
-                          <i className="fa-solid fa-envelope" style={{ fontSize: '0.85rem' }} />
-                          <span>Email OTP (Instant)</span>
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => setOtpChannel('whatsapp')}
-                          style={{
-                            flex: 1,
-                            padding: '0.45rem 0.4rem',
-                            borderRadius: '9px',
-                            border: 'none',
-                            backgroundColor: otpChannel === 'whatsapp' ? '#25D366' : 'transparent',
-                            color: otpChannel === 'whatsapp' ? '#ffffff' : 'var(--text-muted)',
-                            fontWeight: otpChannel === 'whatsapp' ? '700' : '500',
-                            fontSize: '0.75rem',
-                            cursor: 'pointer',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            gap: '0.3rem',
-                            boxShadow: otpChannel === 'whatsapp' ? '0 2px 8px rgba(37,211,102,0.3)' : 'none',
-                            transition: 'all 0.15s ease'
-                          }}
-                        >
-                          <i className="fa-brands fa-whatsapp" style={{ fontSize: '0.85rem' }} />
-                          <span>WhatsApp</span>
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => setOtpChannel('sms')}
-                          style={{
-                            flex: 0.9,
-                            padding: '0.45rem 0.4rem',
-                            borderRadius: '9px',
-                            border: 'none',
-                            backgroundColor: otpChannel === 'sms' ? 'var(--surface)' : 'transparent',
-                            color: otpChannel === 'sms' ? 'var(--brandblue)' : 'var(--text-muted)',
-                            fontWeight: otpChannel === 'sms' ? '700' : '500',
-                            fontSize: '0.75rem',
-                            cursor: 'pointer',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            gap: '0.3rem',
-                            boxShadow: otpChannel === 'sms' ? 'var(--shadow-sm)' : 'none',
-                            transition: 'all 0.15s ease'
-                          }}
-                        >
-                          <i className="fa-solid fa-comment-sms" />
-                          <span>SMS</span>
-                        </button>
-                      </div>
-                    )}
-
-                    {!isPhoneVerified && otpChannel === 'email' && (
-                      <p style={{ fontSize: '0.75rem', color: 'var(--brandblue)', margin: '0 0 0.5rem 0.2rem', fontWeight: '500' }}>
-                        <i className="fa-solid fa-circle-info" style={{ marginRight: '0.35rem' }} />
-                        Verification code will be sent to <strong>{email.trim() || 'your email entered above'}</strong>
-                      </p>
-                    )}
-
-                    <div style={{ display: 'flex', gap: '0.5rem' }}>
-                      <input 
-                        className="form-input"
-                        type="tel" 
-                        required
-                        disabled={isPhoneVerified}
-                        value={phone}
-                        onChange={(e) => setPhone(e.target.value)}
-                        placeholder="e.g. 08012345678 or +234..."
-                        style={{
-                          flex: 1,
-                          borderColor: isPhoneVerified ? '#10b981' : undefined,
-                          backgroundColor: isPhoneVerified ? 'var(--surface-alt)' : undefined
-                        }}
-                      />
-
-                      {isPhoneVerified ? (
-                        <button
-                          type="button"
-                          onClick={handleResetPhone}
-                          style={{
-                            padding: '0.55rem 0.85rem',
-                            fontSize: '0.8rem',
-                            fontFamily: 'var(--font-display)',
-                            fontWeight: '600',
-                            borderRadius: '12px',
-                            border: '1px solid var(--border)',
-                            backgroundColor: 'var(--surface)',
-                            color: 'var(--text-muted)',
-                            cursor: 'pointer',
-                            whiteSpace: 'nowrap'
-                          }}
-                          title="Change phone number"
-                        >
-                          Change
-                        </button>
-                      ) : (
-                        <button
-                          type="button"
-                          onClick={() => handleSendOtp(phone, otpChannel)}
-                          disabled={isSendingOtp || resendCooldown > 0}
-                          style={{
-                            padding: '0.55rem 0.95rem',
-                            fontSize: '0.82rem',
-                            fontFamily: 'var(--font-display)',
-                            fontWeight: '700',
-                            borderRadius: '12px',
-                            border: 'none',
-                            backgroundColor: resendCooldown > 0 ? 'var(--surface-alt)' : (otpChannel === 'whatsapp' ? '#25D366' : 'var(--brandblue)'),
-                            color: resendCooldown > 0 ? 'var(--text-muted)' : '#ffffff',
-                            cursor: (isSendingOtp || resendCooldown > 0) ? 'not-allowed' : 'pointer',
-                            whiteSpace: 'nowrap',
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: '0.35rem'
-                          }}
-                        >
-                          {isSendingOtp ? (
-                            <>
-                              <i className="fa-solid fa-circle-notch fa-spin" />
-                              <span>Sending...</span>
-                            </>
-                          ) : resendCooldown > 0 ? (
-                            <span>Resend ({resendCooldown}s)</span>
-                          ) : (
-                            <span>{isOtpSent ? 'Resend' : 'Send Code'}</span>
-                          )}
-                        </button>
-                      )}
-                    </div>
-
-                    {/* OTP Code Entry Block */}
-                    {!isPhoneVerified && isOtpSent && (
-                      <div style={{
-                        marginTop: '0.75rem',
-                        padding: '0.9rem',
-                        borderRadius: '16px',
-                        backgroundColor: 'var(--surface-alt)',
-                        border: '1px solid var(--border)'
-                      }}>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
-                          <span style={{ fontSize: '0.78rem', fontWeight: '700', color: 'var(--text-main)' }}>
-                            Enter 6-Digit {otpChannel === 'email' ? 'Email' : (otpChannel === 'whatsapp' ? 'WhatsApp' : 'SMS')} Code {otpChannel === 'email' && '(Check inbox/spam)'}
-                          </span>
-                        </div>
-
-                        <div style={{ display: 'flex', gap: '0.5rem' }}>
-                          <input 
-                            className="form-input"
-                            type="text" 
-                            maxLength={6}
-                            value={otpCode}
-                            onChange={(e) => setOtpCode(e.target.value.replace(/\D/g, ''))}
-                            placeholder="123456"
-                            style={{
-                              flex: 1,
-                              textAlign: 'center',
-                              letterSpacing: '0.3rem',
-                              fontFamily: 'var(--font-display)',
-                              fontWeight: '800',
-                              fontSize: '1.2rem',
-                              padding: '0.45rem'
-                            }}
-                          />
-
-                          <button
-                            type="button"
-                            onClick={handleVerifyOtp}
-                            disabled={isVerifyingOtp || otpCode.length < 4}
-                            style={{
-                              padding: '0.55rem 1rem',
-                              borderRadius: '12px',
-                              border: 'none',
-                              backgroundColor: '#10b981',
-                              color: '#ffffff',
-                              fontFamily: 'var(--font-display)',
-                              fontWeight: '700',
-                              fontSize: '0.84rem',
-                              cursor: (isVerifyingOtp || otpCode.length < 4) ? 'not-allowed' : 'pointer',
-                              opacity: otpCode.length < 4 ? 0.6 : 1,
-                              display: 'flex',
-                              alignItems: 'center',
-                              gap: '0.35rem'
-                            }}
-                          >
-                            {isVerifyingOtp ? (
-                              <i className="fa-solid fa-circle-notch fa-spin" />
-                            ) : (
-                              <i className="fa-solid fa-check" />
-                            )}
-                            <span>Confirm</span>
-                          </button>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-
-                  <div>
-                    <label className="form-label">
-                      {accountType === 'store' ? 'Store Handle / Username' : 'Burner Handle (Public Alias)'}
-                    </label>
-                    <div style={{ position: 'relative' }}>
-                      <span style={{
-                        position: 'absolute',
-                        left: '1rem',
-                        top: '50%',
-                        transform: 'translateY(-50%)',
-                        color: 'var(--text-light)',
-                        fontWeight: '600'
-                      }}>
-                        @
-                      </span>
-                      <input 
-                        className="form-input"
-                        type="text" 
-                        value={burnerHandle}
-                        onChange={(e) => setBurnerHandle(e.target.value)}
-                        placeholder={accountType === 'store' ? 'e.g. kevs_thrifts' : 'e.g. ayo_student'}
-                        style={{ paddingLeft: '2.25rem' }}
-                      />
-                    </div>
-                  </div>
+                  <i className="fa-solid fa-circle-notch fa-spin" />
+                  <span>Signing In...</span>
                 </>
+              ) : (
+                <span>Sign In</span>
               )}
-
-              <button 
-                type="submit" 
-                className="btn-primary" 
-                disabled={isLoading || (!isLogin && isSendingOtp)}
-                style={{ width: '100%', marginTop: '0.5rem', padding: '0.85rem' }}
-              >
-                {isLoading ? (
-                  <>
-                    <i className="fa-solid fa-circle-notch fa-spin" />
-                    Processing...
-                  </>
-                ) : (
-                  isLogin 
-                    ? 'Log In to CampusStash' 
-                    : (accountType === 'store' ? 'Complete Verification & Launch Store' : 'Complete Verification & Sign Up')
-                )}
-              </button>
-            </form>
-          </>
+            </button>
+          </form>
         )}
 
-        {/* Skip & Browse Guest Button */}
-        <div style={{ marginTop: '1.5rem', textAlign: 'center', paddingTop: '1.1rem', borderTop: '1px solid var(--border)' }}>
-          <button
-            type="button"
-            onClick={() => navigate('/dashboard')}
-            style={{
-              background: 'none',
-              border: 'none',
-              color: 'var(--brandblue)',
-              fontWeight: '700',
-              fontSize: '0.92rem',
-              cursor: 'pointer',
-              fontFamily: 'var(--font-display)',
-              display: 'inline-flex',
+        {/* MODE 2: CREATE ACCOUNT */}
+        {mode === 'register' && (
+          <form onSubmit={handleRegisterSubmit} style={{ width: '100%', display: 'flex', flexDirection: 'column', gap: '0.95rem' }}>
+            {/* Full / Display Name */}
+            <div style={{
+              position: 'relative',
+              display: 'flex',
               alignItems: 'center',
-              gap: '0.35rem'
-            }}
-          >
-            <span>Browse Items as Guest</span>
-            <i className="fa-solid fa-arrow-right" />
-          </button>
-        </div>
+              backgroundColor: 'rgba(255, 255, 255, 0.05)',
+              border: '1px solid rgba(255, 255, 255, 0.12)',
+              borderRadius: '16px',
+              padding: '0 1rem'
+            }}>
+              <i className="fa-regular fa-user" style={{ color: 'rgba(255, 255, 255, 0.4)', fontSize: '1rem', marginRight: '0.75rem' }} />
+              <input
+                type="text"
+                required
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                placeholder="Full Name / Display Name"
+                style={{
+                  width: '100%',
+                  background: 'transparent',
+                  border: 'none',
+                  outline: 'none',
+                  color: '#FFFFFF',
+                  padding: '1rem 0',
+                  fontSize: '0.92rem',
+                  fontFamily: 'inherit'
+                }}
+              />
+            </div>
+
+            {/* Email Address */}
+            <div style={{
+              position: 'relative',
+              display: 'flex',
+              alignItems: 'center',
+              backgroundColor: 'rgba(255, 255, 255, 0.05)',
+              border: '1px solid rgba(255, 255, 255, 0.12)',
+              borderRadius: '16px',
+              padding: '0 1rem'
+            }}>
+              <i className="fa-regular fa-envelope" style={{ color: 'rgba(255, 255, 255, 0.4)', fontSize: '1rem', marginRight: '0.75rem' }} />
+              <input
+                type="email"
+                required
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="Student Email Address"
+                style={{
+                  width: '100%',
+                  background: 'transparent',
+                  border: 'none',
+                  outline: 'none',
+                  color: '#FFFFFF',
+                  padding: '1rem 0',
+                  fontSize: '0.92rem',
+                  fontFamily: 'inherit'
+                }}
+              />
+            </div>
+
+            {/* Password */}
+            <div style={{
+              position: 'relative',
+              display: 'flex',
+              alignItems: 'center',
+              backgroundColor: 'rgba(255, 255, 255, 0.05)',
+              border: '1px solid rgba(255, 255, 255, 0.12)',
+              borderRadius: '16px',
+              padding: '0 1rem'
+            }}>
+              <i className="fa-solid fa-lock" style={{ color: 'rgba(255, 255, 255, 0.4)', fontSize: '0.95rem', marginRight: '0.75rem' }} />
+              <input
+                type={showPassword ? 'text' : 'password'}
+                required
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="Create Password (min 8 chars)"
+                style={{
+                  width: '100%',
+                  background: 'transparent',
+                  border: 'none',
+                  outline: 'none',
+                  color: '#FFFFFF',
+                  padding: '1rem 0',
+                  fontSize: '0.92rem',
+                  fontFamily: 'inherit'
+                }}
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword(p => !p)}
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  color: 'rgba(255, 255, 255, 0.45)',
+                  cursor: 'pointer',
+                  padding: '4px',
+                  fontSize: '0.95rem',
+                  display: 'flex',
+                  alignItems: 'center'
+                }}
+              >
+                <i className={`fa-regular ${showPassword ? 'fa-eye-slash' : 'fa-eye'}`} />
+              </button>
+            </div>
+
+            <button
+              type="submit"
+              disabled={isLoading}
+              style={{
+                width: '100%',
+                padding: '0.95rem',
+                borderRadius: '9999px',
+                border: 'none',
+                backgroundColor: '#153A2C',
+                backgroundImage: 'linear-gradient(180deg, #1A4D3B 0%, #103325 100%)',
+                color: '#FFFFFF',
+                fontSize: '0.98rem',
+                fontWeight: '700',
+                fontFamily: 'var(--font-display)',
+                cursor: isLoading ? 'not-allowed' : 'pointer',
+                boxShadow: '0 6px 20px rgba(16, 51, 37, 0.6), inset 0 1px 1px rgba(255,255,255,0.15)',
+                marginTop: '0.5rem',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '0.5rem'
+              }}
+            >
+              {isLoading ? (
+                <>
+                  <i className="fa-solid fa-circle-notch fa-spin" />
+                  <span>Creating Account...</span>
+                </>
+              ) : (
+                <span>Create Account</span>
+              )}
+            </button>
+          </form>
+        )}
+
+        {/* MODE 3: FORGOT PASSWORD */}
+        {mode === 'forgot' && (
+          <div style={{ width: '100%', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+            {!isForgotOtpSent ? (
+              <form onSubmit={handleSendForgotOtp} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                <div style={{
+                  position: 'relative',
+                  display: 'flex',
+                  alignItems: 'center',
+                  backgroundColor: 'rgba(255, 255, 255, 0.05)',
+                  border: '1px solid rgba(255, 255, 255, 0.12)',
+                  borderRadius: '16px',
+                  padding: '0 1rem'
+                }}>
+                  <i className="fa-regular fa-envelope" style={{ color: 'rgba(255, 255, 255, 0.4)', fontSize: '1rem', marginRight: '0.75rem' }} />
+                  <input
+                    type="email"
+                    required
+                    value={forgotEmail}
+                    onChange={(e) => setForgotEmail(e.target.value)}
+                    placeholder="Enter Registered Email"
+                    style={{
+                      width: '100%',
+                      background: 'transparent',
+                      border: 'none',
+                      outline: 'none',
+                      color: '#FFFFFF',
+                      padding: '1rem 0',
+                      fontSize: '0.92rem',
+                      fontFamily: 'inherit'
+                    }}
+                  />
+                </div>
+
+                <button
+                  type="submit"
+                  disabled={isLoading || forgotCooldown > 0}
+                  style={{
+                    width: '100%',
+                    padding: '0.95rem',
+                    borderRadius: '9999px',
+                    border: 'none',
+                    backgroundColor: '#153A2C',
+                    backgroundImage: 'linear-gradient(180deg, #1A4D3B 0%, #103325 100%)',
+                    color: '#FFFFFF',
+                    fontSize: '0.95rem',
+                    fontWeight: '700',
+                    cursor: (isLoading || forgotCooldown > 0) ? 'not-allowed' : 'pointer'
+                  }}
+                >
+                  {isLoading ? 'Sending Code...' : (forgotCooldown > 0 ? `Resend Code (${forgotCooldown}s)` : 'Send Recovery Code')}
+                </button>
+              </form>
+            ) : (
+              <form onSubmit={handleResetPasswordSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '0.95rem' }}>
+                <div style={{
+                  position: 'relative',
+                  display: 'flex',
+                  alignItems: 'center',
+                  backgroundColor: 'rgba(255, 255, 255, 0.05)',
+                  border: '1px solid rgba(255, 255, 255, 0.12)',
+                  borderRadius: '16px',
+                  padding: '0 1rem'
+                }}>
+                  <i className="fa-solid fa-key" style={{ color: 'rgba(255, 255, 255, 0.4)', fontSize: '0.95rem', marginRight: '0.75rem' }} />
+                  <input
+                    type="text"
+                    required
+                    maxLength={6}
+                    value={forgotOtp}
+                    onChange={(e) => setForgotOtp(e.target.value)}
+                    placeholder="6-Digit Verification Code"
+                    style={{
+                      width: '100%',
+                      background: 'transparent',
+                      border: 'none',
+                      outline: 'none',
+                      color: '#FFFFFF',
+                      padding: '1rem 0',
+                      fontSize: '0.92rem',
+                      letterSpacing: '0.15em'
+                    }}
+                  />
+                </div>
+
+                <div style={{
+                  position: 'relative',
+                  display: 'flex',
+                  alignItems: 'center',
+                  backgroundColor: 'rgba(255, 255, 255, 0.05)',
+                  border: '1px solid rgba(255, 255, 255, 0.12)',
+                  borderRadius: '16px',
+                  padding: '0 1rem'
+                }}>
+                  <i className="fa-solid fa-lock" style={{ color: 'rgba(255, 255, 255, 0.4)', fontSize: '0.95rem', marginRight: '0.75rem' }} />
+                  <input
+                    type={showPassword ? 'text' : 'password'}
+                    required
+                    value={forgotNewPassword}
+                    onChange={(e) => setForgotNewPassword(e.target.value)}
+                    placeholder="Enter New Password (min 8 chars)"
+                    style={{
+                      width: '100%',
+                      background: 'transparent',
+                      border: 'none',
+                      outline: 'none',
+                      color: '#FFFFFF',
+                      padding: '1rem 0',
+                      fontSize: '0.92rem'
+                    }}
+                  />
+                </div>
+
+                <button
+                  type="submit"
+                  disabled={isLoading}
+                  style={{
+                    width: '100%',
+                    padding: '0.95rem',
+                    borderRadius: '9999px',
+                    border: 'none',
+                    backgroundColor: '#153A2C',
+                    backgroundImage: 'linear-gradient(180deg, #1A4D3B 0%, #103325 100%)',
+                    color: '#FFFFFF',
+                    fontSize: '0.95rem',
+                    fontWeight: '700',
+                    cursor: isLoading ? 'not-allowed' : 'pointer'
+                  }}
+                >
+                  {isLoading ? 'Resetting Password...' : 'Reset & Log In'}
+                </button>
+              </form>
+            )}
+
+            <button
+              type="button"
+              onClick={() => { setMode('login'); setError(''); setForgotSuccessMessage(''); }}
+              style={{
+                background: 'none',
+                border: 'none',
+                color: 'rgba(255, 255, 255, 0.65)',
+                fontSize: '0.85rem',
+                cursor: 'pointer',
+                textAlign: 'center',
+                padding: '0.25rem'
+              }}
+            >
+              ← Back to Sign In
+            </button>
+          </div>
+        )}
+
+        {/* Divider: Or Sign In With */}
+        {mode !== 'forgot' && (
+          <>
+            <div style={{
+              display: 'flex',
+              alignItems: 'center',
+              width: '100%',
+              margin: '1.75rem 0 1.25rem 0'
+            }}>
+              <div style={{ flex: 1, height: '1px', backgroundColor: 'rgba(255, 255, 255, 0.12)' }} />
+              <span style={{
+                padding: '0 0.85rem',
+                fontSize: '0.8rem',
+                color: 'rgba(255, 255, 255, 0.45)',
+                letterSpacing: '0.02em',
+                whiteSpace: 'nowrap'
+              }}>
+                Or Sign In With
+              </span>
+              <div style={{ flex: 1, height: '1px', backgroundColor: 'rgba(255, 255, 255, 0.12)' }} />
+            </div>
+
+            {/* Social Authentication: Google & Apple */}
+            <div style={{
+              display: 'grid',
+              gridTemplateColumns: '1fr 1fr',
+              gap: '0.85rem',
+              width: '100%',
+              marginBottom: '2rem'
+            }}>
+              {/* Google / Gmail Button */}
+              <button
+                type="button"
+                onClick={handleTriggerGoogleAuth}
+                disabled={isLoading}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '0.65rem',
+                  padding: '0.85rem 1rem',
+                  borderRadius: '9999px',
+                  backgroundColor: 'rgba(255, 255, 255, 0.04)',
+                  border: '1px solid rgba(255, 255, 255, 0.16)',
+                  color: '#FFFFFF',
+                  fontSize: '0.92rem',
+                  fontWeight: '600',
+                  cursor: 'pointer',
+                  transition: 'background-color 0.15s ease',
+                  userSelect: 'none'
+                }}
+              >
+                {/* Google Multi-Color SVG Icon */}
+                <svg width="18" height="18" viewBox="0 0 24 24">
+                  <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
+                  <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" />
+                  <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z" />
+                  <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z" />
+                </svg>
+                <span>Google</span>
+              </button>
+
+              {/* Apple Button */}
+              <button
+                type="button"
+                onClick={() => {
+                  setError('Apple Sign-In is configured for the native iOS build. Please use Google / Gmail or Email to sign in now.');
+                }}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '0.65rem',
+                  padding: '0.85rem 1rem',
+                  borderRadius: '9999px',
+                  backgroundColor: 'rgba(255, 255, 255, 0.04)',
+                  border: '1px solid rgba(255, 255, 255, 0.16)',
+                  color: '#FFFFFF',
+                  fontSize: '0.92rem',
+                  fontWeight: '600',
+                  cursor: 'pointer',
+                  transition: 'background-color 0.15s ease',
+                  userSelect: 'none'
+                }}
+              >
+                <i className="fa-brands fa-apple" style={{ fontSize: '1.2rem' }} />
+                <span>Apple</span>
+              </button>
+            </div>
+
+            {/* Bottom Mode Switcher */}
+            <div style={{ textAlign: 'center' }}>
+              {mode === 'login' ? (
+                <span style={{ fontSize: '0.86rem', color: 'rgba(255, 255, 255, 0.65)' }}>
+                  New to ShopMate?{' '}
+                  <button
+                    type="button"
+                    onClick={() => { setMode('register'); setError(''); }}
+                    style={{
+                      background: 'none',
+                      border: 'none',
+                      color: '#FFFFFF',
+                      fontWeight: '700',
+                      cursor: 'pointer',
+                      padding: 0,
+                      textDecoration: 'none'
+                    }}
+                  >
+                    Create an Account
+                  </button>
+                </span>
+              ) : (
+                <span style={{ fontSize: '0.86rem', color: 'rgba(255, 255, 255, 0.65)' }}>
+                  Already have an account?{' '}
+                  <button
+                    type="button"
+                    onClick={() => { setMode('login'); setError(''); }}
+                    style={{
+                      background: 'none',
+                      border: 'none',
+                      color: '#FFFFFF',
+                      fontWeight: '700',
+                      cursor: 'pointer',
+                      padding: 0,
+                      textDecoration: 'none'
+                    }}
+                  >
+                    Sign In
+                  </button>
+                </span>
+              )}
+            </div>
+          </>
+        )}
       </div>
+
+      {/* POST-LOGIN CAMPUS ONBOARDING MODAL (FOR GOOGLE & NEW USERS) */}
+      {showCampusOnboarding && (
+        <div style={{
+          position: 'fixed',
+          inset: 0,
+          backgroundColor: 'rgba(0, 0, 0, 0.85)',
+          backdropFilter: 'blur(8px)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          padding: '1.25rem',
+          zIndex: 10000
+        }}>
+          <div style={{
+            backgroundColor: '#111714',
+            border: '1px solid rgba(255, 255, 255, 0.15)',
+            borderRadius: '26px',
+            padding: '1.75rem',
+            maxWidth: '440px',
+            width: '100%',
+            textAlign: 'center',
+            boxShadow: '0 20px 40px rgba(0, 0, 0, 0.6)'
+          }}>
+            <div style={{
+              width: '56px',
+              height: '56px',
+              borderRadius: '50%',
+              backgroundColor: 'rgba(16, 185, 129, 0.15)',
+              color: '#34D399',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              fontSize: '1.5rem',
+              margin: '0 auto 1.1rem auto'
+            }}>
+              🎓
+            </div>
+
+            <h3 style={{
+              fontSize: '1.4rem',
+              fontWeight: '800',
+              fontFamily: 'var(--font-display)',
+              margin: '0 0 0.4rem 0',
+              color: '#FFFFFF'
+            }}>
+              Which Campus Are You At?
+            </h3>
+            <p style={{
+              fontSize: '0.85rem',
+              color: 'rgba(255, 255, 255, 0.65)',
+              margin: '0 0 1.25rem 0',
+              lineHeight: 1.45
+            }}>
+              Personalize your campus marketplace to see student listings and hostel dropzones near you.
+            </p>
+
+            <div style={{ marginBottom: '1.5rem', textAlign: 'left' }}>
+              <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: '700', marginBottom: '0.4rem', color: 'rgba(255, 255, 255, 0.8)' }}>
+                Select Your University
+              </label>
+              <select
+                value={selectedCampusId}
+                onChange={(e) => setSelectedCampusId(e.target.value)}
+                style={{
+                  width: '100%',
+                  padding: '0.85rem 1rem',
+                  borderRadius: '14px',
+                  backgroundColor: 'rgba(255, 255, 255, 0.08)',
+                  border: '1px solid rgba(255, 255, 255, 0.2)',
+                  color: '#FFFFFF',
+                  fontSize: '0.92rem',
+                  outline: 'none',
+                  cursor: 'pointer'
+                }}
+              >
+                {campuses.map(c => (
+                  <option key={c.id} value={c.id} style={{ backgroundColor: '#111714', color: '#FFFFFF' }}>
+                    {c.acronym} — {c.name} ({c.state})
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <button
+              type="button"
+              onClick={handleSaveCampusOnboarding}
+              disabled={isLoading || !selectedCampusId}
+              style={{
+                width: '100%',
+                padding: '0.95rem',
+                borderRadius: '9999px',
+                border: 'none',
+                backgroundColor: '#10B981',
+                color: '#062419',
+                fontSize: '0.95rem',
+                fontWeight: '800',
+                cursor: 'pointer',
+                boxShadow: '0 4px 16px rgba(16, 185, 129, 0.4)'
+              }}
+            >
+              {isLoading ? 'Saving...' : 'Enter Campus Marketplace →'}
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
