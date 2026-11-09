@@ -21,6 +21,14 @@ const STORE_CATEGORIES = [
   'General Variety Store'
 ];
 
+const GOVERNMENT_ID_TYPES = [
+  { id: 'nin', name: 'National Identification Number (NIN)', placeholder: 'e.g. 11-digit NIN (e.g. 12345678901)' },
+  { id: 'voters_card', name: "Voter's Card (INEC PVC)", placeholder: 'e.g. 19-digit VIN code on your voter card' },
+  { id: 'drivers_license', name: "Driver's License (FRSC)", placeholder: 'e.g. Driving License Number' },
+  { id: 'passport', name: 'International Passport', placeholder: 'e.g. Passport Booklet No. (A12345678)' },
+  { id: 'national_id', name: 'Other Government / State Issued ID', placeholder: 'e.g. Official Government ID No.' }
+];
+
 function Profile() {
   const navigate = useNavigate();
   const location = useLocation();
@@ -111,8 +119,25 @@ function Profile() {
   const [showStoreKycModal, setShowStoreKycModal] = useState(false);
   const [isSavingStoreKyc, setIsSavingStoreKyc] = useState(false);
   const [storeKycError, setStoreKycError] = useState('');
+  const [kycUserType, setKycUserType] = useState(() => {
+    try {
+      const saved = localStorage.getItem('user');
+      const u = saved ? JSON.parse(saved) : null;
+      return u?.kyc_user_type || 'student';
+    } catch (e) {
+      return 'student';
+    }
+  });
   const [idCardPreview, setIdCardPreview] = useState(null);
   const idCardInputRef = useRef(null);
+
+  // Biometric Face Verification state
+  const [selfiePreview, setSelfiePreview] = useState(null);
+  const selfieInputRef = useRef(null);
+  const [isFaceScanning, setIsFaceScanning] = useState(false);
+  const [cameraStreamActive, setCameraStreamActive] = useState(false);
+  const videoRef = useRef(null);
+  const streamRef = useRef(null);
 
   const [storeForm, setStoreForm] = useState(() => {
     try {
@@ -122,22 +147,28 @@ function Profile() {
         business_name: u?.business_name || '',
         business_category: u?.business_category || 'Fashion & Thrift',
         student_id_number: u?.kyc_student_id || '',
+        id_type: u?.kyc_id_type || 'nin',
+        id_number: u?.kyc_id_number || '',
         business_description: u?.business_description || '',
         business_address: u?.business_address || '',
         business_whatsapp: u?.business_whatsapp || '',
         business_instagram: u?.business_instagram || '',
-        id_card_image: u?.kyc_id_card_url || null
+        id_card_image: u?.kyc_id_card_url || null,
+        face_selfie_image: u?.kyc_selfie_url || null
       };
     } catch (e) {
       return {
         business_name: '',
         business_category: 'Fashion & Thrift',
         student_id_number: '',
+        id_type: 'nin',
+        id_number: '',
         business_description: '',
         business_address: '',
         business_whatsapp: '',
         business_instagram: '',
-        id_card_image: null
+        id_card_image: null,
+        face_selfie_image: null
       };
     }
   });
@@ -149,18 +180,27 @@ function Profile() {
       setProfile(data);
       if (data) {
         localStorage.setItem('user', JSON.stringify(data));
+        if (data.kyc_user_type) {
+          setKycUserType(data.kyc_user_type);
+        }
         setStoreForm({
           business_name: data.business_name || '',
           business_category: data.business_category || 'Fashion & Thrift',
           student_id_number: data.kyc_student_id || '',
+          id_type: data.kyc_id_type || 'nin',
+          id_number: data.kyc_id_number || '',
           business_description: data.business_description || '',
           business_address: data.business_address || '',
           business_whatsapp: data.business_whatsapp || '',
           business_instagram: data.business_instagram || '',
-          id_card_image: data.kyc_id_card_url || null
+          id_card_image: data.kyc_id_card_url || null,
+          face_selfie_image: data.kyc_selfie_url || null
         });
         if (data.kyc_id_card_url) {
           setIdCardPreview(data.kyc_id_card_url);
+        }
+        if (data.kyc_selfie_url) {
+          setSelfiePreview(data.kyc_selfie_url);
         }
       }
     } catch (err) {
@@ -236,8 +276,93 @@ function Profile() {
     }
   };
 
+  // Cleanup camera stream on unmount
+  useEffect(() => {
+    return () => {
+      if (streamRef.current) {
+        streamRef.current.getTracks().forEach(t => t.stop());
+        streamRef.current = null;
+      }
+    };
+  }, []);
+
+  // Connect live camera to video element
+  useEffect(() => {
+    if (cameraStreamActive && videoRef.current && streamRef.current) {
+      videoRef.current.srcObject = streamRef.current;
+      videoRef.current.play().catch(e => console.warn('Camera video play error:', e));
+    }
+  }, [cameraStreamActive]);
+
+  const stopCamera = () => {
+    if (streamRef.current) {
+      streamRef.current.getTracks().forEach(t => t.stop());
+      streamRef.current = null;
+    }
+    setCameraStreamActive(false);
+  };
+
+  const startCamera = async () => {
+    try {
+      if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+        selfieInputRef.current?.click();
+        return;
+      }
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: { facingMode: 'user', width: { ideal: 640 }, height: { ideal: 640 } },
+        audio: false
+      });
+      streamRef.current = stream;
+      setCameraStreamActive(true);
+    } catch (err) {
+      console.warn('Live camera access error, falling back to file selfie picker:', err);
+      selfieInputRef.current?.click();
+    }
+  };
+
+  const captureFromVideo = () => {
+    if (!videoRef.current) return;
+    const video = videoRef.current;
+    const canvas = document.createElement('canvas');
+    canvas.width = video.videoWidth || 480;
+    canvas.height = video.videoHeight || 480;
+    const ctx = canvas.getContext('2d');
+    ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+    const base64 = canvas.toDataURL('image/jpeg', 0.85);
+
+    stopCamera();
+    setIsFaceScanning(true);
+    setTimeout(() => {
+      setSelfiePreview(base64);
+      setStoreForm(prev => ({ ...prev, face_selfie_image: base64 }));
+      setIsFaceScanning(false);
+    }, 850);
+  };
+
+  const handleSelfieFile = (e) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setIsFaceScanning(true);
+      setStoreKycError('');
+      const reader = new FileReader();
+      reader.onload = (uploadEvent) => {
+        const base64 = uploadEvent.target.result;
+        setTimeout(() => {
+          setSelfiePreview(base64);
+          setStoreForm(prev => ({ ...prev, face_selfie_image: base64 }));
+          setIsFaceScanning(false);
+        }, 850);
+      };
+      reader.onerror = () => {
+        setIsFaceScanning(false);
+        setStoreKycError('Failed to read image. Please try another photo.');
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
   const handleIdCardFile = (e) => {
-    const file = e.target.files[0];
+    const file = e.target.files?.[0];
     if (file) {
       const reader = new FileReader();
       reader.onload = (uploadEvent) => {
@@ -257,29 +382,53 @@ function Profile() {
       setStoreKycError('Real Business / Store Name is required.');
       return;
     }
-    if (!storeForm.student_id_number || !storeForm.student_id_number.trim()) {
-      setStoreKycError('Student Matriculation / Student ID Number is required for KYC.');
-      return;
+
+    if (kycUserType === 'non_student') {
+      if (!storeForm.id_number || !storeForm.id_number.trim()) {
+        const idLabel = GOVERNMENT_ID_TYPES.find(t => t.id === storeForm.id_type)?.name || 'Government ID';
+        setStoreKycError(`${idLabel} Number is required for outsider verification.`);
+        return;
+      }
+      if (!storeForm.id_card_image) {
+        setStoreKycError('Please upload a clear photo of your Government ID document/card.');
+        return;
+      }
+      if (!storeForm.face_selfie_image) {
+        setStoreKycError('Biometric Face Verification selfie is required for non-student verification.');
+        return;
+      }
+    } else {
+      if (!storeForm.student_id_number || !storeForm.student_id_number.trim()) {
+        setStoreKycError('Student Matriculation / Student ID Number is required for KYC.');
+        return;
+      }
     }
 
     setIsSavingStoreKyc(true);
     try {
+      const payload = {
+        business_name: storeForm.business_name.trim(),
+        business_category: storeForm.business_category,
+        user_type: kycUserType,
+        student_id_number: kycUserType === 'student' ? storeForm.student_id_number.trim() : null,
+        id_type: kycUserType === 'non_student' ? (storeForm.id_type || 'nin') : 'student_id',
+        id_number: kycUserType === 'non_student' ? storeForm.id_number.trim() : (storeForm.student_id_number?.trim() || null),
+        business_description: storeForm.business_description ? storeForm.business_description.trim() : '',
+        business_address: storeForm.business_address ? storeForm.business_address.trim() : '',
+        business_whatsapp: storeForm.business_whatsapp ? storeForm.business_whatsapp.trim() : '',
+        business_instagram: storeForm.business_instagram ? storeForm.business_instagram.trim() : '',
+        id_card_image: storeForm.id_card_image || null,
+        face_selfie_image: storeForm.face_selfie_image || null
+      };
+
       const updated = await apiFetch('/users/me/store-kyc', {
         method: 'POST',
-        body: JSON.stringify({
-          business_name: storeForm.business_name.trim(),
-          business_category: storeForm.business_category,
-          student_id_number: storeForm.student_id_number.trim(),
-          business_description: storeForm.business_description ? storeForm.business_description.trim() : '',
-          business_address: storeForm.business_address ? storeForm.business_address.trim() : '',
-          business_whatsapp: storeForm.business_whatsapp ? storeForm.business_whatsapp.trim() : '',
-          business_instagram: storeForm.business_instagram ? storeForm.business_instagram.trim() : '',
-          id_card_image: storeForm.id_card_image || null
-        })
+        body: JSON.stringify(payload)
       });
       setProfile(updated);
       localStorage.setItem('user', JSON.stringify(updated));
       setShowStoreKycModal(false);
+      stopCamera();
     } catch (err) {
       console.error('Failed to submit store KYC:', err);
       setStoreKycError(err.message || 'Failed to submit store KYC verification.');
@@ -459,7 +608,7 @@ function Profile() {
               whiteSpace: 'nowrap'
             }}>
               <i className="fa-solid fa-check" style={{ fontSize: '0.62rem' }} />
-              <span>{isStore ? (isKycVerified ? 'Verified Store' : 'Store KYC') : 'Verified'}</span>
+              <span>{isStore ? (isKycVerified ? (profile?.kyc_user_type === 'non_student' ? 'Verified Partner' : 'Verified Store') : 'Store KYC') : 'Verified'}</span>
             </div>
           </div>
 
@@ -710,10 +859,10 @@ function Profile() {
                 </div>
                 <div style={{ minWidth: 0, flex: 1 }}>
                   <div style={{ fontSize: '0.92rem', fontWeight: '700', color: 'var(--text-main)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                    Store Owner KYC
+                    {isKycVerified ? (profile?.kyc_user_type === 'non_student' ? 'Verified Store Partner (Outsider)' : 'Verified Store Owner') : 'Store Owner KYC'}
                   </div>
                   <div style={{ fontSize: '0.74rem', color: 'var(--text-muted)', marginTop: '1px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                    Student ID & Business credentials
+                    {profile?.kyc_user_type === 'non_student' ? 'Government ID & Biometric Face Verification' : 'Student ID & Business credentials'}
                   </div>
                 </div>
               </div>
@@ -1146,41 +1295,55 @@ function Profile() {
       />
 
       {/* ============================================================== */}
-      {/* STORE OWNER COMPLETE KYC MODAL                                 */}
+      {/* STORE OWNER COMPLETE KYC MODAL                                */}
       {/* ============================================================== */}
       {showStoreKycModal && (
-        <div className="modal-overlay" onClick={() => setShowStoreKycModal(false)} style={{ zIndex: 1200 }}>
+        <div 
+          className="modal-overlay" 
+          onClick={() => {
+            stopCamera();
+            setShowStoreKycModal(false);
+          }} 
+          style={{ zIndex: 1200 }}
+        >
           <div 
             className="modal-content animate-fade-in"
             onClick={(e) => e.stopPropagation()}
-            style={{ 
-              maxWidth: '520px', 
-              width: '92%', 
-              maxHeight: '90vh', 
-              overflowY: 'auto',
+            style={{
+              backgroundColor: 'var(--surface)',
               borderRadius: '26px',
-              padding: '1.75rem',
-              backgroundColor: 'var(--surface)'
+              width: '100%',
+              maxWidth: '520px',
+              maxHeight: '92vh',
+              overflowY: 'auto',
+              padding: '1.6rem 1.4rem',
+              boxShadow: 'var(--shadow-card)',
+              border: '1px solid var(--border)',
+              position: 'relative'
             }}
           >
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem' }}>
+            {/* Modal Header */}
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1.15rem' }}>
               <div>
                 <span style={{
-                  fontSize: '0.74rem',
+                  fontSize: '0.72rem',
                   fontWeight: '800',
                   color: 'var(--primary)',
                   textTransform: 'uppercase',
                   letterSpacing: '0.04em'
                 }}>
-                  Official Merchant Onboarding
+                  Merchant Onboarding & KYC
                 </span>
                 <h3 style={{ fontSize: '1.35rem', fontWeight: '800', fontFamily: 'var(--font-display)', color: 'var(--text-main)', margin: '0.2rem 0 0 0' }}>
-                  Store Owner Complete KYC
+                  Store Owner Verification
                 </h3>
               </div>
               <button
                 type="button"
-                onClick={() => setShowStoreKycModal(false)}
+                onClick={() => {
+                  stopCamera();
+                  setShowStoreKycModal(false);
+                }}
                 style={{
                   background: 'var(--surface-alt)',
                   border: 'none',
@@ -1217,7 +1380,96 @@ function Profile() {
               </div>
             )}
 
-            <form onSubmit={handleSaveStoreKyc} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+            <form onSubmit={handleSaveStoreKyc} style={{ display: 'flex', flexDirection: 'column', gap: '1.1rem' }}>
+              {/* Segmented Pill Selector: Student vs I'm not a student */}
+              <div>
+                <label className="form-label" style={{ fontWeight: '700', fontSize: '0.84rem', display: 'block', marginBottom: '0.45rem' }}>
+                  I am registering as: *
+                </label>
+                <div style={{
+                  display: 'grid',
+                  gridTemplateColumns: '1fr 1fr',
+                  backgroundColor: 'var(--surface-alt)',
+                  padding: '4px',
+                  borderRadius: '9999px',
+                  gap: '4px',
+                  border: '1px solid var(--border)'
+                }}>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setKycUserType('student');
+                      setStoreKycError('');
+                    }}
+                    style={{
+                      padding: '0.65rem 0.5rem',
+                      borderRadius: '9999px',
+                      border: 'none',
+                      backgroundColor: kycUserType === 'student' ? 'var(--primary)' : 'transparent',
+                      color: kycUserType === 'student' ? '#FFFFFF' : 'var(--text-muted)',
+                      fontWeight: '700',
+                      fontSize: '0.82rem',
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: '0.45rem',
+                      transition: 'all 0.15s ease'
+                    }}
+                  >
+                    <i className="fa-solid fa-graduation-cap" />
+                    <span>Campus Student</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setKycUserType('non_student');
+                      setStoreKycError('');
+                    }}
+                    style={{
+                      padding: '0.65rem 0.5rem',
+                      borderRadius: '9999px',
+                      border: 'none',
+                      backgroundColor: kycUserType === 'non_student' ? 'var(--primary)' : 'transparent',
+                      color: kycUserType === 'non_student' ? '#FFFFFF' : 'var(--text-muted)',
+                      fontWeight: '700',
+                      fontSize: '0.82rem',
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: '0.45rem',
+                      transition: 'all 0.15s ease'
+                    }}
+                  >
+                    <i className="fa-solid fa-user-shield" />
+                    <span>I'm not a student</span>
+                  </button>
+                </div>
+              </div>
+
+              {/* Outsider Security Alert Banner */}
+              {kycUserType === 'non_student' && (
+                <div style={{
+                  backgroundColor: 'rgba(16, 185, 129, 0.08)',
+                  border: '1px solid rgba(16, 185, 129, 0.25)',
+                  borderRadius: '16px',
+                  padding: '0.85rem 1rem',
+                  display: 'flex',
+                  gap: '0.65rem',
+                  alignItems: 'flex-start'
+                }}>
+                  <i className="fa-solid fa-shield-halved" style={{ color: '#10B981', fontSize: '1.15rem', marginTop: '2px' }} />
+                  <div style={{ fontSize: '0.78rem', color: 'var(--text-main)', lineHeight: '1.45' }}>
+                    <strong style={{ color: '#10B981', display: 'block', marginBottom: '2px' }}>
+                      Campus Safety & Outsider Security Check
+                    </strong>
+                    To protect students and eliminate illicit dealings, outsider merchants must submit a verified Government ID and complete live biometric face scanning before selling on campus.
+                  </div>
+                </div>
+              )}
+
+              {/* Official Store Name */}
               <div>
                 <label className="form-label" style={{ fontWeight: '700', fontSize: '0.84rem', display: 'block', marginBottom: '0.35rem' }}>
                   Official Store / Brand Name *
@@ -1232,6 +1484,7 @@ function Profile() {
                 />
               </div>
 
+              {/* Business Category */}
               <div>
                 <label className="form-label" style={{ fontWeight: '700', fontSize: '0.84rem', display: 'block', marginBottom: '0.35rem' }}>
                   Business Category *
@@ -1248,131 +1501,515 @@ function Profile() {
                 </select>
               </div>
 
-              {/* Student Matriculation / Student ID */}
-              <div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.35rem' }}>
-                  <label className="form-label" style={{ marginBottom: 0, fontWeight: '700', fontSize: '0.84rem' }}>
-                    Student ID / Matriculation Number *
-                  </label>
-                  <span style={{ fontSize: '0.72rem', color: 'var(--primary)', fontWeight: '800' }}>
-                    KYC Required
-                  </span>
-                </div>
-                <input
-                  type="text"
-                  required
-                  className="form-input"
-                  value={storeForm.student_id_number}
-                  onChange={(e) => setStoreForm(prev => ({ ...prev, student_id_number: e.target.value }))}
-                  placeholder="e.g. LCU/22/10452 or UI/21/9831"
-                />
-                <span style={{ fontSize: '0.74rem', color: 'var(--text-muted)', marginTop: '0.25rem', display: 'block' }}>
-                  Used to verify active student enrollment for your campus merchant badge.
-                </span>
-              </div>
+              {/* ============================================================== */}
+              {/* NON-STUDENT KYC: GOVERNMENT ID + DOCUMENT + FACE VERIFICATION */}
+              {/* ============================================================== */}
+              {kycUserType === 'non_student' ? (
+                <>
+                  {/* Government ID Type Selector */}
+                  <div>
+                    <label className="form-label" style={{ fontWeight: '700', fontSize: '0.84rem', display: 'block', marginBottom: '0.35rem' }}>
+                      Government ID Document Type *
+                    </label>
+                    <select
+                      className="form-input"
+                      value={storeForm.id_type || 'nin'}
+                      onChange={(e) => setStoreForm(prev => ({ ...prev, id_type: e.target.value }))}
+                      style={{ cursor: 'pointer' }}
+                    >
+                      {GOVERNMENT_ID_TYPES.map(t => (
+                        <option key={t.id} value={t.id}>{t.name}</option>
+                      ))}
+                    </select>
+                  </div>
 
-              {/* Student ID Card Photo Upload */}
-              <div>
-                <label className="form-label" style={{ fontWeight: '700', fontSize: '0.84rem', display: 'block', marginBottom: '0.35rem' }}>
-                  Upload Student ID Card Photo
-                </label>
-                <input
-                  type="file"
-                  ref={idCardInputRef}
-                  accept="image/*"
-                  onChange={handleIdCardFile}
-                  style={{ display: 'none' }}
-                />
-
-                {idCardPreview ? (
-                  <div style={{
-                    position: 'relative',
-                    borderRadius: '16px',
-                    overflow: 'hidden',
-                    border: '1px solid var(--border)',
-                    height: '140px',
-                    backgroundColor: 'var(--surface-alt)'
-                  }}>
-                    <img 
-                      src={idCardPreview} 
-                      alt="Student ID Preview" 
-                      style={{ width: '100%', height: '100%', objectFit: 'cover' }} 
+                  {/* Government ID Number */}
+                  <div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.35rem' }}>
+                      <label className="form-label" style={{ marginBottom: 0, fontWeight: '700', fontSize: '0.84rem' }}>
+                        {(GOVERNMENT_ID_TYPES.find(t => t.id === storeForm.id_type)?.name || 'Government ID')} Number *
+                      </label>
+                      <span style={{ fontSize: '0.72rem', color: '#10B981', fontWeight: '800' }}>
+                        Required
+                      </span>
+                    </div>
+                    <input
+                      type="text"
+                      required
+                      className="form-input"
+                      value={storeForm.id_number || ''}
+                      onChange={(e) => setStoreForm(prev => ({ ...prev, id_number: e.target.value }))}
+                      placeholder={GOVERNMENT_ID_TYPES.find(t => t.id === storeForm.id_type)?.placeholder || 'Enter ID number'}
                     />
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setIdCardPreview(null);
-                        setStoreForm(prev => ({ ...prev, id_card_image: null }));
-                      }}
-                      style={{
-                        position: 'absolute',
-                        top: '6px',
-                        right: '6px',
-                        backgroundColor: 'rgba(239, 68, 68, 0.9)',
-                        color: '#FFFFFF',
-                        border: 'none',
-                        borderRadius: '50%',
-                        width: '26px',
-                        height: '26px',
+                  </div>
+
+                  {/* Government ID Document / Card Upload */}
+                  <div>
+                    <label className="form-label" style={{ fontWeight: '700', fontSize: '0.84rem', display: 'block', marginBottom: '0.35rem' }}>
+                      Upload Government ID Card / Slip *
+                    </label>
+                    <input
+                      type="file"
+                      ref={idCardInputRef}
+                      accept="image/*"
+                      onChange={handleIdCardFile}
+                      style={{ display: 'none' }}
+                    />
+
+                    {idCardPreview ? (
+                      <div style={{
+                        position: 'relative',
+                        borderRadius: '16px',
+                        overflow: 'hidden',
+                        border: '1.5px solid #10B981',
+                        height: '145px',
+                        backgroundColor: 'var(--surface-alt)'
+                      }}>
+                        <img 
+                          src={idCardPreview} 
+                          alt="Government ID Preview" 
+                          style={{ width: '100%', height: '100%', objectFit: 'cover' }} 
+                        />
+                        <div style={{
+                          position: 'absolute',
+                          bottom: '8px',
+                          left: '8px',
+                          backgroundColor: 'rgba(0,0,0,0.72)',
+                          color: '#FFFFFF',
+                          padding: '3px 9px',
+                          borderRadius: '9999px',
+                          fontSize: '0.72rem',
+                          fontWeight: '700',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '5px'
+                        }}>
+                          <i className="fa-solid fa-circle-check" style={{ color: '#10B981' }} />
+                          <span>Government ID Attached</span>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setIdCardPreview(null);
+                            setStoreForm(prev => ({ ...prev, id_card_image: null }));
+                          }}
+                          style={{
+                            position: 'absolute',
+                            top: '8px',
+                            right: '8px',
+                            backgroundColor: 'rgba(239, 68, 68, 0.9)',
+                            color: '#FFFFFF',
+                            border: 'none',
+                            borderRadius: '50%',
+                            width: '28px',
+                            height: '28px',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            cursor: 'pointer',
+                            fontSize: '0.8rem'
+                          }}
+                        >
+                          ✕
+                        </button>
+                      </div>
+                    ) : (
+                      <div 
+                        onClick={() => idCardInputRef.current?.click()}
+                        style={{
+                          border: '2px dashed var(--primary)',
+                          borderRadius: '16px',
+                          padding: '1.2rem',
+                          textAlign: 'center',
+                          backgroundColor: 'var(--surface-alt)',
+                          cursor: 'pointer'
+                        }}
+                      >
+                        <i className="fa-solid fa-id-card" style={{ fontSize: '1.5rem', color: 'var(--primary)', marginBottom: '0.35rem' }} />
+                        <div style={{ fontWeight: '700', fontSize: '0.86rem', color: 'var(--text-main)' }}>
+                          Tap to Upload Government ID Document / Slip
+                        </div>
+                        <div style={{ fontSize: '0.74rem', color: 'var(--text-muted)', marginTop: '2px' }}>
+                          NIN slip, voter card, driver license, or passport page
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Biometric Face Verification System */}
+                  <div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.35rem' }}>
+                      <label className="form-label" style={{ marginBottom: 0, fontWeight: '700', fontSize: '0.84rem' }}>
+                        Biometric Face Verification *
+                      </label>
+                      <span style={{ fontSize: '0.72rem', color: '#10B981', fontWeight: '800', display: 'flex', alignItems: 'center', gap: '3px' }}>
+                        <i className="fa-solid fa-camera" /> Anti-Fraud Check
+                      </span>
+                    </div>
+
+                    <input
+                      type="file"
+                      ref={selfieInputRef}
+                      accept="image/*"
+                      capture="user"
+                      onChange={handleSelfieFile}
+                      style={{ display: 'none' }}
+                    />
+
+                    {cameraStreamActive ? (
+                      <div style={{
+                        position: 'relative',
+                        borderRadius: '20px',
+                        overflow: 'hidden',
+                        backgroundColor: '#000000',
+                        textAlign: 'center',
+                        border: '2px solid #10B981',
+                        padding: '1rem 0.5rem'
+                      }}>
+                        <div style={{
+                          position: 'relative',
+                          width: '210px',
+                          height: '210px',
+                          margin: '0 auto',
+                          borderRadius: '50%',
+                          overflow: 'hidden',
+                          border: '3px dashed #10B981',
+                          boxShadow: '0 0 20px rgba(16, 185, 129, 0.4)'
+                        }}>
+                          <video 
+                            ref={videoRef} 
+                            autoPlay 
+                            playsInline 
+                            muted 
+                            style={{ width: '100%', height: '100%', objectFit: 'cover', transform: 'scaleX(-1)' }} 
+                          />
+                        </div>
+                        <div style={{ color: '#FFFFFF', fontSize: '0.78rem', marginTop: '0.75rem', fontWeight: '600' }}>
+                          Center your face in the circle & look directly at camera
+                        </div>
+                        <div style={{ display: 'flex', gap: '0.65rem', justifyContent: 'center', marginTop: '0.85rem' }}>
+                          <button
+                            type="button"
+                            onClick={stopCamera}
+                            style={{
+                              padding: '0.5rem 1.1rem',
+                              borderRadius: '9999px',
+                              border: '1px solid rgba(255,255,255,0.3)',
+                              backgroundColor: 'transparent',
+                              color: '#FFFFFF',
+                              fontSize: '0.8rem',
+                              fontWeight: '600',
+                              cursor: 'pointer'
+                            }}
+                          >
+                            Cancel
+                          </button>
+                          <button
+                            type="button"
+                            onClick={captureFromVideo}
+                            style={{
+                              padding: '0.55rem 1.45rem',
+                              borderRadius: '9999px',
+                              border: 'none',
+                              backgroundColor: '#10B981',
+                              color: '#FFFFFF',
+                              fontSize: '0.84rem',
+                              fontWeight: '800',
+                              cursor: 'pointer',
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              gap: '0.45rem',
+                              boxShadow: '0 4px 14px rgba(16, 185, 129, 0.4)'
+                            }}
+                          >
+                            <i className="fa-solid fa-camera" />
+                            <span>Capture Face</span>
+                          </button>
+                        </div>
+                      </div>
+                    ) : isFaceScanning ? (
+                      <div style={{
+                        border: '2px dashed #10B981',
+                        borderRadius: '20px',
+                        padding: '2rem 1rem',
+                        textAlign: 'center',
+                        backgroundColor: 'rgba(16, 185, 129, 0.06)',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        alignItems: 'center',
+                        justifyContent: 'center'
+                      }}>
+                        <div className="spinner" style={{ width: '36px', height: '36px', borderColor: 'rgba(16, 185, 129, 0.25)', borderTopColor: '#10B981', marginBottom: '0.75rem' }} />
+                        <div style={{ fontWeight: '800', fontSize: '0.88rem', color: '#10B981' }}>
+                          Analyzing Biometric Facial Geometry...
+                        </div>
+                        <div style={{ fontSize: '0.74rem', color: 'var(--text-muted)', marginTop: '3px' }}>
+                          Confirming live human subject & identity match
+                        </div>
+                      </div>
+                    ) : selfiePreview ? (
+                      <div style={{
+                        border: '1.5px solid #10B981',
+                        borderRadius: '20px',
+                        padding: '0.85rem 1rem',
+                        backgroundColor: 'rgba(16, 185, 129, 0.06)',
                         display: 'flex',
                         alignItems: 'center',
-                        justifyContent: 'center',
-                        cursor: 'pointer',
-                        fontSize: '0.75rem'
-                      }}
-                    >
-                      ✕
-                    </button>
+                        justifyContent: 'space-between',
+                        gap: '0.75rem'
+                      }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.85rem' }}>
+                          <div style={{
+                            width: '58px',
+                            height: '58px',
+                            borderRadius: '50%',
+                            overflow: 'hidden',
+                            border: '2.5px solid #10B981',
+                            boxShadow: '0 4px 12px rgba(16, 185, 129, 0.3)',
+                            flexShrink: 0
+                          }}>
+                            <img src={selfiePreview} alt="Face Verification" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                          </div>
+                          <div>
+                            <div style={{ fontSize: '0.84rem', fontWeight: '800', color: 'var(--text-main)', display: 'flex', alignItems: 'center', gap: '5px' }}>
+                              <i className="fa-solid fa-circle-check" style={{ color: '#10B981' }} />
+                              <span>Biometric Face Verified</span>
+                            </div>
+                            <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)', marginTop: '2px' }}>
+                              Face selfie matched for secure campus trading
+                            </div>
+                          </div>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setSelfiePreview(null);
+                            setStoreForm(prev => ({ ...prev, face_selfie_image: null }));
+                          }}
+                          style={{
+                            padding: '0.45rem 0.85rem',
+                            borderRadius: '9999px',
+                            border: '1px solid var(--border)',
+                            backgroundColor: 'var(--surface)',
+                            color: 'var(--text-main)',
+                            fontSize: '0.75rem',
+                            fontWeight: '700',
+                            cursor: 'pointer',
+                            flexShrink: 0
+                          }}
+                        >
+                          Retake
+                        </button>
+                      </div>
+                    ) : (
+                      <div style={{
+                        border: '2px dashed var(--primary)',
+                        borderRadius: '20px',
+                        padding: '1.25rem 1rem',
+                        textAlign: 'center',
+                        backgroundColor: 'var(--surface-alt)'
+                      }}>
+                        <div style={{
+                          width: '46px',
+                          height: '46px',
+                          borderRadius: '50%',
+                          backgroundColor: 'var(--primary-light)',
+                          color: 'var(--primary)',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          fontSize: '1.2rem',
+                          margin: '0 auto 0.65rem auto'
+                        }}>
+                          <i className="fa-solid fa-face-smile" />
+                        </div>
+                        <div style={{ fontWeight: '800', fontSize: '0.88rem', color: 'var(--text-main)' }}>
+                          Take Live Face Verification Selfie
+                        </div>
+                        <div style={{ fontSize: '0.74rem', color: 'var(--text-muted)', marginTop: '2px', marginBottom: '0.85rem' }}>
+                          Look directly at camera to verify you match your ID
+                        </div>
+                        <div style={{ display: 'flex', gap: '0.55rem', justifyContent: 'center' }}>
+                          <button
+                            type="button"
+                            onClick={startCamera}
+                            style={{
+                              padding: '0.55rem 1.15rem',
+                              borderRadius: '9999px',
+                              border: 'none',
+                              backgroundColor: 'var(--primary)',
+                              color: '#FFFFFF',
+                              fontSize: '0.8rem',
+                              fontWeight: '700',
+                              cursor: 'pointer',
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              gap: '0.4rem',
+                              boxShadow: '0 4px 10px var(--primary-light)'
+                            }}
+                          >
+                            <i className="fa-solid fa-camera" />
+                            <span>Open Camera</span>
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => selfieInputRef.current?.click()}
+                            style={{
+                              padding: '0.55rem 1rem',
+                              borderRadius: '9999px',
+                              border: '1px solid var(--border)',
+                              backgroundColor: 'var(--surface)',
+                              color: 'var(--text-main)',
+                              fontSize: '0.8rem',
+                              fontWeight: '700',
+                              cursor: 'pointer',
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              gap: '0.4rem'
+                            }}
+                          >
+                            <i className="fa-solid fa-upload" />
+                            <span>Upload Photo</span>
+                          </button>
+                        </div>
+                      </div>
+                    )}
                   </div>
-                ) : (
-                  <div 
-                    onClick={() => idCardInputRef.current?.click()}
-                    style={{
-                      border: '2px dashed var(--primary)',
-                      borderRadius: '16px',
-                      padding: '1.2rem',
-                      textAlign: 'center',
-                      backgroundColor: 'var(--surface-alt)',
-                      cursor: 'pointer'
-                    }}
-                  >
-                    <i className="fa-solid fa-camera" style={{ fontSize: '1.4rem', color: 'var(--primary)', marginBottom: '0.35rem' }} />
-                    <div style={{ fontWeight: '700', fontSize: '0.86rem', color: 'var(--text-main)' }}>
-                      Tap to Upload Student ID Card Photo
+                </>
+              ) : (
+                <>
+                  {/* ============================================================== */}
+                  {/* CAMPUS STUDENT KYC: STUDENT MATRICULATION + STUDENT ID CARD    */}
+                  {/* ============================================================== */}
+                  <div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.35rem' }}>
+                      <label className="form-label" style={{ marginBottom: 0, fontWeight: '700', fontSize: '0.84rem' }}>
+                        Student ID / Matriculation Number *
+                      </label>
+                      <span style={{ fontSize: '0.72rem', color: 'var(--primary)', fontWeight: '800' }}>
+                        KYC Required
+                      </span>
                     </div>
-                    <div style={{ fontSize: '0.74rem', color: 'var(--text-muted)', marginTop: '2px' }}>
-                      School ID card or student portal screenshot
-                    </div>
+                    <input
+                      type="text"
+                      required
+                      className="form-input"
+                      value={storeForm.student_id_number}
+                      onChange={(e) => setStoreForm(prev => ({ ...prev, student_id_number: e.target.value }))}
+                      placeholder="e.g. LCU/22/10452 or UI/21/9831"
+                    />
+                    <span style={{ fontSize: '0.74rem', color: 'var(--text-muted)', marginTop: '0.25rem', display: 'block' }}>
+                      Used to verify active student enrollment for your campus merchant badge.
+                    </span>
                   </div>
-                )}
-              </div>
 
-              {/* Campus Pickup Spot */}
+                  <div>
+                    <label className="form-label" style={{ fontWeight: '700', fontSize: '0.84rem', display: 'block', marginBottom: '0.35rem' }}>
+                      Upload Student ID Card Photo
+                    </label>
+                    <input
+                      type="file"
+                      ref={idCardInputRef}
+                      accept="image/*"
+                      onChange={handleIdCardFile}
+                      style={{ display: 'none' }}
+                    />
+
+                    {idCardPreview ? (
+                      <div style={{
+                        position: 'relative',
+                        borderRadius: '16px',
+                        overflow: 'hidden',
+                        border: '1px solid var(--border)',
+                        height: '140px',
+                        backgroundColor: 'var(--surface-alt)'
+                      }}>
+                        <img 
+                          src={idCardPreview} 
+                          alt="Student ID Preview" 
+                          style={{ width: '100%', height: '100%', objectFit: 'cover' }} 
+                        />
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setIdCardPreview(null);
+                            setStoreForm(prev => ({ ...prev, id_card_image: null }));
+                          }}
+                          style={{
+                            position: 'absolute',
+                            top: '6px',
+                            right: '6px',
+                            backgroundColor: 'rgba(239, 68, 68, 0.9)',
+                            color: '#FFFFFF',
+                            border: 'none',
+                            borderRadius: '50%',
+                            width: '26px',
+                            height: '26px',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            cursor: 'pointer',
+                            fontSize: '0.75rem'
+                          }}
+                        >
+                          ✕
+                        </button>
+                      </div>
+                    ) : (
+                      <div 
+                        onClick={() => idCardInputRef.current?.click()}
+                        style={{
+                          border: '2px dashed var(--primary)',
+                          borderRadius: '16px',
+                          padding: '1.2rem',
+                          textAlign: 'center',
+                          backgroundColor: 'var(--surface-alt)',
+                          cursor: 'pointer'
+                        }}
+                      >
+                        <i className="fa-solid fa-camera" style={{ fontSize: '1.4rem', color: 'var(--primary)', marginBottom: '0.35rem' }} />
+                        <div style={{ fontWeight: '700', fontSize: '0.86rem', color: 'var(--text-main)' }}>
+                          Tap to Upload Student ID Card Photo
+                        </div>
+                        <div style={{ fontSize: '0.74rem', color: 'var(--text-muted)', marginTop: '2px' }}>
+                          School ID card or student portal screenshot
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </>
+              )}
+
+              {/* Delivery / Hostel / Campus Pickup Spot */}
               <div>
                 <label className="form-label" style={{ fontWeight: '700', fontSize: '0.84rem', display: 'block', marginBottom: '0.35rem' }}>
-                  Hostel / Campus Pickup Spot
+                  {kycUserType === 'non_student' ? 'Store Address / Campus Delivery Meeting Spot' : 'Hostel / Campus Pickup Spot'}
                 </label>
                 <input
                   type="text"
                   className="form-input"
                   value={storeForm.business_address}
                   onChange={(e) => setStoreForm(prev => ({ ...prev, business_address: e.target.value }))}
-                  placeholder="e.g. SUB Car Park or Peace Hall Room B12"
+                  placeholder={kycUserType === 'non_student' ? 'e.g. Campus Main Gate, Off-Campus Shop #4, or Car Park' : 'e.g. SUB Car Park or Peace Hall Room B12'}
                 />
               </div>
 
               {/* WhatsApp Contact */}
               <div>
                 <label className="form-label" style={{ fontWeight: '700', fontSize: '0.84rem', display: 'block', marginBottom: '0.35rem' }}>
-                  Business WhatsApp Contact
+                  Business WhatsApp Contact *
                 </label>
                 <input
                   type="tel"
+                  required
                   className="form-input"
                   value={storeForm.business_whatsapp}
                   onChange={(e) => setStoreForm(prev => ({ ...prev, business_whatsapp: e.target.value }))}
                   placeholder="e.g. 08012345678"
                 />
+                <span style={{ fontSize: '0.74rem', color: 'var(--text-muted)', marginTop: '0.25rem', display: 'block' }}>
+                  Direct buyer inquiries will be routed to your WhatsApp.
+                </span>
               </div>
 
               {/* Instagram Handle */}
@@ -1406,7 +2043,10 @@ function Profile() {
               <div style={{ display: 'flex', gap: '0.75rem', marginTop: '0.5rem' }}>
                 <button
                   type="button"
-                  onClick={() => setShowStoreKycModal(false)}
+                  onClick={() => {
+                    stopCamera();
+                    setShowStoreKycModal(false);
+                  }}
                   style={{
                     flex: 1,
                     padding: '0.8rem',
@@ -1438,7 +2078,7 @@ function Profile() {
                     boxShadow: '0 4px 14px var(--primary-light)'
                   }}
                 >
-                  {isSavingStoreKyc ? 'Submitting KYC...' : 'Submit & Complete KYC'}
+                  {isSavingStoreKyc ? 'Verifying & Submitting...' : (kycUserType === 'non_student' ? 'Verify Merchant ID & Face' : 'Submit & Complete KYC')}
                 </button>
               </div>
             </form>
