@@ -91,14 +91,22 @@ function Auth() {
     }
   }, []);
 
+  const GOOGLE_CLIENT_ID = (import.meta.env.VITE_GOOGLE_CLIENT_ID || '').trim();
+  const isGoogleConfigured = Boolean(
+    GOOGLE_CLIENT_ID && 
+    GOOGLE_CLIENT_ID.length > 20 && 
+    GOOGLE_CLIENT_ID.includes('.apps.googleusercontent.com') && 
+    !GOOGLE_CLIENT_ID.includes('campusstash.apps.googleusercontent.com')
+  );
+
   // Initialize Google One-Tap / Google Identity Services
   useEffect(() => {
+    if (!isGoogleConfigured) return;
     const initGsi = () => {
       if (window.google?.accounts?.id) {
         try {
           window.google.accounts.id.initialize({
-            // Using a standard client ID or server client
-            client_id: "713498836545-campusstash.apps.googleusercontent.com",
+            client_id: GOOGLE_CLIENT_ID,
             callback: handleGoogleCredentialResponse,
             auto_select: false,
             cancel_on_tap_outside: true
@@ -120,7 +128,7 @@ function Auth() {
       }, 500);
       return () => clearInterval(interval);
     }
-  }, []);
+  }, [isGoogleConfigured, GOOGLE_CLIENT_ID]);
 
   const handleGoogleCredentialResponse = async (response) => {
     if (!response?.credential) return;
@@ -142,11 +150,16 @@ function Auth() {
   const handleTriggerGoogleAuth = () => {
     setError('');
 
+    if (!isGoogleConfigured) {
+      setError('Google Sign-In is awaiting your Google Cloud Client ID. Please sign in with your email or phone below!');
+      return;
+    }
+
     // 1. If Google Identity Services OAuth2 token client is available, trigger official popup
     if (window.google?.accounts?.oauth2) {
       try {
         const client = window.google.accounts.oauth2.initTokenClient({
-          client_id: "713498836545-campusstash.apps.googleusercontent.com",
+          client_id: GOOGLE_CLIENT_ID,
           scope: "email profile openid",
           callback: async (tokenResponse) => {
             if (tokenResponse?.access_token) {
@@ -202,9 +215,12 @@ function Auth() {
   };
 
   const handleGoogleOAuthRedirect = () => {
-    const clientId = "713498836545-campusstash.apps.googleusercontent.com";
+    if (!isGoogleConfigured) {
+      setError('Google Sign-In is awaiting your Google Cloud Client ID. Please sign in with your email or phone below!');
+      return;
+    }
     const redirectUri = window.location.origin + "/auth";
-    const googleAuthUrl = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${encodeURIComponent(clientId)}&redirect_uri=${encodeURIComponent(redirectUri)}&response_type=token&scope=email%20profile%20openid&prompt=select_account`;
+    const googleAuthUrl = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${encodeURIComponent(GOOGLE_CLIENT_ID)}&redirect_uri=${encodeURIComponent(redirectUri)}&response_type=token&scope=email%20profile%20openid&prompt=select_account`;
     window.location.href = googleAuthUrl;
   };
 
