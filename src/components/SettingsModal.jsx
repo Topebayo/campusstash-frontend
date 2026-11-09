@@ -321,7 +321,7 @@ function SettingsModal({ isOpen, onClose, onLogout, userProfile, onUpdateUser, d
             { id: 'account', label: 'Profile', icon: 'fa-user' },
             { id: 'security', label: 'Security', icon: 'fa-lock' },
             { id: 'notifications', label: 'Alerts', icon: 'fa-bell' },
-            { id: 'safety', label: 'Safety', icon: 'fa-shield-halved' }
+            { id: 'safety', label: 'Support', icon: 'fa-headset' }
           ].map(tab => {
             const isActive = activeTab === tab.id;
             return (
@@ -995,6 +995,94 @@ function SettingsModal({ isOpen, onClose, onLogout, userProfile, onUpdateUser, d
                   </div>
                 </div>
               ))}
+
+              {/* Direct Support Card returning to salesflowingai@gmail.com */}
+              <div style={{
+                marginTop: '0.5rem',
+                padding: '1.2rem',
+                backgroundColor: 'rgba(16, 185, 129, 0.08)',
+                borderRadius: '20px',
+                border: '1px solid rgba(16, 185, 129, 0.25)',
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '0.75rem'
+              }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                  <div style={{
+                    width: '38px',
+                    height: '38px',
+                    borderRadius: '50%',
+                    backgroundColor: '#10B981',
+                    color: '#FFFFFF',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    fontSize: '1rem',
+                    flexShrink: 0
+                  }}>
+                    <i className="fa-solid fa-headset" />
+                  </div>
+                  <div>
+                    <div style={{ fontSize: '0.92rem', fontWeight: '800', color: 'var(--text-main)' }}>
+                      Campus Support & Helpdesk
+                    </div>
+                    <div style={{ fontSize: '0.75rem', color: '#10B981', fontWeight: '700' }}>
+                      salesflowingai@gmail.com
+                    </div>
+                  </div>
+                </div>
+
+                <p style={{ margin: 0, fontSize: '0.8rem', color: 'var(--text-muted)', lineHeight: '1.45' }}>
+                  Have an issue with a listing, payment inquiry, or account help? Reach our team directly at salesflowingai@gmail.com.
+                </p>
+
+                <div style={{ display: 'flex', gap: '0.65rem' }}>
+                  <a
+                    href="mailto:salesflowingai@gmail.com?subject=CampusStash%20Support%20Inquiry"
+                    style={{
+                      flex: 1,
+                      padding: '0.65rem 1rem',
+                      borderRadius: '9999px',
+                      backgroundColor: 'var(--primary)',
+                      color: '#FFFFFF',
+                      textDecoration: 'none',
+                      fontWeight: '700',
+                      fontSize: '0.82rem',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: '0.45rem',
+                      boxShadow: '0 4px 12px var(--primary-light)'
+                    }}
+                  >
+                    <i className="fa-solid fa-envelope" />
+                    <span>Email Support</span>
+                  </a>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      navigator.clipboard?.writeText('salesflowingai@gmail.com');
+                      alert('Support email (salesflowingai@gmail.com) copied to clipboard!');
+                    }}
+                    style={{
+                      padding: '0.65rem 1rem',
+                      borderRadius: '9999px',
+                      border: '1px solid var(--border)',
+                      backgroundColor: 'var(--surface)',
+                      color: 'var(--text-main)',
+                      fontWeight: '700',
+                      fontSize: '0.82rem',
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '0.4rem'
+                    }}
+                  >
+                    <i className="fa-regular fa-copy" />
+                    <span>Copy</span>
+                  </button>
+                </div>
+              </div>
             </div>
           )}
         </div>

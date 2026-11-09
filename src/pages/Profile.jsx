@@ -139,6 +139,12 @@ function Profile() {
   const videoRef = useRef(null);
   const streamRef = useRef(null);
 
+  // Customer & Campus Support state
+  const [showSupportModal, setShowSupportModal] = useState(false);
+  const [supportTopic, setSupportTopic] = useState('General Support');
+  const [supportMessage, setSupportMessage] = useState('');
+  const [supportCopied, setSupportCopied] = useState(false);
+
   const [storeForm, setStoreForm] = useState(() => {
     try {
       const saved = localStorage.getItem('user');
@@ -914,12 +920,9 @@ function Profile() {
               <i className="fa-solid fa-chevron-right" style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }} />
             </div>
 
-            {/* Row 5: Help & Campus Safety Support */}
+            {/* Row 5: Help & Premium Support */}
             <div
-              onClick={() => {
-                setSettingsDefaultTab('safety');
-                setIsSettingsOpen(true);
-              }}
+              onClick={() => setShowSupportModal(true)}
               style={{
                 display: 'flex',
                 alignItems: 'center',
@@ -930,15 +933,30 @@ function Profile() {
             >
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.85rem' }}>
                 <div style={{ width: '32px', height: '32px', borderRadius: '50%', backgroundColor: 'var(--surface-alt)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-main)', fontSize: '0.9rem' }}>
-                  <i className="fa-regular fa-circle-question" />
+                  <i className="fa-solid fa-headset" />
                 </div>
                 <div>
                   <div style={{ fontSize: '0.92rem', fontWeight: '700', color: 'var(--text-main)' }}>
-                    Help & Campus Safety Support
+                    Help & Premium Support
+                  </div>
+                  <div style={{ fontSize: '0.74rem', color: '#10B981', marginTop: '1px', fontWeight: '600' }}>
+                    salesflowingai@gmail.com
                   </div>
                 </div>
               </div>
-              <i className="fa-solid fa-chevron-right" style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }} />
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                <span style={{
+                  fontSize: '0.72rem',
+                  fontWeight: '700',
+                  color: 'var(--primary)',
+                  backgroundColor: 'var(--primary-light)',
+                  padding: '0.2rem 0.65rem',
+                  borderRadius: '9999px'
+                }}>
+                  Support
+                </span>
+                <i className="fa-solid fa-chevron-right" style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }} />
+              </div>
             </div>
           </div>
         )}
@@ -2097,6 +2115,249 @@ function Profile() {
             setShowStorefrontModal(false);
           }}
         />
+      )}
+
+      {/* Help & Support Modal returning to salesflowingai@gmail.com */}
+      {showSupportModal && (
+        <div 
+          className="modal-overlay"
+          onClick={() => setShowSupportModal(false)}
+          style={{ zIndex: 1200 }}
+        >
+          <div 
+            className="modal-content animate-fade-in"
+            onClick={(e) => e.stopPropagation()}
+            style={{
+              backgroundColor: 'var(--surface)',
+              borderRadius: '26px',
+              width: '100%',
+              maxWidth: '480px',
+              maxHeight: '90vh',
+              overflowY: 'auto',
+              padding: '1.6rem 1.4rem',
+              boxShadow: 'var(--shadow-card)',
+              border: '1px solid var(--border)',
+              position: 'relative'
+            }}
+          >
+            {/* Modal Header */}
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1.25rem' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                <div style={{
+                  width: '42px',
+                  height: '42px',
+                  borderRadius: '50%',
+                  backgroundColor: 'rgba(16, 185, 129, 0.15)',
+                  color: '#10B981',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  fontSize: '1.2rem',
+                  flexShrink: 0
+                }}>
+                  <i className="fa-solid fa-headset" />
+                </div>
+                <div>
+                  <h3 style={{ fontSize: '1.25rem', fontWeight: '800', fontFamily: 'var(--font-display)', color: 'var(--text-main)', margin: 0 }}>
+                    Help & Support
+                  </h3>
+                  <div style={{ fontSize: '0.76rem', color: 'var(--text-muted)', marginTop: '2px' }}>
+                    Direct desk: <strong style={{ color: '#10B981' }}>salesflowingai@gmail.com</strong>
+                  </div>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowSupportModal(false)}
+                style={{
+                  background: 'var(--surface-alt)',
+                  border: 'none',
+                  borderRadius: '50%',
+                  width: '32px',
+                  height: '32px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  fontSize: '1rem',
+                  color: 'var(--text-muted)',
+                  cursor: 'pointer'
+                }}
+              >
+                <i className="fa-solid fa-xmark" />
+              </button>
+            </div>
+
+            {/* Quick Actions Card */}
+            <div style={{
+              backgroundColor: 'var(--surface-alt)',
+              borderRadius: '20px',
+              padding: '1.1rem',
+              border: '1px solid var(--border)',
+              marginBottom: '1.25rem'
+            }}>
+              <div style={{ fontSize: '0.82rem', color: 'var(--text-main)', fontWeight: '700', marginBottom: '0.4rem' }}>
+                Official Support Email
+              </div>
+              <div style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                padding: '0.65rem 0.85rem',
+                backgroundColor: 'var(--surface)',
+                borderRadius: '14px',
+                border: '1px solid var(--border)',
+                marginBottom: '0.85rem'
+              }}>
+                <span style={{ fontSize: '0.86rem', fontWeight: '700', color: 'var(--text-main)' }}>
+                  salesflowingai@gmail.com
+                </span>
+                <button
+                  type="button"
+                  onClick={() => {
+                    navigator.clipboard?.writeText('salesflowingai@gmail.com');
+                    setSupportCopied(true);
+                    setTimeout(() => setSupportCopied(false), 2500);
+                  }}
+                  style={{
+                    border: 'none',
+                    background: 'none',
+                    color: supportCopied ? '#10B981' : 'var(--primary)',
+                    fontSize: '0.78rem',
+                    fontWeight: '700',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '4px'
+                  }}
+                >
+                  <i className={`fa-solid ${supportCopied ? 'fa-check' : 'fa-copy'}`} />
+                  <span>{supportCopied ? 'Copied!' : 'Copy'}</span>
+                </button>
+              </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.65rem' }}>
+                <a
+                  href="mailto:salesflowingai@gmail.com?subject=CampusStash%20Support%20Inquiry"
+                  style={{
+                    padding: '0.75rem',
+                    borderRadius: '9999px',
+                    backgroundColor: 'var(--primary)',
+                    color: '#FFFFFF',
+                    textDecoration: 'none',
+                    fontWeight: '800',
+                    fontSize: '0.82rem',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '0.45rem',
+                    boxShadow: '0 4px 12px var(--primary-light)'
+                  }}
+                >
+                  <i className="fa-solid fa-paper-plane" />
+                  <span>Open Email App</span>
+                </a>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowSupportModal(false);
+                    setSettingsDefaultTab('safety');
+                    setIsSettingsOpen(true);
+                  }}
+                  style={{
+                    padding: '0.75rem',
+                    borderRadius: '9999px',
+                    backgroundColor: 'var(--surface)',
+                    border: '1px solid var(--border)',
+                    color: 'var(--text-main)',
+                    fontWeight: '700',
+                    fontSize: '0.82rem',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '0.45rem'
+                  }}
+                >
+                  <i className="fa-solid fa-shield-halved" />
+                  <span>Safety Rules</span>
+                </button>
+              </div>
+            </div>
+
+            {/* In-App Direct Message Form */}
+            <form
+              onSubmit={(e) => {
+                e.preventDefault();
+                const subject = encodeURIComponent(`CampusStash [${supportTopic}] from ${profile?.name || profile?.email || 'User'}`);
+                const body = encodeURIComponent(
+                  `User: ${profile?.name || ''} (${profile?.email || ''})\n` +
+                  `Campus: ${activeCampusObj?.name || 'Lead City University'}\n` +
+                  `Topic: ${supportTopic}\n\n` +
+                  `Message:\n${supportMessage}`
+                );
+                window.location.href = `mailto:salesflowingai@gmail.com?subject=${subject}&body=${body}`;
+              }}
+              style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem' }}
+            >
+              <div>
+                <label className="form-label" style={{ fontWeight: '700', fontSize: '0.84rem', display: 'block', marginBottom: '0.35rem' }}>
+                  What do you need help with?
+                </label>
+                <select
+                  className="form-input"
+                  value={supportTopic}
+                  onChange={(e) => setSupportTopic(e.target.value)}
+                  style={{ cursor: 'pointer' }}
+                >
+                  <option value="General Support">General Support & Question</option>
+                  <option value="KYC Verification">Store KYC Verification Help</option>
+                  <option value="Payment & Transaction">Payment or Listing Issue</option>
+                  <option value="Report Suspicious User">Report Suspicious Activity / Fraud</option>
+                  <option value="Campus Partnership">Campus Partnership & Feedback</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="form-label" style={{ fontWeight: '700', fontSize: '0.84rem', display: 'block', marginBottom: '0.35rem' }}>
+                  Your Message / Inquiry Details
+                </label>
+                <textarea
+                  required
+                  rows={4}
+                  className="form-input"
+                  value={supportMessage}
+                  onChange={(e) => setSupportMessage(e.target.value)}
+                  placeholder="Describe your issue or inquiry in detail..."
+                />
+              </div>
+
+              <button
+                type="submit"
+                style={{
+                  width: '100%',
+                  padding: '0.85rem',
+                  borderRadius: '9999px',
+                  border: 'none',
+                  backgroundColor: 'var(--primary)',
+                  color: '#FFFFFF',
+                  fontWeight: '800',
+                  fontSize: '0.88rem',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '0.45rem',
+                  boxShadow: '0 4px 14px var(--primary-light)',
+                  marginTop: '0.35rem'
+                }}
+              >
+                <i className="fa-solid fa-envelope" />
+                <span>Send to salesflowingai@gmail.com</span>
+              </button>
+            </form>
+          </div>
+        </div>
       )}
     </div>
   );
