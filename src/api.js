@@ -348,3 +348,29 @@ export const deleteItemRequest = async (requestId) => {
     method: 'DELETE',
   });
 };
+
+export const adminApi = {
+  getMe: () => apiFetch('/admin/me'),
+  getStats: () => apiFetch('/admin/stats'),
+  getUsers: (query = '', limit = 30, offset = 0) => {
+    const q = query ? `&query=${encodeURIComponent(query)}` : '';
+    return apiFetch(`/admin/users?limit=${limit}&offset=${offset}${q}`);
+  },
+  forceVerifyUser: (userId) => apiFetch(`/admin/users/${userId}/force-verify`, { method: 'POST' }),
+  verifyDirect: (identifier) => apiFetch('/admin/verify-direct', {
+    method: 'POST',
+    body: JSON.stringify({ identifier })
+  }),
+  getRecentOtps: (limit = 25) => apiFetch(`/admin/recent-otps?limit=${limit}`),
+  getPendingKyc: () => apiFetch('/admin/kyc/pending'),
+  approveKyc: (userId) => apiFetch(`/admin/kyc/${userId}/approve`, { method: 'POST' }),
+  rejectKyc: (userId, reason = '') => apiFetch(`/admin/kyc/${userId}/reject`, {
+    method: 'POST',
+    body: JSON.stringify({ reason })
+  }),
+  getListings: (query = '', limit = 30, offset = 0) => {
+    const q = query ? `&query=${encodeURIComponent(query)}` : '';
+    return apiFetch(`/admin/listings?limit=${limit}&offset=${offset}${q}`);
+  },
+  deleteListing: (listingId) => apiFetch(`/admin/listings/${listingId}`, { method: 'DELETE' }),
+};
