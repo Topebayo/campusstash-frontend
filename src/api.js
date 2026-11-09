@@ -352,7 +352,7 @@ export const deleteItemRequest = async (requestId) => {
 export const adminApi = {
   getMe: () => apiFetch('/admin/me'),
   getStats: () => apiFetch('/admin/stats'),
-  getUsers: (query = '', limit = 30, offset = 0) => {
+  getUsers: (query = '', limit = 100, offset = 0) => {
     const q = query ? `&query=${encodeURIComponent(query)}` : '';
     return apiFetch(`/admin/users?limit=${limit}&offset=${offset}${q}`);
   },
@@ -361,8 +361,8 @@ export const adminApi = {
     method: 'POST',
     body: JSON.stringify({ identifier })
   }),
-  getRecentOtps: (limit = 25) => apiFetch(`/admin/recent-otps?limit=${limit}`),
-  getRecentSignups: (limit = 25) => apiFetch(`/admin/recent-signups?limit=${limit}`),
+  getRecentOtps: (limit = 30) => apiFetch(`/admin/recent-otps?limit=${limit}`),
+  getRecentSignups: (limit = 50) => apiFetch(`/admin/recent-signups?limit=${limit}`),
   getPendingKyc: (status = 'all') => apiFetch(`/admin/kyc?status_filter=${status}`),
   approveKyc: (userId) => apiFetch(`/admin/kyc/${userId}/approve`, { method: 'POST' }),
   rejectKyc: (userId, reason = '') => apiFetch(`/admin/kyc/${userId}/reject`, {
