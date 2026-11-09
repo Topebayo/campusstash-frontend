@@ -313,11 +313,11 @@ function SettingsModal({ isOpen, onClose, onLogout, userProfile, onUpdateUser, d
           WebkitOverflowScrolling: 'touch',
           scrollbarWidth: 'none',
           msOverflowStyle: 'none',
-          padding: '6px 12px',
-          gap: '6px'
+          padding: '8px 12px',
+          gap: '8px'
         }}>
           {[
-            { id: 'appearance', label: 'Theme & Sync', icon: 'fa-palette' },
+            { id: 'appearance', label: 'Theme', icon: 'fa-palette' },
             { id: 'account', label: 'Profile', icon: 'fa-user' },
             { id: 'security', label: 'Security', icon: 'fa-lock' },
             { id: 'notifications', label: 'Alerts', icon: 'fa-bell' },
@@ -327,30 +327,31 @@ function SettingsModal({ isOpen, onClose, onLogout, userProfile, onUpdateUser, d
             return (
               <button
                 key={tab.id}
+                type="button"
                 onClick={() => setActiveTab(tab.id)}
                 style={{
-                  flex: 1,
-                  minWidth: '95px',
-                  padding: '0.6rem 0.65rem',
+                  flexShrink: 0,
+                  padding: '0.52rem 1.05rem',
                   border: 'none',
                   borderRadius: '9999px',
                   backgroundColor: isActive ? 'var(--primary)' : 'transparent',
                   color: isActive ? '#FFFFFF' : 'var(--text-muted)',
                   fontFamily: 'var(--font-display)',
                   fontWeight: isActive ? '800' : '600',
-                  fontSize: '0.82rem',
+                  fontSize: '0.84rem',
                   cursor: 'pointer',
-                  display: 'flex',
+                  display: 'inline-flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  gap: '0.4rem',
+                  gap: '0.45rem',
                   transition: 'all 0.18s cubic-bezier(0.16, 1, 0.3, 1)',
-                  boxShadow: isActive ? '0 3px 10px var(--primary-light)' : 'none',
-                  whiteSpace: 'nowrap'
+                  boxShadow: isActive ? '0 2px 10px rgba(10, 56, 44, 0.28)' : 'none',
+                  whiteSpace: 'nowrap',
+                  lineHeight: 1
                 }}
               >
-                <i className={`fa-solid ${tab.icon}`} />
-                <span>{tab.label}</span>
+                <i className={`fa-solid ${tab.icon}`} style={{ fontSize: '0.84rem', flexShrink: 0, lineHeight: 1 }} />
+                <span style={{ lineHeight: 1 }}>{tab.label}</span>
               </button>
             );
           })}

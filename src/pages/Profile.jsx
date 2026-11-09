@@ -652,32 +652,38 @@ function Profile() {
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'space-between',
-                padding: '1rem 1.1rem',
+                padding: '0.95rem 1.1rem',
                 borderBottom: '1px solid var(--border)',
-                cursor: 'pointer'
+                cursor: 'pointer',
+                gap: '0.75rem'
               }}
             >
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.85rem' }}>
-                <div style={{ width: '32px', height: '32px', borderRadius: '50%', backgroundColor: 'var(--surface-alt)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--primary)', fontSize: '0.9rem' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.85rem', minWidth: 0, flex: 1 }}>
+                <div style={{ width: '34px', height: '34px', borderRadius: '50%', backgroundColor: 'var(--surface-alt)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--primary)', fontSize: '0.95rem', flexShrink: 0 }}>
                   <i className="fa-solid fa-id-card" />
                 </div>
-                <div>
-                  <div style={{ fontSize: '0.92rem', fontWeight: '700', color: 'var(--text-main)' }}>
-                    Store Owner KYC Verification
+                <div style={{ minWidth: 0, flex: 1 }}>
+                  <div style={{ fontSize: '0.92rem', fontWeight: '700', color: 'var(--text-main)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                    Store Owner KYC
                   </div>
-                  <div style={{ fontSize: '0.74rem', color: 'var(--text-muted)', marginTop: '1px' }}>
+                  <div style={{ fontSize: '0.74rem', color: 'var(--text-muted)', marginTop: '1px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                     Student ID & Business credentials
                   </div>
                 </div>
               </div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexShrink: 0 }}>
                 <span style={{
                   fontSize: '0.75rem',
-                  fontWeight: '800',
+                  fontWeight: '700',
                   color: isKycVerified ? '#10B981' : 'var(--primary)',
                   backgroundColor: isKycVerified ? 'rgba(16, 185, 129, 0.12)' : 'var(--primary-light)',
-                  padding: '2px 8px',
-                  borderRadius: '9999px'
+                  padding: '0.35rem 0.75rem',
+                  borderRadius: '9999px',
+                  whiteSpace: 'nowrap',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  lineHeight: '1',
+                  flexShrink: 0
                 }}>
                   {isKycVerified ? 'Verified ✓' : 'Complete KYC'}
                 </span>
