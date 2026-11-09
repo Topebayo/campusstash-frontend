@@ -212,11 +212,59 @@ export default function AdminPage() {
     }
   };
 
-  // 4. If checking or unauthorized, render stealth 404
+  // 4. If checking or unauthorized, render gate
   if (checkingAuth) {
     return (
       <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: 'var(--bg-color)' }}>
         <i className="fa-solid fa-spinner fa-spin" style={{ fontSize: '2rem', color: '#C87A5B' }}></i>
+      </div>
+    );
+  }
+
+  // If user has no token at all, offer clean Admin Sign-In
+  const hasToken = !!localStorage.getItem('token');
+  if (!hasToken) {
+    return (
+      <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '2rem', textAlign: 'center', backgroundColor: 'var(--bg-color)', color: 'var(--text-main)', fontFamily: 'sans-serif' }}>
+        <div style={{
+          width: '56px',
+          height: '56px',
+          borderRadius: '16px',
+          backgroundColor: '#C87A5B',
+          color: '#FFF',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          fontSize: '1.5rem',
+          marginBottom: '1rem',
+          boxShadow: '0 4px 14px rgba(200, 122, 91, 0.35)'
+        }}>
+          <i className="fa-solid fa-shield-halved"></i>
+        </div>
+        <h2 style={{ fontSize: '1.4rem', fontWeight: '800', margin: '0 0 0.5rem' }}>CampusStash Admin Access</h2>
+        <p style={{ color: 'var(--text-muted)', maxWidth: '360px', marginBottom: '1.8rem', fontSize: '0.9rem', lineHeight: '1.45' }}>
+          Please sign in with your authorized administrator account to access the command center.
+        </p>
+        <button
+          onClick={() => navigate('/auth?redirect=/admin')}
+          style={{
+            backgroundColor: '#C87A5B',
+            color: '#FFF',
+            border: 'none',
+            padding: '0.85rem 1.8rem',
+            borderRadius: '9999px',
+            fontWeight: '800',
+            fontSize: '0.92rem',
+            cursor: 'pointer',
+            boxShadow: '0 4px 14px rgba(200, 122, 91, 0.3)',
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: '0.5rem',
+          }}
+        >
+          <i className="fa-brands fa-google"></i>
+          Sign In with Admin Account
+        </button>
       </div>
     );
   }
@@ -229,12 +277,23 @@ export default function AdminPage() {
         <p style={{ color: '#78716C', maxWidth: '360px', marginBottom: '2rem', fontSize: '0.95rem' }}>
           The page you requested could not be found or you do not have permission to view it.
         </p>
-        <button
-          onClick={() => navigate('/dashboard')}
-          style={{ backgroundColor: '#C87A5B', color: '#FFF', border: 'none', padding: '0.8rem 1.8rem', borderRadius: '9999px', fontWeight: '700', cursor: 'pointer', boxShadow: '0 4px 14px rgba(200, 122, 91, 0.3)' }}
-        >
-          Return to Dashboard
-        </button>
+        <div style={{ display: 'flex', gap: '0.75rem' }}>
+          <button
+            onClick={() => navigate('/dashboard')}
+            style={{ backgroundColor: 'var(--surface-alt)', color: 'var(--text-main)', border: '1px solid var(--border)', padding: '0.75rem 1.4rem', borderRadius: '9999px', fontWeight: '700', cursor: 'pointer' }}
+          >
+            Storefront
+          </button>
+          <button
+            onClick={() => {
+              localStorage.removeItem('token');
+              navigate('/auth?redirect=/admin');
+            }}
+            style={{ backgroundColor: '#C87A5B', color: '#FFF', border: 'none', padding: '0.75rem 1.4rem', borderRadius: '9999px', fontWeight: '700', cursor: 'pointer' }}
+          >
+            Switch Account
+          </button>
+        </div>
       </div>
     );
   }
@@ -998,3 +1057,4 @@ const statSubStyle = {
   color: 'var(--text-muted)',
   marginTop: '0.25rem',
 };
+
