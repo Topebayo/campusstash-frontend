@@ -29,6 +29,49 @@ const GOVERNMENT_ID_TYPES = [
   { id: 'national_id', name: 'Other Government / State Issued ID', placeholder: 'e.g. Official Government ID No.' }
 ];
 
+// High-speed client-side image compression to prevent mobile upload timeouts and 413 payload errors
+const compressImage = (file, maxWidth = 900, maxHeight = 900, quality = 0.8) => {
+  return new Promise((resolve, reject) => {
+    if (!file) return resolve(null);
+    if (!file.type || !file.type.startsWith('image/')) {
+      const reader = new FileReader();
+      reader.onload = (e) => resolve(e.target.result);
+      reader.onerror = reject;
+      reader.readAsDataURL(file);
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const img = new Image();
+      img.onload = () => {
+        let width = img.width;
+        let height = img.height;
+        if (width > height) {
+          if (width > maxWidth) {
+            height = Math.round((height * maxWidth) / width);
+            width = maxWidth;
+          }
+        } else {
+          if (height > maxHeight) {
+            width = Math.round((width * maxHeight) / height);
+            height = maxHeight;
+          }
+        }
+        const canvas = document.createElement('canvas');
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0, width, height);
+        resolve(canvas.toDataURL('image/jpeg', quality));
+      };
+      img.onerror = () => resolve(event.target.result);
+      img.src = event.target.result;
+    };
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+};
+
 function Profile() {
   const navigate = useNavigate();
   const location = useLocation();
@@ -133,7 +176,8 @@ function Profile() {
 
   // Biometric Face Verification state
   const [selfiePreview, setSelfiePreview] = useState(null);
-  const selfieInputRef = useRef(null);
+  const selfieCameraInputRef = useRef(null);
+  const selfieGalleryInputRef = useRef(null);
   const [isFaceScanning, setIsFaceScanning] = useState(false);
   const [cameraStreamActive, setCameraStreamActive] = useState(false);
   const videoRef = useRef(null);
@@ -309,11 +353,12 @@ function Profile() {
   };
 
   const startCamera = async () => {
+    // If running on mobile or camera stream is unavailable, trigger native camera immediately
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+      selfieCameraInputRef.current?.click();
+      return;
+    }
     try {
-      if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-        selfieInputRef.current?.click();
-        return;
-      }
       const stream = await navigator.mediaDevices.getUserMedia({
         video: { facingMode: 'user', width: { ideal: 640 }, height: { ideal: 640 } },
         audio: false
@@ -321,8 +366,8 @@ function Profile() {
       streamRef.current = stream;
       setCameraStreamActive(true);
     } catch (err) {
-      console.warn('Live camera access error, falling back to file selfie picker:', err);
-      selfieInputRef.current?.click();
+      console.warn('Live camera stream unavailable, opening native camera:', err);
+      selfieCameraInputRef.current?.click();
     }
   };
 
@@ -334,7 +379,7 @@ function Profile() {
     canvas.height = video.videoHeight || 480;
     const ctx = canvas.getContext('2d');
     ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-    const base64 = canvas.toDataURL('image/jpeg', 0.85);
+    const base64 = canvas.toDataURL('image/jpeg', 0.82);
 
     stopCamera();
     setIsFaceScanning(true);
@@ -342,41 +387,44 @@ function Profile() {
       setSelfiePreview(base64);
       setStoreForm(prev => ({ ...prev, face_selfie_image: base64 }));
       setIsFaceScanning(false);
-    }, 850);
+    }, 700);
   };
 
-  const handleSelfieFile = (e) => {
+  const handleSelfieFile = async (e) => {
     const file = e.target.files?.[0];
     if (file) {
-      setIsFaceScanning(true);
       setStoreKycError('');
-      const reader = new FileReader();
-      reader.onload = (uploadEvent) => {
-        const base64 = uploadEvent.target.result;
+      setIsFaceScanning(true);
+      try {
+        const compressed = await compressImage(file, 640, 640, 0.82);
         setTimeout(() => {
-          setSelfiePreview(base64);
-          setStoreForm(prev => ({ ...prev, face_selfie_image: base64 }));
+          setSelfiePreview(compressed);
+          setStoreForm(prev => ({ ...prev, face_selfie_image: compressed }));
           setIsFaceScanning(false);
-        }, 850);
-      };
-      reader.onerror = () => {
+        }, 700);
+      } catch (err) {
         setIsFaceScanning(false);
-        setStoreKycError('Failed to read image. Please try another photo.');
-      };
-      reader.readAsDataURL(file);
+        console.error('Selfie processing error:', err);
+        setStoreKycError('Could not process selfie photo. Please try again.');
+      }
+      // Reset input value so same photo can be re-selected if retrying
+      if (e.target) e.target.value = '';
     }
   };
 
-  const handleIdCardFile = (e) => {
+  const handleIdCardFile = async (e) => {
     const file = e.target.files?.[0];
     if (file) {
-      const reader = new FileReader();
-      reader.onload = (uploadEvent) => {
-        const base64 = uploadEvent.target.result;
-        setIdCardPreview(base64);
-        setStoreForm(prev => ({ ...prev, id_card_image: base64 }));
-      };
-      reader.readAsDataURL(file);
+      setStoreKycError('');
+      try {
+        const compressed = await compressImage(file, 900, 900, 0.8);
+        setIdCardPreview(compressed);
+        setStoreForm(prev => ({ ...prev, id_card_image: compressed }));
+      } catch (err) {
+        console.error('ID Card processing error:', err);
+        setStoreKycError('Could not process ID document image. Please try again.');
+      }
+      if (e.target) e.target.value = '';
     }
   };
 
@@ -384,28 +432,31 @@ function Profile() {
     if (e) e.preventDefault();
     setStoreKycError('');
 
-    if (!storeForm.business_name || !storeForm.business_name.trim()) {
-      setStoreKycError('Real Business / Store Name is required.');
+    const bName = String(storeForm.business_name || '').trim();
+    if (!bName) {
+      setStoreKycError('Official Store / Brand Name is required.');
       return;
     }
 
     if (kycUserType === 'non_student') {
-      if (!storeForm.id_number || !storeForm.id_number.trim()) {
+      const idNum = String(storeForm.id_number || '').trim();
+      if (!idNum) {
         const idLabel = GOVERNMENT_ID_TYPES.find(t => t.id === storeForm.id_type)?.name || 'Government ID';
         setStoreKycError(`${idLabel} Number is required for outsider verification.`);
         return;
       }
       if (!storeForm.id_card_image) {
-        setStoreKycError('Please upload a clear photo of your Government ID document/card.');
+        setStoreKycError('Please upload a clear photo of your Government ID document/slip.');
         return;
       }
       if (!storeForm.face_selfie_image) {
-        setStoreKycError('Biometric Face Verification selfie is required for non-student verification.');
+        setStoreKycError('Biometric Face Verification selfie is required for outsider verification.');
         return;
       }
     } else {
-      if (!storeForm.student_id_number || !storeForm.student_id_number.trim()) {
-        setStoreKycError('Student Matriculation / Student ID Number is required for KYC.');
+      const studentId = String(storeForm.student_id_number || '').trim();
+      if (!studentId) {
+        setStoreKycError('Student Matriculation / Student ID Number is required for student KYC.');
         return;
       }
     }
@@ -413,16 +464,16 @@ function Profile() {
     setIsSavingStoreKyc(true);
     try {
       const payload = {
-        business_name: storeForm.business_name.trim(),
-        business_category: storeForm.business_category,
+        business_name: bName,
+        business_category: storeForm.business_category || 'General Variety Store',
         user_type: kycUserType,
-        student_id_number: kycUserType === 'student' ? storeForm.student_id_number.trim() : null,
+        student_id_number: kycUserType === 'student' ? String(storeForm.student_id_number || '').trim() : null,
         id_type: kycUserType === 'non_student' ? (storeForm.id_type || 'nin') : 'student_id',
-        id_number: kycUserType === 'non_student' ? storeForm.id_number.trim() : (storeForm.student_id_number?.trim() || null),
-        business_description: storeForm.business_description ? storeForm.business_description.trim() : '',
-        business_address: storeForm.business_address ? storeForm.business_address.trim() : '',
-        business_whatsapp: storeForm.business_whatsapp ? storeForm.business_whatsapp.trim() : '',
-        business_instagram: storeForm.business_instagram ? storeForm.business_instagram.trim() : '',
+        id_number: kycUserType === 'non_student' ? String(storeForm.id_number || '').trim() : (String(storeForm.student_id_number || '').trim() || null),
+        business_description: String(storeForm.business_description || '').trim(),
+        business_address: String(storeForm.business_address || '').trim(),
+        business_whatsapp: String(storeForm.business_whatsapp || '').trim(),
+        business_instagram: String(storeForm.business_instagram || '').trim().replace(/^@/, ''),
         id_card_image: storeForm.id_card_image || null,
         face_selfie_image: storeForm.face_selfie_image || null
       };
@@ -443,7 +494,7 @@ function Profile() {
     }
   };
 
-  const isStore = profile?.account_type === 'store';
+    const isStore = profile?.account_type === 'store';
   const isKycVerified = profile?.kyc_status === 'verified';
 
   const displayName = profile?.profile?.burner_handle 
@@ -1322,29 +1373,30 @@ function Profile() {
             stopCamera();
             setShowStoreKycModal(false);
           }} 
-          style={{ zIndex: 1200 }}
+          style={{ zIndex: 1200, padding: '0.75rem' }}
         >
           <div 
             className="modal-content animate-fade-in"
             onClick={(e) => e.stopPropagation()}
             style={{
               backgroundColor: 'var(--surface)',
-              borderRadius: '26px',
+              borderRadius: '24px',
               width: '100%',
-              maxWidth: '520px',
-              maxHeight: '92vh',
+              maxWidth: '480px',
+              maxHeight: '88vh',
               overflowY: 'auto',
-              padding: '1.6rem 1.4rem',
+              padding: '1.35rem 1.15rem',
               boxShadow: 'var(--shadow-card)',
               border: '1px solid var(--border)',
+              boxSizing: 'border-box',
               position: 'relative'
             }}
           >
             {/* Modal Header */}
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1.15rem' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1rem' }}>
               <div>
                 <span style={{
-                  fontSize: '0.72rem',
+                  fontSize: '0.7rem',
                   fontWeight: '800',
                   color: 'var(--primary)',
                   textTransform: 'uppercase',
@@ -1352,7 +1404,7 @@ function Profile() {
                 }}>
                   Merchant Onboarding & KYC
                 </span>
-                <h3 style={{ fontSize: '1.35rem', fontWeight: '800', fontFamily: 'var(--font-display)', color: 'var(--text-main)', margin: '0.2rem 0 0 0' }}>
+                <h3 style={{ fontSize: '1.25rem', fontWeight: '800', fontFamily: 'var(--font-display)', color: 'var(--text-main)', margin: '0.15rem 0 0 0' }}>
                   Store Owner Verification
                 </h3>
               </div>
@@ -1371,7 +1423,7 @@ function Profile() {
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  fontSize: '1rem',
+                  fontSize: '0.95rem',
                   color: 'var(--text-muted)',
                   cursor: 'pointer'
                 }}
@@ -1384,10 +1436,10 @@ function Profile() {
               <div style={{
                 backgroundColor: 'rgba(239, 68, 68, 0.12)',
                 color: '#EF4444',
-                padding: '0.75rem 1rem',
-                borderRadius: '14px',
-                fontSize: '0.84rem',
-                marginBottom: '1rem',
+                padding: '0.7rem 0.9rem',
+                borderRadius: '12px',
+                fontSize: '0.82rem',
+                marginBottom: '0.9rem',
                 fontWeight: '600',
                 display: 'flex',
                 alignItems: 'center',
@@ -1398,17 +1450,17 @@ function Profile() {
               </div>
             )}
 
-            <form onSubmit={handleSaveStoreKyc} style={{ display: 'flex', flexDirection: 'column', gap: '1.1rem' }}>
+            <form onSubmit={handleSaveStoreKyc} style={{ display: 'flex', flexDirection: 'column', gap: '0.95rem' }}>
               {/* Segmented Pill Selector: Student vs I'm not a student */}
               <div>
-                <label className="form-label" style={{ fontWeight: '700', fontSize: '0.84rem', display: 'block', marginBottom: '0.45rem' }}>
+                <label className="form-label" style={{ fontWeight: '700', fontSize: '0.82rem', display: 'block', marginBottom: '0.35rem' }}>
                   I am registering as: *
                 </label>
                 <div style={{
                   display: 'grid',
                   gridTemplateColumns: '1fr 1fr',
                   backgroundColor: 'var(--surface-alt)',
-                  padding: '4px',
+                  padding: '3px',
                   borderRadius: '9999px',
                   gap: '4px',
                   border: '1px solid var(--border)'
@@ -1420,18 +1472,18 @@ function Profile() {
                       setStoreKycError('');
                     }}
                     style={{
-                      padding: '0.65rem 0.5rem',
+                      padding: '0.6rem 0.4rem',
                       borderRadius: '9999px',
                       border: 'none',
                       backgroundColor: kycUserType === 'student' ? 'var(--primary)' : 'transparent',
                       color: kycUserType === 'student' ? '#FFFFFF' : 'var(--text-muted)',
                       fontWeight: '700',
-                      fontSize: '0.82rem',
+                      fontSize: '0.8rem',
                       cursor: 'pointer',
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',
-                      gap: '0.45rem',
+                      gap: '0.35rem',
                       transition: 'all 0.15s ease'
                     }}
                   >
@@ -1445,18 +1497,18 @@ function Profile() {
                       setStoreKycError('');
                     }}
                     style={{
-                      padding: '0.65rem 0.5rem',
+                      padding: '0.6rem 0.4rem',
                       borderRadius: '9999px',
                       border: 'none',
                       backgroundColor: kycUserType === 'non_student' ? 'var(--primary)' : 'transparent',
                       color: kycUserType === 'non_student' ? '#FFFFFF' : 'var(--text-muted)',
                       fontWeight: '700',
-                      fontSize: '0.82rem',
+                      fontSize: '0.8rem',
                       cursor: 'pointer',
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',
-                      gap: '0.45rem',
+                      gap: '0.35rem',
                       transition: 'all 0.15s ease'
                     }}
                   >
@@ -1470,33 +1522,33 @@ function Profile() {
               {kycUserType === 'non_student' && (
                 <div style={{
                   backgroundColor: 'rgba(16, 185, 129, 0.08)',
-                  border: '1px solid rgba(16, 185, 129, 0.25)',
-                  borderRadius: '16px',
-                  padding: '0.85rem 1rem',
+                  border: '1px solid rgba(16, 185, 129, 0.22)',
+                  borderRadius: '14px',
+                  padding: '0.75rem 0.9rem',
                   display: 'flex',
-                  gap: '0.65rem',
+                  gap: '0.6rem',
                   alignItems: 'flex-start'
                 }}>
-                  <i className="fa-solid fa-shield-halved" style={{ color: '#10B981', fontSize: '1.15rem', marginTop: '2px' }} />
-                  <div style={{ fontSize: '0.78rem', color: 'var(--text-main)', lineHeight: '1.45' }}>
-                    <strong style={{ color: '#10B981', display: 'block', marginBottom: '2px' }}>
-                      Campus Safety & Outsider Security Check
+                  <i className="fa-solid fa-shield-halved" style={{ color: '#10B981', fontSize: '1.05rem', marginTop: '2px' }} />
+                  <div style={{ fontSize: '0.76rem', color: 'var(--text-main)', lineHeight: '1.4' }}>
+                    <strong style={{ color: '#10B981', display: 'block', marginBottom: '1px' }}>
+                      Campus Safety & Security Verification
                     </strong>
-                    To protect students and eliminate illicit dealings, outsider merchants must submit a verified Government ID and complete live biometric face scanning before selling on campus.
+                    Outsider merchants must provide valid Government ID and a live face verification photo to prevent fraud and illegal campus activities.
                   </div>
                 </div>
               )}
 
               {/* Official Store Name */}
               <div>
-                <label className="form-label" style={{ fontWeight: '700', fontSize: '0.84rem', display: 'block', marginBottom: '0.35rem' }}>
+                <label className="form-label" style={{ fontWeight: '700', fontSize: '0.82rem', display: 'block', marginBottom: '0.3rem' }}>
                   Official Store / Brand Name *
                 </label>
                 <input
                   type="text"
                   required
                   className="form-input"
-                  value={storeForm.business_name}
+                  value={storeForm.business_name || ''}
                   onChange={(e) => setStoreForm(prev => ({ ...prev, business_name: e.target.value }))}
                   placeholder="e.g. Kev's Campus Thrifts"
                 />
@@ -1504,12 +1556,12 @@ function Profile() {
 
               {/* Business Category */}
               <div>
-                <label className="form-label" style={{ fontWeight: '700', fontSize: '0.84rem', display: 'block', marginBottom: '0.35rem' }}>
+                <label className="form-label" style={{ fontWeight: '700', fontSize: '0.82rem', display: 'block', marginBottom: '0.3rem' }}>
                   Business Category *
                 </label>
                 <select
                   className="form-input"
-                  value={storeForm.business_category}
+                  value={storeForm.business_category || 'Fashion & Thrift'}
                   onChange={(e) => setStoreForm(prev => ({ ...prev, business_category: e.target.value }))}
                   style={{ cursor: 'pointer' }}
                 >
@@ -1519,14 +1571,11 @@ function Profile() {
                 </select>
               </div>
 
-              {/* ============================================================== */}
-              {/* NON-STUDENT KYC: GOVERNMENT ID + DOCUMENT + FACE VERIFICATION */}
-              {/* ============================================================== */}
+              {/* NON-STUDENT KYC FIELDS */}
               {kycUserType === 'non_student' ? (
                 <>
-                  {/* Government ID Type Selector */}
                   <div>
-                    <label className="form-label" style={{ fontWeight: '700', fontSize: '0.84rem', display: 'block', marginBottom: '0.35rem' }}>
+                    <label className="form-label" style={{ fontWeight: '700', fontSize: '0.82rem', display: 'block', marginBottom: '0.3rem' }}>
                       Government ID Document Type *
                     </label>
                     <select
@@ -1541,13 +1590,12 @@ function Profile() {
                     </select>
                   </div>
 
-                  {/* Government ID Number */}
                   <div>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.35rem' }}>
-                      <label className="form-label" style={{ marginBottom: 0, fontWeight: '700', fontSize: '0.84rem' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.3rem' }}>
+                      <label className="form-label" style={{ marginBottom: 0, fontWeight: '700', fontSize: '0.82rem' }}>
                         {(GOVERNMENT_ID_TYPES.find(t => t.id === storeForm.id_type)?.name || 'Government ID')} Number *
                       </label>
-                      <span style={{ fontSize: '0.72rem', color: '#10B981', fontWeight: '800' }}>
+                      <span style={{ fontSize: '0.7rem', color: '#10B981', fontWeight: '800' }}>
                         Required
                       </span>
                     </div>
@@ -1561,10 +1609,10 @@ function Profile() {
                     />
                   </div>
 
-                  {/* Government ID Document / Card Upload */}
+                  {/* ID Document Card Upload */}
                   <div>
-                    <label className="form-label" style={{ fontWeight: '700', fontSize: '0.84rem', display: 'block', marginBottom: '0.35rem' }}>
-                      Upload Government ID Card / Slip *
+                    <label className="form-label" style={{ fontWeight: '700', fontSize: '0.82rem', display: 'block', marginBottom: '0.3rem' }}>
+                      Upload Government ID Card / Slip Photo *
                     </label>
                     <input
                       type="file"
@@ -1580,7 +1628,7 @@ function Profile() {
                         borderRadius: '16px',
                         overflow: 'hidden',
                         border: '1.5px solid #10B981',
-                        height: '145px',
+                        height: '135px',
                         backgroundColor: 'var(--surface-alt)'
                       }}>
                         <img 
@@ -1590,17 +1638,17 @@ function Profile() {
                         />
                         <div style={{
                           position: 'absolute',
-                          bottom: '8px',
-                          left: '8px',
-                          backgroundColor: 'rgba(0,0,0,0.72)',
+                          bottom: '6px',
+                          left: '6px',
+                          backgroundColor: 'rgba(0,0,0,0.75)',
                           color: '#FFFFFF',
-                          padding: '3px 9px',
+                          padding: '3px 8px',
                           borderRadius: '9999px',
-                          fontSize: '0.72rem',
+                          fontSize: '0.7rem',
                           fontWeight: '700',
                           display: 'flex',
                           alignItems: 'center',
-                          gap: '5px'
+                          gap: '4px'
                         }}>
                           <i className="fa-solid fa-circle-check" style={{ color: '#10B981' }} />
                           <span>Government ID Attached</span>
@@ -1613,19 +1661,19 @@ function Profile() {
                           }}
                           style={{
                             position: 'absolute',
-                            top: '8px',
-                            right: '8px',
+                            top: '6px',
+                            right: '6px',
                             backgroundColor: 'rgba(239, 68, 68, 0.9)',
                             color: '#FFFFFF',
                             border: 'none',
                             borderRadius: '50%',
-                            width: '28px',
-                            height: '28px',
+                            width: '26px',
+                            height: '26px',
                             display: 'flex',
                             alignItems: 'center',
                             justifyContent: 'center',
                             cursor: 'pointer',
-                            fontSize: '0.8rem'
+                            fontSize: '0.75rem'
                           }}
                         >
                           ✕
@@ -1637,39 +1685,47 @@ function Profile() {
                         style={{
                           border: '2px dashed var(--primary)',
                           borderRadius: '16px',
-                          padding: '1.2rem',
+                          padding: '1rem',
                           textAlign: 'center',
                           backgroundColor: 'var(--surface-alt)',
                           cursor: 'pointer'
                         }}
                       >
-                        <i className="fa-solid fa-id-card" style={{ fontSize: '1.5rem', color: 'var(--primary)', marginBottom: '0.35rem' }} />
-                        <div style={{ fontWeight: '700', fontSize: '0.86rem', color: 'var(--text-main)' }}>
-                          Tap to Upload Government ID Document / Slip
+                        <i className="fa-solid fa-id-card" style={{ fontSize: '1.35rem', color: 'var(--primary)', marginBottom: '0.3rem' }} />
+                        <div style={{ fontWeight: '700', fontSize: '0.84rem', color: 'var(--text-main)' }}>
+                          Tap to Upload Government ID Card / Slip
                         </div>
-                        <div style={{ fontSize: '0.74rem', color: 'var(--text-muted)', marginTop: '2px' }}>
+                        <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)', marginTop: '2px' }}>
                           NIN slip, voter card, driver license, or passport page
                         </div>
                       </div>
                     )}
                   </div>
 
-                  {/* Biometric Face Verification System */}
+                  {/* Biometric Face Verification */}
                   <div>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.35rem' }}>
-                      <label className="form-label" style={{ marginBottom: 0, fontWeight: '700', fontSize: '0.84rem' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.3rem' }}>
+                      <label className="form-label" style={{ marginBottom: 0, fontWeight: '700', fontSize: '0.82rem' }}>
                         Biometric Face Verification *
                       </label>
-                      <span style={{ fontSize: '0.72rem', color: '#10B981', fontWeight: '800', display: 'flex', alignItems: 'center', gap: '3px' }}>
+                      <span style={{ fontSize: '0.7rem', color: '#10B981', fontWeight: '800', display: 'flex', alignItems: 'center', gap: '3px' }}>
                         <i className="fa-solid fa-camera" /> Anti-Fraud Check
                       </span>
                     </div>
 
+                    {/* Hidden Native Camera & Gallery Inputs */}
                     <input
                       type="file"
-                      ref={selfieInputRef}
+                      ref={selfieCameraInputRef}
                       accept="image/*"
                       capture="user"
+                      onChange={handleSelfieFile}
+                      style={{ display: 'none' }}
+                    />
+                    <input
+                      type="file"
+                      ref={selfieGalleryInputRef}
+                      accept="image/*"
                       onChange={handleSelfieFile}
                       style={{ display: 'none' }}
                     />
@@ -1677,22 +1733,21 @@ function Profile() {
                     {cameraStreamActive ? (
                       <div style={{
                         position: 'relative',
-                        borderRadius: '20px',
+                        borderRadius: '18px',
                         overflow: 'hidden',
                         backgroundColor: '#000000',
                         textAlign: 'center',
                         border: '2px solid #10B981',
-                        padding: '1rem 0.5rem'
+                        padding: '0.75rem 0.5rem'
                       }}>
                         <div style={{
                           position: 'relative',
-                          width: '210px',
-                          height: '210px',
+                          width: '190px',
+                          height: '190px',
                           margin: '0 auto',
                           borderRadius: '50%',
                           overflow: 'hidden',
-                          border: '3px dashed #10B981',
-                          boxShadow: '0 0 20px rgba(16, 185, 129, 0.4)'
+                          border: '3px dashed #10B981'
                         }}>
                           <video 
                             ref={videoRef} 
@@ -1702,20 +1757,20 @@ function Profile() {
                             style={{ width: '100%', height: '100%', objectFit: 'cover', transform: 'scaleX(-1)' }} 
                           />
                         </div>
-                        <div style={{ color: '#FFFFFF', fontSize: '0.78rem', marginTop: '0.75rem', fontWeight: '600' }}>
-                          Center your face in the circle & look directly at camera
+                        <div style={{ color: '#FFFFFF', fontSize: '0.76rem', marginTop: '0.6rem', fontWeight: '600' }}>
+                          Look directly at camera & align face
                         </div>
-                        <div style={{ display: 'flex', gap: '0.65rem', justifyContent: 'center', marginTop: '0.85rem' }}>
+                        <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'center', marginTop: '0.75rem' }}>
                           <button
                             type="button"
                             onClick={stopCamera}
                             style={{
-                              padding: '0.5rem 1.1rem',
+                              padding: '0.45rem 1rem',
                               borderRadius: '9999px',
                               border: '1px solid rgba(255,255,255,0.3)',
                               backgroundColor: 'transparent',
                               color: '#FFFFFF',
-                              fontSize: '0.8rem',
+                              fontSize: '0.78rem',
                               fontWeight: '600',
                               cursor: 'pointer'
                             }}
@@ -1726,18 +1781,17 @@ function Profile() {
                             type="button"
                             onClick={captureFromVideo}
                             style={{
-                              padding: '0.55rem 1.45rem',
+                              padding: '0.5rem 1.3rem',
                               borderRadius: '9999px',
                               border: 'none',
                               backgroundColor: '#10B981',
                               color: '#FFFFFF',
-                              fontSize: '0.84rem',
+                              fontSize: '0.82rem',
                               fontWeight: '800',
                               cursor: 'pointer',
                               display: 'inline-flex',
                               alignItems: 'center',
-                              gap: '0.45rem',
-                              boxShadow: '0 4px 14px rgba(16, 185, 129, 0.4)'
+                              gap: '0.4rem'
                             }}
                           >
                             <i className="fa-solid fa-camera" />
@@ -1748,8 +1802,8 @@ function Profile() {
                     ) : isFaceScanning ? (
                       <div style={{
                         border: '2px dashed #10B981',
-                        borderRadius: '20px',
-                        padding: '2rem 1rem',
+                        borderRadius: '18px',
+                        padding: '1.75rem 1rem',
                         textAlign: 'center',
                         backgroundColor: 'rgba(16, 185, 129, 0.06)',
                         display: 'flex',
@@ -1757,44 +1811,44 @@ function Profile() {
                         alignItems: 'center',
                         justifyContent: 'center'
                       }}>
-                        <div className="spinner" style={{ width: '36px', height: '36px', borderColor: 'rgba(16, 185, 129, 0.25)', borderTopColor: '#10B981', marginBottom: '0.75rem' }} />
-                        <div style={{ fontWeight: '800', fontSize: '0.88rem', color: '#10B981' }}>
-                          Analyzing Biometric Facial Geometry...
+                        <div className="spinner" style={{ width: '32px', height: '32px', borderColor: 'rgba(16, 185, 129, 0.25)', borderTopColor: '#10B981', marginBottom: '0.65rem' }} />
+                        <div style={{ fontWeight: '800', fontSize: '0.84rem', color: '#10B981' }}>
+                          Verifying Face Biometrics...
                         </div>
-                        <div style={{ fontSize: '0.74rem', color: 'var(--text-muted)', marginTop: '3px' }}>
-                          Confirming live human subject & identity match
+                        <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)', marginTop: '2px' }}>
+                          Confirming live identity check
                         </div>
                       </div>
                     ) : selfiePreview ? (
                       <div style={{
                         border: '1.5px solid #10B981',
-                        borderRadius: '20px',
-                        padding: '0.85rem 1rem',
+                        borderRadius: '18px',
+                        padding: '0.75rem 0.9rem',
                         backgroundColor: 'rgba(16, 185, 129, 0.06)',
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'space-between',
-                        gap: '0.75rem'
+                        gap: '0.65rem'
                       }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.85rem' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
                           <div style={{
-                            width: '58px',
-                            height: '58px',
+                            width: '52px',
+                            height: '52px',
                             borderRadius: '50%',
                             overflow: 'hidden',
                             border: '2.5px solid #10B981',
-                            boxShadow: '0 4px 12px rgba(16, 185, 129, 0.3)',
+                            boxShadow: '0 4px 10px rgba(16, 185, 129, 0.25)',
                             flexShrink: 0
                           }}>
                             <img src={selfiePreview} alt="Face Verification" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                           </div>
                           <div>
-                            <div style={{ fontSize: '0.84rem', fontWeight: '800', color: 'var(--text-main)', display: 'flex', alignItems: 'center', gap: '5px' }}>
+                            <div style={{ fontSize: '0.82rem', fontWeight: '800', color: 'var(--text-main)', display: 'flex', alignItems: 'center', gap: '4px' }}>
                               <i className="fa-solid fa-circle-check" style={{ color: '#10B981' }} />
                               <span>Biometric Face Verified</span>
                             </div>
-                            <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)', marginTop: '2px' }}>
-                              Face selfie matched for secure campus trading
+                            <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)', marginTop: '2px' }}>
+                              Face selfie matched against ID
                             </div>
                           </div>
                         </div>
@@ -1805,12 +1859,12 @@ function Profile() {
                             setStoreForm(prev => ({ ...prev, face_selfie_image: null }));
                           }}
                           style={{
-                            padding: '0.45rem 0.85rem',
+                            padding: '0.4rem 0.75rem',
                             borderRadius: '9999px',
                             border: '1px solid var(--border)',
                             backgroundColor: 'var(--surface)',
                             color: 'var(--text-main)',
-                            fontSize: '0.75rem',
+                            fontSize: '0.72rem',
                             fontWeight: '700',
                             cursor: 'pointer',
                             flexShrink: 0
@@ -1822,42 +1876,42 @@ function Profile() {
                     ) : (
                       <div style={{
                         border: '2px dashed var(--primary)',
-                        borderRadius: '20px',
-                        padding: '1.25rem 1rem',
+                        borderRadius: '18px',
+                        padding: '1.1rem 0.9rem',
                         textAlign: 'center',
                         backgroundColor: 'var(--surface-alt)'
                       }}>
                         <div style={{
-                          width: '46px',
-                          height: '46px',
+                          width: '42px',
+                          height: '42px',
                           borderRadius: '50%',
                           backgroundColor: 'var(--primary-light)',
                           color: 'var(--primary)',
                           display: 'flex',
                           alignItems: 'center',
                           justifyContent: 'center',
-                          fontSize: '1.2rem',
-                          margin: '0 auto 0.65rem auto'
+                          fontSize: '1.1rem',
+                          margin: '0 auto 0.5rem auto'
                         }}>
                           <i className="fa-solid fa-face-smile" />
                         </div>
-                        <div style={{ fontWeight: '800', fontSize: '0.88rem', color: 'var(--text-main)' }}>
+                        <div style={{ fontWeight: '800', fontSize: '0.84rem', color: 'var(--text-main)' }}>
                           Take Live Face Verification Selfie
                         </div>
-                        <div style={{ fontSize: '0.74rem', color: 'var(--text-muted)', marginTop: '2px', marginBottom: '0.85rem' }}>
-                          Look directly at camera to verify you match your ID
+                        <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)', marginTop: '2px', marginBottom: '0.75rem' }}>
+                          Look directly at camera to verify you match your Government ID
                         </div>
-                        <div style={{ display: 'flex', gap: '0.55rem', justifyContent: 'center' }}>
+                        <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'center' }}>
                           <button
                             type="button"
-                            onClick={startCamera}
+                            onClick={() => selfieCameraInputRef.current?.click()}
                             style={{
-                              padding: '0.55rem 1.15rem',
+                              padding: '0.5rem 1rem',
                               borderRadius: '9999px',
                               border: 'none',
                               backgroundColor: 'var(--primary)',
                               color: '#FFFFFF',
-                              fontSize: '0.8rem',
+                              fontSize: '0.78rem',
                               fontWeight: '700',
                               cursor: 'pointer',
                               display: 'inline-flex',
@@ -1867,18 +1921,18 @@ function Profile() {
                             }}
                           >
                             <i className="fa-solid fa-camera" />
-                            <span>Open Camera</span>
+                            <span>Take Selfie</span>
                           </button>
                           <button
                             type="button"
-                            onClick={() => selfieInputRef.current?.click()}
+                            onClick={() => selfieGalleryInputRef.current?.click()}
                             style={{
-                              padding: '0.55rem 1rem',
+                              padding: '0.5rem 0.9rem',
                               borderRadius: '9999px',
                               border: '1px solid var(--border)',
                               backgroundColor: 'var(--surface)',
                               color: 'var(--text-main)',
-                              fontSize: '0.8rem',
+                              fontSize: '0.78rem',
                               fontWeight: '700',
                               cursor: 'pointer',
                               display: 'inline-flex',
@@ -1887,7 +1941,7 @@ function Profile() {
                             }}
                           >
                             <i className="fa-solid fa-upload" />
-                            <span>Upload Photo</span>
+                            <span>Upload</span>
                           </button>
                         </div>
                       </div>
@@ -1896,15 +1950,13 @@ function Profile() {
                 </>
               ) : (
                 <>
-                  {/* ============================================================== */}
-                  {/* CAMPUS STUDENT KYC: STUDENT MATRICULATION + STUDENT ID CARD    */}
-                  {/* ============================================================== */}
+                  {/* STUDENT KYC FIELDS */}
                   <div>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.35rem' }}>
-                      <label className="form-label" style={{ marginBottom: 0, fontWeight: '700', fontSize: '0.84rem' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.3rem' }}>
+                      <label className="form-label" style={{ marginBottom: 0, fontWeight: '700', fontSize: '0.82rem' }}>
                         Student ID / Matriculation Number *
                       </label>
-                      <span style={{ fontSize: '0.72rem', color: 'var(--primary)', fontWeight: '800' }}>
+                      <span style={{ fontSize: '0.7rem', color: 'var(--primary)', fontWeight: '800' }}>
                         KYC Required
                       </span>
                     </div>
@@ -1912,17 +1964,17 @@ function Profile() {
                       type="text"
                       required
                       className="form-input"
-                      value={storeForm.student_id_number}
+                      value={storeForm.student_id_number || ''}
                       onChange={(e) => setStoreForm(prev => ({ ...prev, student_id_number: e.target.value }))}
                       placeholder="e.g. LCU/22/10452 or UI/21/9831"
                     />
-                    <span style={{ fontSize: '0.74rem', color: 'var(--text-muted)', marginTop: '0.25rem', display: 'block' }}>
+                    <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)', marginTop: '0.2rem', display: 'block' }}>
                       Used to verify active student enrollment for your campus merchant badge.
                     </span>
                   </div>
 
                   <div>
-                    <label className="form-label" style={{ fontWeight: '700', fontSize: '0.84rem', display: 'block', marginBottom: '0.35rem' }}>
+                    <label className="form-label" style={{ fontWeight: '700', fontSize: '0.82rem', display: 'block', marginBottom: '0.3rem' }}>
                       Upload Student ID Card Photo
                     </label>
                     <input
@@ -1939,7 +1991,7 @@ function Profile() {
                         borderRadius: '16px',
                         overflow: 'hidden',
                         border: '1px solid var(--border)',
-                        height: '140px',
+                        height: '135px',
                         backgroundColor: 'var(--surface-alt)'
                       }}>
                         <img 
@@ -1979,17 +2031,17 @@ function Profile() {
                         style={{
                           border: '2px dashed var(--primary)',
                           borderRadius: '16px',
-                          padding: '1.2rem',
+                          padding: '1rem',
                           textAlign: 'center',
                           backgroundColor: 'var(--surface-alt)',
                           cursor: 'pointer'
                         }}
                       >
-                        <i className="fa-solid fa-camera" style={{ fontSize: '1.4rem', color: 'var(--primary)', marginBottom: '0.35rem' }} />
-                        <div style={{ fontWeight: '700', fontSize: '0.86rem', color: 'var(--text-main)' }}>
+                        <i className="fa-solid fa-camera" style={{ fontSize: '1.35rem', color: 'var(--primary)', marginBottom: '0.3rem' }} />
+                        <div style={{ fontWeight: '700', fontSize: '0.84rem', color: 'var(--text-main)' }}>
                           Tap to Upload Student ID Card Photo
                         </div>
-                        <div style={{ fontSize: '0.74rem', color: 'var(--text-muted)', marginTop: '2px' }}>
+                        <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)', marginTop: '2px' }}>
                           School ID card or student portal screenshot
                         </div>
                       </div>
@@ -2000,13 +2052,13 @@ function Profile() {
 
               {/* Delivery / Hostel / Campus Pickup Spot */}
               <div>
-                <label className="form-label" style={{ fontWeight: '700', fontSize: '0.84rem', display: 'block', marginBottom: '0.35rem' }}>
+                <label className="form-label" style={{ fontWeight: '700', fontSize: '0.82rem', display: 'block', marginBottom: '0.3rem' }}>
                   {kycUserType === 'non_student' ? 'Store Address / Campus Delivery Meeting Spot' : 'Hostel / Campus Pickup Spot'}
                 </label>
                 <input
                   type="text"
                   className="form-input"
-                  value={storeForm.business_address}
+                  value={storeForm.business_address || ''}
                   onChange={(e) => setStoreForm(prev => ({ ...prev, business_address: e.target.value }))}
                   placeholder={kycUserType === 'non_student' ? 'e.g. Campus Main Gate, Off-Campus Shop #4, or Car Park' : 'e.g. SUB Car Park or Peace Hall Room B12'}
                 />
@@ -2014,31 +2066,31 @@ function Profile() {
 
               {/* WhatsApp Contact */}
               <div>
-                <label className="form-label" style={{ fontWeight: '700', fontSize: '0.84rem', display: 'block', marginBottom: '0.35rem' }}>
+                <label className="form-label" style={{ fontWeight: '700', fontSize: '0.82rem', display: 'block', marginBottom: '0.3rem' }}>
                   Business WhatsApp Contact *
                 </label>
                 <input
                   type="tel"
                   required
                   className="form-input"
-                  value={storeForm.business_whatsapp}
+                  value={storeForm.business_whatsapp || ''}
                   onChange={(e) => setStoreForm(prev => ({ ...prev, business_whatsapp: e.target.value }))}
                   placeholder="e.g. 08012345678"
                 />
-                <span style={{ fontSize: '0.74rem', color: 'var(--text-muted)', marginTop: '0.25rem', display: 'block' }}>
-                  Direct buyer inquiries will be routed to your WhatsApp.
+                <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)', marginTop: '0.2rem', display: 'block' }}>
+                  Buyer inquiries and verified badge alerts will be sent here.
                 </span>
               </div>
 
               {/* Instagram Handle */}
               <div>
-                <label className="form-label" style={{ fontWeight: '700', fontSize: '0.84rem', display: 'block', marginBottom: '0.35rem' }}>
+                <label className="form-label" style={{ fontWeight: '700', fontSize: '0.82rem', display: 'block', marginBottom: '0.3rem' }}>
                   Store Instagram Handle (Optional)
                 </label>
                 <input
                   type="text"
                   className="form-input"
-                  value={storeForm.business_instagram}
+                  value={storeForm.business_instagram || ''}
                   onChange={(e) => setStoreForm(prev => ({ ...prev, business_instagram: e.target.value }))}
                   placeholder="e.g. @kevs_thrifts"
                 />
@@ -2046,19 +2098,19 @@ function Profile() {
 
               {/* Store Tagline */}
               <div>
-                <label className="form-label" style={{ fontWeight: '700', fontSize: '0.84rem', display: 'block', marginBottom: '0.35rem' }}>
+                <label className="form-label" style={{ fontWeight: '700', fontSize: '0.82rem', display: 'block', marginBottom: '0.3rem' }}>
                   Store Bio / Tagline (Optional)
                 </label>
                 <textarea
                   className="form-input"
                   rows={2}
-                  value={storeForm.business_description}
+                  value={storeForm.business_description || ''}
                   onChange={(e) => setStoreForm(prev => ({ ...prev, business_description: e.target.value }))}
                   placeholder="e.g. Daily hostel deliveries for thrift fits, kicks, and phone accessories."
                 />
               </div>
 
-              <div style={{ display: 'flex', gap: '0.75rem', marginTop: '0.5rem' }}>
+              <div style={{ display: 'flex', gap: '0.65rem', marginTop: '0.4rem' }}>
                 <button
                   type="button"
                   onClick={() => {
@@ -2067,13 +2119,13 @@ function Profile() {
                   }}
                   style={{
                     flex: 1,
-                    padding: '0.8rem',
+                    padding: '0.75rem',
                     borderRadius: '9999px',
                     border: '1px solid var(--border)',
                     backgroundColor: 'var(--surface-alt)',
                     color: 'var(--text-main)',
                     fontWeight: '700',
-                    fontSize: '0.88rem',
+                    fontSize: '0.84rem',
                     cursor: 'pointer'
                   }}
                 >
@@ -2084,13 +2136,13 @@ function Profile() {
                   disabled={isSavingStoreKyc}
                   style={{
                     flex: 2,
-                    padding: '0.8rem',
+                    padding: '0.75rem',
                     borderRadius: '9999px',
                     border: 'none',
                     backgroundColor: 'var(--primary)',
                     color: '#FFFFFF',
                     fontWeight: '800',
-                    fontSize: '0.88rem',
+                    fontSize: '0.86rem',
                     cursor: 'pointer',
                     opacity: isSavingStoreKyc ? 0.7 : 1,
                     boxShadow: '0 4px 14px var(--primary-light)'
@@ -2122,37 +2174,40 @@ function Profile() {
         <div 
           className="modal-overlay"
           onClick={() => setShowSupportModal(false)}
-          style={{ zIndex: 1200 }}
+          style={{ zIndex: 1200, padding: '0.85rem' }}
         >
           <div 
             className="modal-content animate-fade-in"
             onClick={(e) => e.stopPropagation()}
             style={{
               backgroundColor: 'var(--surface)',
-              borderRadius: '26px',
+              borderRadius: '24px',
               width: '100%',
-              maxWidth: '480px',
-              maxHeight: '90vh',
+              maxWidth: '460px',
+              maxHeight: '88vh',
               overflowY: 'auto',
-              padding: '1.6rem 1.4rem',
+              padding: '1.4rem 1.25rem',
               boxShadow: 'var(--shadow-card)',
               border: '1px solid var(--border)',
-              position: 'relative'
+              boxSizing: 'border-box',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '1.1rem'
             }}
           >
             {/* Modal Header */}
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1.25rem' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
                 <div style={{
-                  width: '42px',
-                  height: '42px',
+                  width: '40px',
+                  height: '40px',
                   borderRadius: '50%',
-                  backgroundColor: 'rgba(16, 185, 129, 0.15)',
+                  backgroundColor: 'rgba(16, 185, 129, 0.12)',
                   color: '#10B981',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  fontSize: '1.2rem',
+                  fontSize: '1.15rem',
                   flexShrink: 0
                 }}>
                   <i className="fa-solid fa-headset" />
@@ -2161,7 +2216,7 @@ function Profile() {
                   <h3 style={{ fontSize: '1.25rem', fontWeight: '800', fontFamily: 'var(--font-display)', color: 'var(--text-main)', margin: 0 }}>
                     Help & Support
                   </h3>
-                  <div style={{ fontSize: '0.76rem', color: 'var(--text-muted)', marginTop: '2px' }}>
+                  <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '2px' }}>
                     Direct desk: <strong style={{ color: '#10B981' }}>salesflowingai@gmail.com</strong>
                   </div>
                 </div>
@@ -2178,7 +2233,7 @@ function Profile() {
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  fontSize: '1rem',
+                  fontSize: '0.95rem',
                   color: 'var(--text-muted)',
                   cursor: 'pointer'
                 }}
@@ -2187,47 +2242,41 @@ function Profile() {
               </button>
             </div>
 
-            {/* Quick Actions Card */}
+            {/* Support Email Card (Clean single card, no nested borders) */}
             <div style={{
               backgroundColor: 'var(--surface-alt)',
-              borderRadius: '20px',
-              padding: '1.1rem',
+              borderRadius: '18px',
+              padding: '0.95rem 1rem',
               border: '1px solid var(--border)',
-              marginBottom: '1.25rem'
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '0.85rem'
             }}>
-              <div style={{ fontSize: '0.82rem', color: 'var(--text-main)', fontWeight: '700', marginBottom: '0.4rem' }}>
-                Official Support Email
-              </div>
-              <div style={{
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'space-between',
-                padding: '0.65rem 0.85rem',
-                backgroundColor: 'var(--surface)',
-                borderRadius: '14px',
-                border: '1px solid var(--border)',
-                marginBottom: '0.85rem'
-              }}>
-                <span style={{ fontSize: '0.86rem', fontWeight: '700', color: 'var(--text-main)' }}>
-                  salesflowingai@gmail.com
-                </span>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                  <i className="fa-regular fa-envelope" style={{ color: 'var(--primary)', fontSize: '0.9rem' }} />
+                  <span style={{ fontSize: '0.86rem', fontWeight: '700', color: 'var(--text-main)' }}>
+                    salesflowingai@gmail.com
+                  </span>
+                </div>
                 <button
                   type="button"
                   onClick={() => {
                     navigator.clipboard?.writeText('salesflowingai@gmail.com');
                     setSupportCopied(true);
-                    setTimeout(() => setSupportCopied(false), 2500);
+                    setTimeout(() => setSupportCopied(false), 2000);
                   }}
                   style={{
-                    border: 'none',
                     background: 'none',
+                    border: 'none',
                     color: supportCopied ? '#10B981' : 'var(--primary)',
                     fontSize: '0.78rem',
                     fontWeight: '700',
                     cursor: 'pointer',
-                    display: 'flex',
+                    display: 'inline-flex',
                     alignItems: 'center',
-                    gap: '4px'
+                    gap: '0.35rem',
+                    padding: '4px 6px'
                   }}
                 >
                   <i className={`fa-solid ${supportCopied ? 'fa-check' : 'fa-copy'}`} />
@@ -2239,12 +2288,12 @@ function Profile() {
                 <a
                   href="mailto:salesflowingai@gmail.com?subject=CampusStash%20Support%20Inquiry"
                   style={{
-                    padding: '0.75rem',
+                    padding: '0.65rem 0.85rem',
                     borderRadius: '9999px',
                     backgroundColor: 'var(--primary)',
                     color: '#FFFFFF',
                     textDecoration: 'none',
-                    fontWeight: '800',
+                    fontWeight: '700',
                     fontSize: '0.82rem',
                     display: 'flex',
                     alignItems: 'center',
@@ -2265,7 +2314,7 @@ function Profile() {
                     setIsSettingsOpen(true);
                   }}
                   style={{
-                    padding: '0.75rem',
+                    padding: '0.65rem 0.85rem',
                     borderRadius: '9999px',
                     backgroundColor: 'var(--surface)',
                     border: '1px solid var(--border)',
@@ -2289,46 +2338,47 @@ function Profile() {
             <form
               onSubmit={(e) => {
                 e.preventDefault();
-                const subject = encodeURIComponent(`CampusStash [${supportTopic}] from ${profile?.name || profile?.email || 'User'}`);
+                const subject = encodeURIComponent(`CampusStash Support [${supportTopic}] - ${profile?.name || profile?.email || 'User'}`);
                 const body = encodeURIComponent(
                   `User: ${profile?.name || ''} (${profile?.email || ''})\n` +
                   `Campus: ${activeCampusObj?.name || 'Lead City University'}\n` +
                   `Topic: ${supportTopic}\n\n` +
-                  `Message:\n${supportMessage}`
+                  `Message Details:\n${supportMessage}`
                 );
                 window.location.href = `mailto:salesflowingai@gmail.com?subject=${subject}&body=${body}`;
               }}
-              style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem' }}
+              style={{ display: 'flex', flexDirection: 'column', gap: '0.9rem' }}
             >
               <div>
-                <label className="form-label" style={{ fontWeight: '700', fontSize: '0.84rem', display: 'block', marginBottom: '0.35rem' }}>
+                <label className="form-label" style={{ fontWeight: '700', fontSize: '0.82rem', display: 'block', marginBottom: '0.35rem', textTransform: 'none' }}>
                   What do you need help with?
                 </label>
                 <select
                   className="form-input"
                   value={supportTopic}
                   onChange={(e) => setSupportTopic(e.target.value)}
-                  style={{ cursor: 'pointer' }}
+                  style={{ cursor: 'pointer', fontSize: '0.84rem' }}
                 >
                   <option value="General Support">General Support & Question</option>
-                  <option value="KYC Verification">Store KYC Verification Help</option>
+                  <option value="Store KYC Verification">Store KYC Verification Help</option>
                   <option value="Payment & Transaction">Payment or Listing Issue</option>
                   <option value="Report Suspicious User">Report Suspicious Activity / Fraud</option>
-                  <option value="Campus Partnership">Campus Partnership & Feedback</option>
+                  <option value="Campus Partnership">Campus Partnership & Suggestions</option>
                 </select>
               </div>
 
               <div>
-                <label className="form-label" style={{ fontWeight: '700', fontSize: '0.84rem', display: 'block', marginBottom: '0.35rem' }}>
-                  Your Message / Inquiry Details
+                <label className="form-label" style={{ fontWeight: '700', fontSize: '0.82rem', display: 'block', marginBottom: '0.35rem', textTransform: 'none' }}>
+                  Your Message Details
                 </label>
                 <textarea
                   required
-                  rows={4}
+                  rows={3}
                   className="form-input"
                   value={supportMessage}
                   onChange={(e) => setSupportMessage(e.target.value)}
                   placeholder="Describe your issue or inquiry in detail..."
+                  style={{ fontSize: '0.84rem', resize: 'vertical' }}
                 />
               </div>
 
@@ -2336,20 +2386,20 @@ function Profile() {
                 type="submit"
                 style={{
                   width: '100%',
-                  padding: '0.85rem',
+                  padding: '0.8rem',
                   borderRadius: '9999px',
                   border: 'none',
                   backgroundColor: 'var(--primary)',
                   color: '#FFFFFF',
                   fontWeight: '800',
-                  fontSize: '0.88rem',
+                  fontSize: '0.86rem',
                   cursor: 'pointer',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
                   gap: '0.45rem',
                   boxShadow: '0 4px 14px var(--primary-light)',
-                  marginTop: '0.35rem'
+                  marginTop: '0.25rem'
                 }}
               >
                 <i className="fa-solid fa-envelope" />
