@@ -61,6 +61,7 @@ function SellerStorefrontModal({
 
   const ownerDisplayName = storeData?.seller?.name || sellerName;
   const storeCategory = storeData?.seller?.business_category;
+  const storeServices = storeData?.seller?.business_services;
   const storeBio = storeData?.seller?.business_description;
   const pickupLocation = storeData?.seller?.business_address;
   const instagramHandle = storeData?.seller?.business_instagram;
@@ -213,6 +214,28 @@ function SellerStorefrontModal({
                 </div>
               </div>
             </div>
+
+            {/* Rendered Services Badges */}
+            {storeServices && (
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.35rem' }}>
+                {storeServices.split(',').map(s => s.trim()).filter(Boolean).map((srv, idx) => (
+                  <span key={idx} style={{
+                    backgroundColor: 'var(--primary-light)',
+                    color: 'var(--primary)',
+                    fontSize: '0.72rem',
+                    fontWeight: '700',
+                    padding: '3px 9px',
+                    borderRadius: '9999px',
+                    border: '1px solid var(--border)',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '3px'
+                  }}>
+                    ✨ {srv}
+                  </span>
+                ))}
+              </div>
+            )}
 
             {/* Store Bio / Tagline */}
             {storeBio && (

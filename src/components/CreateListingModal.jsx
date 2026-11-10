@@ -41,6 +41,7 @@ const CATEGORIES = [
   { name: 'Electronics', icon: 'fa-laptop' },
   { name: 'Dorm Essentials', icon: 'fa-couch' },
   { name: 'Fashion & Apparel', icon: 'fa-shirt' },
+  { name: 'Campus Services', icon: 'fa-wand-magic-sparkles' },
   { name: 'Other', icon: 'fa-shapes' }
 ];
 

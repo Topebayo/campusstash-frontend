@@ -10,11 +10,26 @@ import SettingsModal from '../components/SettingsModal';
 import ItemDetailModal from '../components/ItemDetailModal';
 import SellerStorefrontModal from '../components/SellerStorefrontModal';
 
+export const POPULAR_CAMPUS_SERVICES = [
+  { id: 'lash_tech', name: 'Lash Tech', icon: '👁️', desc: 'Lash extensions, refills & brow tinting' },
+  { id: 'nail_tech', name: 'Nail Tech', icon: '💅', desc: 'Acrylics, press-ons, gel nails & pedicures' },
+  { id: 'makeup_artist', name: 'Makeup Artist (MUA)', icon: '💄', desc: 'Glam, soft beats & shoot makeup' },
+  { id: 'hair_styling', name: 'Hair Styling & Braiding', icon: '💇‍♀️', desc: 'Braids, wig styling & installs' },
+  { id: 'barbing', name: 'Barbing & Grooming', icon: '💈', desc: 'Hostel cuts, beard shaping & trims' },
+  { id: 'gadget_repairs', name: 'Gadget & Phone Repairs', icon: '📱', desc: 'Screen, battery & software fixes' },
+  { id: 'photography', name: 'Photography & Media', icon: '📸', desc: 'Portraits, event shoots & reels' },
+  { id: 'printing_graphics', name: 'Printing & Graphic Design', icon: '🖨️', desc: 'Flyers, slides & project binding' },
+  { id: 'hostel_laundry', name: 'Hostel Laundry & Errands', icon: '🧺', desc: 'Wash, iron & campus doorstep delivery' },
+  { id: 'catering_snacks', name: 'Catering & Small Chops', icon: '🍲', desc: 'Hostel meals, pastries & snacks' },
+  { id: 'academic_tutoring', name: 'Tutoring & Academic Typing', icon: '📚', desc: 'Course tutorials & assignment typing' }
+];
+
 const STORE_CATEGORIES = [
   'Fashion & Thrift',
   'Phones, Gadgets & Tech',
   'Food, Snacks & Pastries',
   'Beauty, Hair & Skincare',
+  'Campus Services & Beauty Skills',
   'Textbooks & Academics',
   'Hostel & Dorm Essentials',
   'Services, Printing & Repairs',
@@ -196,6 +211,7 @@ function Profile() {
       return {
         business_name: u?.business_name || '',
         business_category: u?.business_category || 'Fashion & Thrift',
+        business_services: u?.business_services || '',
         student_id_number: u?.kyc_student_id || '',
         id_type: u?.kyc_id_type || 'nin',
         id_number: u?.kyc_id_number || '',
@@ -210,6 +226,7 @@ function Profile() {
       return {
         business_name: '',
         business_category: 'Fashion & Thrift',
+        business_services: '',
         student_id_number: '',
         id_type: 'nin',
         id_number: '',
@@ -236,6 +253,7 @@ function Profile() {
         setStoreForm({
           business_name: data.business_name || '',
           business_category: data.business_category || 'Fashion & Thrift',
+          business_services: data.business_services || '',
           student_id_number: data.kyc_student_id || '',
           id_type: data.kyc_id_type || 'nin',
           id_number: data.kyc_id_number || '',
@@ -466,6 +484,7 @@ function Profile() {
       const payload = {
         business_name: bName,
         business_category: storeForm.business_category || 'General Variety Store',
+        business_services: storeForm.business_services ? String(storeForm.business_services).trim() : null,
         user_type: kycUserType,
         student_id_number: kycUserType === 'student' ? String(storeForm.student_id_number || '').trim() : null,
         id_type: kycUserType === 'non_student' ? (storeForm.id_type || 'nin') : 'student_id',
@@ -680,6 +699,24 @@ function Profile() {
           }}>
             {isStore && profile?.business_name ? profile.business_name : (profile?.name || displayName)}
           </h2>
+
+          {isStore && profile?.business_services && (
+            <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'center', gap: '0.35rem', margin: '0.2rem auto 0.75rem auto', maxWidth: '420px' }}>
+              {profile.business_services.split(',').map(s => s.trim()).filter(Boolean).map((srv, idx) => (
+                <span key={idx} style={{
+                  backgroundColor: 'var(--primary-light)',
+                  color: 'var(--primary)',
+                  fontSize: '0.72rem',
+                  fontWeight: '700',
+                  padding: '3px 10px',
+                  borderRadius: '9999px',
+                  border: '1px solid var(--border)'
+                }}>
+                  ✨ {srv}
+                </span>
+              ))}
+            </div>
+          )}
 
           {/* Location Pin & Campus Switcher */}
           <div 
@@ -1569,6 +1606,89 @@ function Profile() {
                     <option key={cat} value={cat}>{cat}</option>
                   ))}
                 </select>
+              </div>
+
+              {/* Rendered Campus Services Multi-Select Option */}
+              <div style={{
+                backgroundColor: 'var(--surface-alt)',
+                border: '1px solid var(--border)',
+                borderRadius: '16px',
+                padding: '1rem',
+                marginTop: '0.2rem'
+              }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.4rem', flexWrap: 'wrap', gap: '0.25rem' }}>
+                  <label className="form-label" style={{ fontWeight: '700', fontSize: '0.84rem', marginBottom: 0, color: 'var(--text-main)', display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+                    <span>✨</span> What service do you want to render on campus?
+                  </label>
+                  <span style={{ fontSize: '0.7rem', color: 'var(--primary)', fontWeight: '700' }}>
+                    Tap to select
+                  </span>
+                </div>
+                <p style={{ fontSize: '0.76rem', color: 'var(--text-muted)', margin: '0 0 0.75rem 0', lineHeight: 1.35 }}>
+                  Select the services you offer (e.g. Lash Tech, Nail Tech, Makeup, Barbing, Repairs) so students can discover and book you:
+                </p>
+
+                {/* Service Quick Select Chips */}
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.4rem', marginBottom: '0.75rem' }}>
+                  {POPULAR_CAMPUS_SERVICES.map(srv => {
+                    const currentParts = (storeForm.business_services || '')
+                      .split(',')
+                      .map(s => s.trim())
+                      .filter(Boolean);
+                    const isSelected = currentParts.some(p => p.toLowerCase() === srv.name.toLowerCase());
+
+                    const toggleService = () => {
+                      let updated;
+                      if (isSelected) {
+                        updated = currentParts.filter(p => p.toLowerCase() !== srv.name.toLowerCase());
+                      } else {
+                        updated = [...currentParts, srv.name];
+                      }
+                      setStoreForm(prev => ({ ...prev, business_services: updated.join(', ') }));
+                    };
+
+                    return (
+                      <button
+                        key={srv.id}
+                        type="button"
+                        onClick={toggleService}
+                        style={{
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: '0.35rem',
+                          padding: '6px 12px',
+                          borderRadius: '9999px',
+                          fontSize: '0.76rem',
+                          fontWeight: '700',
+                          border: isSelected ? '1.5px solid var(--primary)' : '1px solid var(--border)',
+                          backgroundColor: isSelected ? 'var(--primary-light)' : 'var(--surface)',
+                          color: isSelected ? 'var(--primary)' : 'var(--text-main)',
+                          cursor: 'pointer',
+                          transition: 'all 0.15s ease'
+                        }}
+                      >
+                        <span>{srv.icon}</span>
+                        <span>{srv.name}</span>
+                        {isSelected && <i className="fa-solid fa-check" style={{ fontSize: '0.68rem', marginLeft: '2px' }} />}
+                      </button>
+                    );
+                  })}
+                </div>
+
+                {/* Freeform Services & Notes Input */}
+                <div>
+                  <label style={{ fontSize: '0.73rem', fontWeight: '700', color: 'var(--text-muted)', display: 'block', marginBottom: '0.25rem' }}>
+                    Selected Services & Extra Specialties:
+                  </label>
+                  <input
+                    type="text"
+                    className="form-input"
+                    value={storeForm.business_services || ''}
+                    onChange={(e) => setStoreForm(prev => ({ ...prev, business_services: e.target.value }))}
+                    placeholder="e.g. Lash Tech, Nail Tech, Makeup (Hostel room appointments available)"
+                    style={{ fontSize: '0.82rem', padding: '0.55rem 0.75rem' }}
+                  />
+                </div>
               </div>
 
               {/* NON-STUDENT KYC FIELDS */}

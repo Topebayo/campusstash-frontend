@@ -14,6 +14,7 @@ const STORE_CATEGORIES = [
   'Phones, Gadgets & Tech',
   'Food, Snacks & Pastries',
   'Beauty, Hair & Skincare',
+  'Campus Services & Beauty Skills',
   'Textbooks & Academics',
   'Hostel & Dorm Essentials',
   'Services, Printing & Repairs',
@@ -79,7 +80,8 @@ function Discover() {
       if (selectedCategory !== 'All Stores') {
         const storeCat = (store.business_category || '').toLowerCase();
         const targetCat = selectedCategory.toLowerCase();
-        if (!storeCat.includes(targetCat) && !targetCat.includes(storeCat)) {
+        const hasServicesMatch = selectedCategory.includes('Services') && Boolean(store.business_services);
+        if (!storeCat.includes(targetCat) && !targetCat.includes(storeCat) && !hasServicesMatch) {
           return false;
         }
       }
@@ -92,7 +94,8 @@ function Discover() {
         const matchOwner = (store.name || '').toLowerCase().includes(q);
         const matchHandle = (store.burner_handle || '').toLowerCase().includes(q);
         const matchCat = (store.business_category || '').toLowerCase().includes(q);
-        if (!matchName && !matchDesc && !matchOwner && !matchHandle && !matchCat) {
+        const matchServices = (store.business_services || '').toLowerCase().includes(q);
+        if (!matchName && !matchDesc && !matchOwner && !matchHandle && !matchCat && !matchServices) {
           return false;
         }
       }
@@ -444,6 +447,25 @@ function Discover() {
                     }}>
                       {store.business_description}
                     </p>
+                  )}
+
+                  {/* Rendered Campus Services Badges */}
+                  {store.business_services && (
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.35rem', marginBottom: '0.75rem' }}>
+                      {store.business_services.split(',').map(s => s.trim()).filter(Boolean).map((srv, idx) => (
+                        <span key={idx} style={{
+                          backgroundColor: 'var(--primary-light)',
+                          color: 'var(--primary)',
+                          fontSize: '0.7rem',
+                          fontWeight: '700',
+                          padding: '2px 8px',
+                          borderRadius: '9999px',
+                          border: '1px solid var(--border)'
+                        }}>
+                          ✨ {srv}
+                        </span>
+                      ))}
+                    </div>
                   )}
 
                   {/* Pickup Location if provided */}

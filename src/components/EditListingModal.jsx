@@ -41,6 +41,7 @@ const CATEGORIES = [
   'Electronics',
   'Dorm Essentials',
   'Fashion & Apparel',
+  'Campus Services',
   'Other'
 ];
 

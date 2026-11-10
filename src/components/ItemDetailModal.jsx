@@ -681,6 +681,23 @@ function ItemDetailModal({
                       Owned by {activeListing.seller.name}
                     </div>
                   )}
+                  {activeListing.seller?.account_type === 'store' && activeListing.seller?.business_services && (
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.3rem', marginTop: '4px' }}>
+                      {activeListing.seller.business_services.split(',').map(s => s.trim()).filter(Boolean).map((srv, idx) => (
+                        <span key={idx} style={{
+                          backgroundColor: 'var(--primary-light)',
+                          color: 'var(--primary)',
+                          fontSize: '0.68rem',
+                          fontWeight: '700',
+                          padding: '1px 6px',
+                          borderRadius: '9999px',
+                          border: '1px solid var(--border)'
+                        }}>
+                          ✨ {srv}
+                        </span>
+                      ))}
+                    </div>
+                  )}
                   <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem', fontSize: '0.82rem', color: 'var(--text-muted)', marginTop: '3px' }}>
                     <span style={{ color: '#F59E0B', fontWeight: '700' }}>
                       ★ {activeListing.seller?.rating ? activeListing.seller.rating.toFixed(1) : '0.0'}

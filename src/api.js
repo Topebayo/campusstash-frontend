@@ -26,7 +26,12 @@ export const DEFAULT_CAMPUSES = [
   // OSUN STATE (ALL UNIVERSITIES & HUBS)
   // ==========================================
   { id: '5c701cef-35a9-4f29-9232-ed8cd3afeba1', name: 'Obafemi Awolowo University', acronym: 'OAU', state: 'Osun', lat: 7.5186, lon: 4.5262 },
-  { id: '6a812345-bcde-4f01-2345-6789abcdef01', name: 'Osun State University', acronym: 'UNIOSUN', state: 'Osun', lat: 7.7650, lon: 4.5680 },
+  { id: 'ac43fb43-da06-4fce-86b0-7f0292ad1725', name: 'Osun State University, Osogbo Campus', acronym: 'UNIOSUN Osogbo', state: 'Osun', lat: 7.7820, lon: 4.5410 },
+  { id: '6a812345-bcde-4f01-2345-6789abcdef11', name: 'Osun State University, Ikire Campus', acronym: 'UNIOSUN Ikire', state: 'Osun', lat: 7.3620, lon: 4.1850 },
+  { id: '6a812345-bcde-4f01-2345-6789abcdef12', name: 'Osun State University, Okuku Campus', acronym: 'UNIOSUN Okuku', state: 'Osun', lat: 7.9890, lon: 4.6720 },
+  { id: '6a812345-bcde-4f01-2345-6789abcdef13', name: 'Osun State University, Ejigbo Campus', acronym: 'UNIOSUN Ejigbo', state: 'Osun', lat: 7.9030, lon: 4.3160 },
+  { id: '6a812345-bcde-4f01-2345-6789abcdef14', name: 'Osun State University, Ifetedo Campus', acronym: 'UNIOSUN Ifetedo', state: 'Osun', lat: 7.1850, lon: 4.7080 },
+  { id: '6a812345-bcde-4f01-2345-6789abcdef15', name: 'Osun State University, Ipetu-Ijesha Campus', acronym: 'UNIOSUN Ipetu-Ijesha', state: 'Osun', lat: 7.4640, lon: 4.8970 },
   { id: '6a812345-bcde-4f01-2345-6789abcdef02', name: 'Federal University of Health Sciences, Ila-Orangun', acronym: 'FUHSI', state: 'Osun', lat: 8.0160, lon: 4.9040 },
   { id: '6a812345-bcde-4f01-2345-6789abcdef03', name: 'University of Ilesa', acronym: 'UNILESA', state: 'Osun', lat: 7.6250, lon: 4.7410 },
   { id: '6a812345-bcde-4f01-2345-6789abcdef04', name: 'Bowen University', acronym: 'Bowen', state: 'Osun', lat: 7.6290, lon: 4.1870 },
@@ -130,7 +135,7 @@ if (typeof window !== 'undefined') {
       } catch (e) {}
     }
     const cachedCampuses = localStorage.getItem('campusstash_cached_campuses');
-    if (cachedCampuses && (!cachedCampuses.includes('UNIOSUN') || !cachedCampuses.includes('LASUSTECH'))) {
+    if (cachedCampuses && (!cachedCampuses.includes('UNIOSUN Osogbo') || !cachedCampuses.includes('UNIOSUN Ikire') || !cachedCampuses.includes('LASUSTECH'))) {
       localStorage.removeItem('campusstash_cached_campuses');
     }
   } catch (e) {}
