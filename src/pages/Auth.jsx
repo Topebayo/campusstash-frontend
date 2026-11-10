@@ -419,24 +419,34 @@ function Auth() {
         flexDirection: 'column',
         alignItems: 'center'
       }}>
-        {/* Brand Logo with Shopping Bag */}
+        {/* Brand Logo with Official Collegiate Emblem */}
         <div style={{
           display: 'flex',
           alignItems: 'center',
-          gap: '8px',
+          gap: '12px',
           marginBottom: '2rem',
           userSelect: 'none'
         }}>
+          <img 
+            src="/logo.png" 
+            alt="CampusStash Emblem" 
+            style={{ 
+              width: '44px', 
+              height: '44px', 
+              borderRadius: '12px', 
+              boxShadow: '0 4px 14px rgba(0,0,0,0.4)',
+              border: '1px solid rgba(255, 255, 255, 0.15)'
+            }} 
+          />
           <span style={{
-            fontSize: '1.5rem',
+            fontSize: '1.6rem',
             fontWeight: '800',
             letterSpacing: '-0.02em',
             fontFamily: 'var(--font-display)',
             color: '#FFFFFF'
           }}>
-            ShopMate
+            Campus<span style={{ color: '#E8A588' }}>Stash</span>
           </span>
-          <span style={{ fontSize: '1.4rem' }}>🛍️</span>
         </div>
 
         {/* Heading & Subtitle */}
