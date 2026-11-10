@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { Capacitor } from '@capacitor/core';
-import { apiFetch, getImageUrl, getCampuses, DEFAULT_CAMPUSES, setActiveCampusId, getActiveCampusId } from '../api';
+import { apiFetch, getImageUrl, getCampuses, DEFAULT_CAMPUSES, setActiveCampusId, getActiveCampusId, normalizeNigerianPhone, getWhatsAppUrl } from '../api';
 import Navbar from '../components/Navbar';
 import CampusOnboardingModal from '../components/CampusOnboardingModal';
 import EditListingModal from '../components/EditListingModal';
@@ -491,7 +491,7 @@ function Profile() {
         id_number: kycUserType === 'non_student' ? String(storeForm.id_number || '').trim() : (String(storeForm.student_id_number || '').trim() || null),
         business_description: String(storeForm.business_description || '').trim(),
         business_address: String(storeForm.business_address || '').trim(),
-        business_whatsapp: String(storeForm.business_whatsapp || '').trim(),
+        business_whatsapp: normalizeNigerianPhone(storeForm.business_whatsapp) || String(storeForm.business_whatsapp || '').trim() || null,
         business_instagram: String(storeForm.business_instagram || '').trim().replace(/^@/, ''),
         id_card_image: storeForm.id_card_image || null,
         face_selfie_image: storeForm.face_selfie_image || null
@@ -2195,11 +2195,31 @@ function Profile() {
                   className="form-input"
                   value={storeForm.business_whatsapp || ''}
                   onChange={(e) => setStoreForm(prev => ({ ...prev, business_whatsapp: e.target.value }))}
-                  placeholder="e.g. 08012345678"
+                  onBlur={() => {
+                    const norm = normalizeNigerianPhone(storeForm.business_whatsapp);
+                    if (norm) {
+                      setStoreForm(prev => ({ ...prev, business_whatsapp: norm }));
+                    }
+                  }}
+                  placeholder="e.g. 0810 511 2773 or +234 810 511 2773"
                 />
-                <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)', marginTop: '0.2rem', display: 'block' }}>
-                  Buyer inquiries and verified badge alerts will be sent here.
-                </span>
+                {storeForm.business_whatsapp ? (
+                  normalizeNigerianPhone(storeForm.business_whatsapp) ? (
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', marginTop: '0.3rem', fontSize: '0.74rem', color: '#10B981', fontWeight: '600' }}>
+                      <i className="fa-solid fa-circle-check" />
+                      <span>Auto-corrected for WhatsApp: <strong>{normalizeNigerianPhone(storeForm.business_whatsapp)}</strong></span>
+                    </div>
+                  ) : (
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', marginTop: '0.3rem', fontSize: '0.74rem', color: '#F59E0B', fontWeight: '600' }}>
+                      <i className="fa-solid fa-circle-exclamation" />
+                      <span>Please enter an 11-digit Nigerian WhatsApp number (e.g. 0810 511 2773)</span>
+                    </div>
+                  )
+                ) : (
+                  <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)', marginTop: '0.2rem', display: 'block' }}>
+                    Type any format (e.g. 08105112773) — the system auto-corrects it so student WhatsApp chats connect instantly.
+                  </span>
+                )}
               </div>
 
               {/* Instagram Handle */}

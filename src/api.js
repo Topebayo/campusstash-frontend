@@ -380,3 +380,45 @@ export const adminApi = {
   },
   deleteListing: (listingId) => apiFetch(`/admin/listings/${listingId}`, { method: 'DELETE' }),
 };
+
+
+// ==========================================
+// WHATSAPP & PHONE NORMALIZATION HELPERS
+// ==========================================
+export function normalizeNigerianPhone(phone) {
+  if (!phone) return null;
+  const raw = String(phone).trim();
+  let digits = raw.replace(/\D/g, '');
+  if (!digits) return null;
+
+  // 23408105112773 (14 digits) -> 2348105112773
+  if (digits.startsWith('2340') && digits.length === 14) {
+    digits = '234' + digits.slice(4);
+  }
+  // 08105112773 (11 digits starting with 0) -> 2348105112773
+  else if (digits.startsWith('0') && digits.length === 11) {
+    digits = '234' + digits.slice(1);
+  }
+  // 8105112773 (10 digits starting with 7, 8, 9) -> 2348105112773
+  else if (digits.length === 10 && (digits.startsWith('7') || digits.startsWith('8') || digits.startsWith('9'))) {
+    digits = '234' + digits;
+  }
+  // 2348105112773 (13 digits starting with 234)
+  else if (digits.startsWith('234') && digits.length === 13) {
+    // Already correct
+  } else {
+    if (digits.length < 10 || digits.length > 15 || digits.startsWith('0')) {
+      return null;
+    }
+  }
+
+  return `+${digits}`;
+}
+
+export function getWhatsAppUrl(phone, defaultText = '') {
+  const normalized = normalizeNigerianPhone(phone);
+  if (!normalized) return null;
+  const waDigits = normalized.replace(/^\+/, '');
+  const query = defaultText ? `?text=${encodeURIComponent(defaultText)}` : '';
+  return `https://wa.me/${waDigits}${query}`;
+}

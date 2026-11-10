@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Capacitor } from '@capacitor/core';
-import { apiFetch, getImageUrl } from '../api';
+import { apiFetch, getImageUrl, getWhatsAppUrl } from '../api';
 import Navbar from '../components/Navbar';
 import ThemeToggleBtn from '../components/ThemeToggleBtn';
 import SellerStorefrontModal from '../components/SellerStorefrontModal';
@@ -538,9 +538,9 @@ function Discover() {
                     </button>
 
                     <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                      {store.business_whatsapp && (
+                      {getWhatsAppUrl(store.business_whatsapp) && (
                         <a
-                          href={`https://wa.me/${store.business_whatsapp.replace(/[^0-9]/g, '')}`}
+                          href={getWhatsAppUrl(store.business_whatsapp, `Hello ${bName}! I found your store on CampusStash.`)}
                           target="_blank"
                           rel="noopener noreferrer"
                           onClick={(e) => e.stopPropagation()}

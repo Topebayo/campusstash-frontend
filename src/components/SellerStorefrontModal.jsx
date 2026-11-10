@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { apiFetch, getImageUrl } from '../api';
+import { apiFetch, getImageUrl, getWhatsAppUrl } from '../api';
 
 function SellerStorefrontModal({ 
   isOpen = true, 
@@ -285,6 +285,35 @@ function SellerStorefrontModal({
                 >
                   <i className="fa-regular fa-comment" />
                   <span>{isStore ? 'Chat with Store' : 'Message Seller'}</span>
+                </button>
+              )}
+
+              {getWhatsAppUrl(storeData?.seller?.business_whatsapp) && (
+                <button
+                  type="button"
+                  className="btn-secondary"
+                  onClick={() => {
+                    const waLink = getWhatsAppUrl(
+                      storeData?.seller?.business_whatsapp,
+                      `Hello ${storeTitle}! I am viewing your campus catalog on CampusStash.`
+                    );
+                    if (waLink) window.open(waLink, '_blank');
+                  }}
+                  style={{
+                    borderRadius: '9999px',
+                    padding: '0.65rem 1rem',
+                    fontSize: '0.86rem',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '0.4rem',
+                    color: '#25D366',
+                    borderColor: 'rgba(37, 211, 102, 0.4)'
+                  }}
+                  title="Chat on WhatsApp"
+                >
+                  <i className="fa-brands fa-whatsapp" style={{ fontSize: '1.05rem' }} />
+                  <span>WhatsApp</span>
                 </button>
               )}
 
