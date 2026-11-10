@@ -149,7 +149,7 @@ const [campuses, setCampuses] = useState(() => {
     {
       id: 1,
       title: "This week's fresh picks",
-      subtitle: "100% verified campus stash, delivered within 15 mins...",
+      subtitle: "100% verified campus stash from students near you...",
       btnText: "Shop Now",
       action: () => {
         const el = document.querySelector('.shopmate-section-header');
@@ -959,10 +959,23 @@ const [campuses, setCampuses] = useState(() => {
                         {listing.title}
                       </h3>
 
-                      {/* Card Meta / Delivery (⏱ 10 MINS in Template) */}
+                      {/* Card Meta: Seller */}
                       <div className="shopmate-card-meta">
-                        <i className="fa-regular fa-clock" style={{ fontSize: '0.65rem' }} />
-                        <span>15 MINS • by {sellerName}</span>
+                        <i className={isStore ? "fa-solid fa-store" : "fa-regular fa-user"} style={{ fontSize: '0.65rem', color: isStore ? 'var(--primary)' : 'var(--text-muted)' }} />
+                        <span>by {sellerName}</span>
+                        {isStore && (
+                          <span style={{
+                            backgroundColor: 'var(--badge-active-bg)',
+                            color: 'var(--badge-active-text)',
+                            fontSize: '0.62rem',
+                            fontWeight: '700',
+                            padding: '1px 5px',
+                            borderRadius: '9999px',
+                            marginLeft: '2px'
+                          }}>
+                            Store
+                          </span>
+                        )}
                       </div>
 
                       {/* Footer: Price + Circular Green Plus Action Button */}
