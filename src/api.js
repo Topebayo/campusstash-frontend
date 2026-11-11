@@ -391,6 +391,11 @@ export function normalizeNigerianPhone(phone) {
   let digits = raw.replace(/\D/g, '');
   if (!digits) return null;
 
+  // Strip international dialing prefix '00' if present (e.g. 00234... -> 234...)
+  if (digits.startsWith('00')) {
+    digits = digits.slice(2);
+  }
+
   // 23408105112773 (14 digits) -> 2348105112773
   if (digits.startsWith('2340') && digits.length === 14) {
     digits = '234' + digits.slice(4);

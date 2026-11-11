@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { getImageUrl, CLOUD_HOST, apiFetch } from '../api';
+import { getImageUrl, CLOUD_HOST, apiFetch, getWhatsAppUrl } from '../api';
 import ImageLightbox from './ImageLightbox';
 
 function ItemDetailModal({ 
@@ -217,6 +217,36 @@ function ItemDetailModal({
         >
           <i className={isBookmarked ? "fa-solid fa-heart" : "fa-regular fa-heart"} />
         </button>
+
+        {getWhatsAppUrl(activeListing.seller?.business_whatsapp || listing.seller?.business_whatsapp) && (
+          <a
+            href={getWhatsAppUrl(
+              activeListing.seller?.business_whatsapp || listing.seller?.business_whatsapp,
+              `Hello ${sellerDisplayName}! I saw your listing "${activeListing.title || listing.title}" on CampusStash and would like to buy it.`
+            )}
+            target="_blank"
+            rel="noopener noreferrer"
+            onClick={(e) => e.stopPropagation()}
+            style={{
+              width: isDesktop ? '50px' : '48px',
+              height: isDesktop ? '50px' : '48px',
+              borderRadius: '50%',
+              backgroundColor: '#25D366',
+              color: '#FFFFFF',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              textDecoration: 'none',
+              fontSize: '1.25rem',
+              boxShadow: '0 4px 12px rgba(37, 211, 102, 0.35)',
+              flexShrink: 0,
+              transition: 'all 0.2s ease'
+            }}
+            title="Chat on WhatsApp"
+          >
+            <i className="fa-brands fa-whatsapp" />
+          </a>
+        )}
 
         <button
           type="button"
