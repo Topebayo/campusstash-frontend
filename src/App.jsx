@@ -10,6 +10,8 @@ import Messages from './pages/Messages';
 import Saved from './pages/Saved';
 import Discover from './pages/Discover';
 import Admin from './pages/Admin';
+import PrivacyPolicy from './pages/PrivacyPolicy';
+import TermsOfService from './pages/TermsOfService';
 
 class ErrorBoundary extends React.Component {
   constructor(props) {
@@ -177,6 +179,8 @@ function App() {
         <Route path="/stores" element={<Discover />} />
         <Route path="/saved" element={<Navigate to="/profile?tab=saved" replace />} />
         <Route path="/admin" element={<Admin />} />
+        <Route path="/privacy" element={<PrivacyPolicy />} />
+        <Route path="/terms" element={<TermsOfService />} />
         <Route path="*" element={<Dashboard />} />
       </Routes>
       </div>

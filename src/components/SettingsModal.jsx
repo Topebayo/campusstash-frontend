@@ -709,6 +709,73 @@ function SettingsModal({ isOpen, onClose, onLogout, userProfile, onUpdateUser, d
                 </button>
               </form>
 
+              {/* About & Legal */}
+              <div style={{
+                marginTop: '1.25rem',
+                padding: '1rem',
+                borderRadius: '16px',
+                border: '1px solid var(--border)',
+                backgroundColor: 'var(--surface-alt)'
+              }}>
+                <div style={{ fontSize: '0.82rem', fontWeight: '800', color: 'var(--text-main)', marginBottom: '0.65rem' }}>
+                  About & Legal
+                </div>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                  <a
+                    href="/privacy"
+                    target="_blank"
+                    rel="noreferrer"
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      textDecoration: 'none',
+                      color: 'var(--text-main)',
+                      fontSize: '0.85rem',
+                      fontWeight: '600',
+                      padding: '0.35rem 0'
+                    }}
+                  >
+                    <span style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                      <i className="fa-solid fa-shield-halved" style={{ color: 'var(--primary)', fontSize: '0.85rem' }} />
+                      Privacy Policy
+                    </span>
+                    <i className="fa-solid fa-chevron-right" style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }} />
+                  </a>
+
+                  <div style={{ height: '1px', backgroundColor: 'var(--border)' }} />
+
+                  <a
+                    href="/terms"
+                    target="_blank"
+                    rel="noreferrer"
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      textDecoration: 'none',
+                      color: 'var(--text-main)',
+                      fontSize: '0.85rem',
+                      fontWeight: '600',
+                      padding: '0.35rem 0'
+                    }}
+                  >
+                    <span style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                      <i className="fa-solid fa-file-contract" style={{ color: 'var(--primary)', fontSize: '0.85rem' }} />
+                      Terms of Service
+                    </span>
+                    <i className="fa-solid fa-chevron-right" style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }} />
+                  </a>
+
+                  <div style={{ height: '1px', backgroundColor: 'var(--border)' }} />
+
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.78rem', color: 'var(--text-muted)', paddingTop: '0.2rem' }}>
+                    <span>CampusStash</span>
+                    <span>Version 1.2.0</span>
+                  </div>
+                </div>
+              </div>
+
               {/* Danger Zone: Account Deletion */}
               <div style={{
                 marginTop: '1.25rem',
