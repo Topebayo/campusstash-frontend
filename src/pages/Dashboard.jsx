@@ -961,18 +961,19 @@ const [campuses, setCampuses] = useState(() => {
 
                       {/* Card Meta: Seller */}
                       <div className="shopmate-card-meta">
-                        <i className={isStore ? "fa-solid fa-store" : "fa-regular fa-user"} style={{ fontSize: '0.65rem', color: isStore ? 'var(--primary)' : 'var(--text-muted)' }} />
-                        <span>by {sellerName}</span>
+                        <i 
+                          className={isStore ? "fa-solid fa-store" : "fa-regular fa-user"} 
+                          style={{ 
+                            fontSize: '0.65rem', 
+                            color: isStore ? 'var(--primary)' : 'var(--text-muted)',
+                            flexShrink: 0 
+                          }} 
+                        />
+                        <span className="shopmate-seller-name" title={`by ${sellerName}`}>
+                          by {sellerName}
+                        </span>
                         {isStore && (
-                          <span style={{
-                            backgroundColor: 'var(--badge-active-bg)',
-                            color: 'var(--badge-active-text)',
-                            fontSize: '0.62rem',
-                            fontWeight: '700',
-                            padding: '1px 5px',
-                            borderRadius: '9999px',
-                            marginLeft: '2px'
-                          }}>
+                          <span className="shopmate-store-badge">
                             Store
                           </span>
                         )}
