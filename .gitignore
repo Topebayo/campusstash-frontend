@@ -22,6 +22,12 @@ android/build/
 *.apk
 *.aab
 
+# iOS Builds
+ios/App/Pods/
+ios/App/build/
+ios/App/DerivedData/
+*.ipa
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json
